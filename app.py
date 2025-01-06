@@ -7,9 +7,9 @@ app = Flask(__name__)
 def hello_world():
     return render_template('home.html')
 
-@app.route('/favicon.ico')
+@app.route('/favicon.png')
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.png', mimetype='image/png')
 
 
 if __name__ == "__main__":
