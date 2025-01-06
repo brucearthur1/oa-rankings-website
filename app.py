@@ -34,7 +34,7 @@ ATHLETES = [
 
 @app.route("/")
 def home_page():
-    return render_template('index.html', athletes=ATHLETES, group='Women')
+    return render_template('index.html', athletes=ATHLETES, group='Men')
 
 @app.route('/favicon.png')
 def favicon():
