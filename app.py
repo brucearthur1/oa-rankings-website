@@ -4,8 +4,8 @@ from flask import Flask, render_template, send_from_directory
 app = Flask(__name__)
 
 @app.route("/")
-def hello_world():
-    return render_template('home.html')
+def home_page():
+    return render_template('index.html')
 
 @app.route('/favicon.png')
 def favicon():
