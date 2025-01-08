@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, jsonify
 from database import load_athletes_from_db
 
 app = Flask(__name__)
@@ -8,7 +8,14 @@ app = Flask(__name__)
 @app.route("/")
 def home_page():
     athletes = load_athletes_from_db()
+    print('data load and broswer refresh')
     return render_template('index.html', athletes=athletes, group='M')
+
+@app.route("/api/athletes")
+def list_athletes():
+    athletes = load_athletes_from_db()
+    return jsonify(athletes)
+
 
 
 @app.route('/favicon.png')
