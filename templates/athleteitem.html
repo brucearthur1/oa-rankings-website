@@ -1,15 +1,12 @@
-{% if athlete.class == group %}
+{% if athlete.gender == group %}
 <div class="border-bottom row" style=margin-bottom:16px;padding-bottom:8px;>
   <div class="col-9">
-    <h4 style="color:rgb(120,120,120); margin-bottom:4px;">{{athlete['name']}}</h4>
+    <h4 style="color:rgb(120,120,120); margin-bottom:4px;">{{athlete['athlete']}}</h4>
     {% if 'state' in athlete %}
     <div>
       <b>State</b>: {{athlete['state']}}
     </div>
     {% endif %}
-    <div>
-      <b>Ranking Points</b>: {{athlete['points']}}
-    </div>
   </div>
   <div class="col-3">
     <button type="button" class="btn btn-outline-primary">Details</button>

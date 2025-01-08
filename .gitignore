@@ -169,3 +169,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# contains secrets
+database.py
+database_sqlalchemy.py
+
