@@ -4,8 +4,6 @@ import os
 
 load_dotenv() 
 
-os.getenv('SECRET_KEY')
-
 timeout = 10
 connection = pymysql.connect(
     charset="utf8mb4",
