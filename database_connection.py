@@ -13,7 +13,7 @@ connection = pymysql.connect(
     host=os.getenv('HOST'),
     password=os.getenv('PASSWORD'),
     read_timeout=timeout,
-    port=int(os.getenv('PORT')),
+    port=int(os.getenv('PORTNO')),
     user=os.getenv('USER'),
     write_timeout=timeout,
 )
