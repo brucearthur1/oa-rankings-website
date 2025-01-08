@@ -171,6 +171,6 @@ cython_debug/
 .pypirc
 
 # contains secrets
-database_connection.py
+# database_connection.py
 database_sqlalchemy.py
 
