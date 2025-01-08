@@ -1,47 +1,8 @@
 import os
 from flask import Flask, render_template, send_from_directory
-from database import connection
-
-
+from database import load_athletes_from_db
 
 app = Flask(__name__)
-
-ATHLETES = [
-  {
-      'id' : 1,
-      'name' : 'Michael Phelps',
-      'state' : 'SA',
-      'class' : 'Men',
-      'YOB' : 1985,
-      'points' : 5023
-  },  
-  {
-      'id' : 2,
-      'name' : 'John Smith',
-      'class' : 'Men',
-      'YOB' : 2005,
-      'points' : 5019
-  },  
-  {
-      'id' : 3,
-      'name' : 'Jane Smith',
-      'state' : 'WA',
-      'class' : 'Women',
-      'YOB' : 1995,
-      'points' : 4019
-  }
-    
-]
-
-def load_athletes_from_db():
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM athletes")
-        result = cursor.fetchall()
-        athletes = []
-        for row in result:
-            athletes.append(row)
-        return athletes
-      
 
 
 @app.route("/")
