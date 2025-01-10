@@ -24,3 +24,13 @@ def load_athlete_from_db(id):
             return None
         else:
             return result[0]
+
+
+def update_to_athlete_db(id, update):
+    with connection.cursor() as cursor:
+        # Define the query with a placeholder 
+        query = "UPDATE athletes SET athlete=%s WHERE id=%s" 
+        #Execute the query with the parameter 
+        cursor.execute(query, (update['athlete'], id)
+                       ) 
+        connection.commit()

@@ -1,6 +1,6 @@
 import os
-from flask import Flask, render_template, send_from_directory, jsonify
-from database import load_athletes_from_db, load_athlete_from_db
+from flask import Flask, render_template, send_from_directory, jsonify, request
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db 
 
 app = Flask(__name__)
 
@@ -19,12 +19,24 @@ def list_athletes():
 @app.route("/athlete/<id>")
 def show_athlete(id):
     athlete= load_athlete_from_db(id)
-    
     if not athlete:
         return "Not found", 404
-    
     return render_template('athletepage.html',athlete=athlete)
-    
+
+
+@app.route("/athlete/<id>/apply", methods=['post'])
+def update_athlete(id):
+    data = request.form
+    athlete = load_athlete_from_db(id)
+    #store this in the DB
+    update_to_athlete_db(id, data)
+    #send an email
+    #display an acknowledgement 
+    return render_template('update_submitted.html', 
+                           update=data,
+                           athlete=athlete)
+
+
 
 @app.route('/favicon.png')
 def favicon():

@@ -1,0 +1,25 @@
+<h4>Update Details</h4>
+<form action="/athlete/{{athlete['id']}}/apply" method="post">
+    <div class="mb-2">
+    <label>Full Name</label><br>
+    <input type="text" name="athlete" placeholder={{athlete.athlete}}>
+    </div>
+
+    <div class="mb-2">
+    <label>Gender</label><br>
+    <input type="text" name="gender" placeholder={{athlete.gender}}>
+    </div>
+
+    <div class="mb-2">
+    <label>State</label><br>
+    <input type="text" name="state" placeholder={{athlete.state}}>
+    </div>
+
+    <div class="mb-2">
+    <label>Year of birth</label><br>
+    <input type="text" name="yob" placeholder={{athlete.yob}}>
+    </div>
+
+    <input type="submit">
+
+</form>

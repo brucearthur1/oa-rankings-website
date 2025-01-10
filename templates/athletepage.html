@@ -5,14 +5,17 @@
         {% include 'bootstrap.html' %}
     </head>
     <body>
-        <h3>Athlete</h3>
-        <p>{{athlete.athlete}}</p>
-        <h3>Gender</h3>
-        <p>{{athlete.gender}}</p>
-        <h3>Year of birth</h3>
-        <p>{{athlete.yob}}</p>
-        <h3>State</h3>
-        <p>{{athlete.state}}</p>
-
+        <div class="m-5 p-5">
+            <h3>Athlete</h3>
+            <p>{{athlete.athlete}}</p>
+            <h3>Gender</h3>
+            <p>{{athlete.gender}}</p>
+            <h3>Year of birth</h3>
+            <p>{{athlete.yob}}</p>
+            <h3>State</h3>
+            <p>{{athlete.state}}</p>
+        
+            {% include 'application_form.html' %}
+        </div>
     </body>
 </html>

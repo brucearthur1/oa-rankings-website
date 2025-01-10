@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Update Submitted</title>
+        {% include 'bootstrap.html' %}
+    </head>
+    <body>
+        <div class="container">
+
+            <h3>Update Submitted</h3>
+            <p>Your update for <b>{{athlete['athlete']}}</b> has been submitted</p>
+
+            <b>Full Name</b>
+            <div class="mb-2">{{update['athlete']}}</div>
+
+            <b>Gender</b>
+            <div class="mb-2">{{update['gender']}}</div>
+
+            <b>State</b>
+            <div class="mb-2">{{update['state']}}</div>
+
+            <b>Year of birth</b>
+            <div class="mb-2">{{update['yob']}}</div>
+
+        </div>
+    </body>
+</html>
