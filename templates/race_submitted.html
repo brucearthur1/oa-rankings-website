@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>OA Elite Rankings</title>
+    {% include 'bootstrap.html' %}
+
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  </head>
+  <body>
+    <div class="container">
+        <h4>Confirmation of race submitted</h4>
+        {{ df_html|safe }}
+    </div>
+  </body>
+</html>

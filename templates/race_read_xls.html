@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>OA Elite Rankings</title>
+    {% include 'bootstrap.html' %}
+
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  </head>
+  <body>
+    <div class="container">
+
+    
+        <h4>Upload new race from Excel</h4>
+        <form action="/race/new" method="post">
+            <div class="mb-2">
+            <label>Full path of Excel file</label><br>
+            <input type="text" name="path_file" placeholder='/path/file.xls'>
+            </div>
+
+            <div class="mb-2">
+            <label>Worksheet</label><br>
+            <input type="text" name="sheet" placeholder='24cam21e'>
+            </div>
+
+            <input type="submit">
+
+        </form>
+    </div>
+  </body>
+</html>

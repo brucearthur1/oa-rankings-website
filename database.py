@@ -34,3 +34,15 @@ def update_to_athlete_db(id, update):
         cursor.execute(query, (update['athlete'], id)
                        ) 
         connection.commit()
+
+
+def store_race_from_excel(sheetname, data_to_insert):
+    with connection.cursor() as cursor:
+        # Insert data 
+        insert_query = """ 
+        INSERT INTO result_staging (race_code, place, athlete, race_time, race_points) 
+        VALUES ('""" + sheetname + """', %s, %s, %s, %s) 
+        """ 
+        cursor.executemany(insert_query, data_to_insert) 
+        connection.commit() 
+        print("Data inserted successfully!")

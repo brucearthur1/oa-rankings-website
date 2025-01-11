@@ -2,3 +2,5 @@ Flask
 pymysql
 gunicorn
 python-dotenv
+pandas
+xlrd
