@@ -4,3 +4,4 @@ gunicorn
 python-dotenv
 pandas
 openpyxl
+xlrd
