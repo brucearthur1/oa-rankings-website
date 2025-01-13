@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>{{athlete.athlete}} - OA Rankings</title>
-        {% include 'bootstrap.html' %}
-    </head>
-    <body>
+  <head>
+    {% include 'head.html' %}
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
+        
         <div class="m-5 p-5">
             <h3>Athlete</h3>
             <p>{{athlete.athlete}}</p>

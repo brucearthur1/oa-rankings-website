@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
+  
+
+        <h3 style='text-align:center' class="mb-5"><span style='color:#000099'>Events</span></h3>
+
+      
+        <form method="post" action="/events">
+            <div class="row mb-3">
+                <div class="col-md-auto"> 
+                    <input type="date" name="start_date" class="form-control" placeholder="Start date" value="{{ request.form.start_date }}"> 
+                </div> 
+                <div class="col-md-auto"> 
+                    <input type="date" name="end_date" class="form-control" placeholder="End date" value="{{ request.form.end_date }}"> 
+                </div>            
+
+                <div class="col-md-auto">
+                    
+                    <select name="list_filter" class="form-select" aria-label="Default select example">
+                        <option selected>Ranking List</option>
+                        <option value="Men">Men</option>
+                        <option value="Women">Women</option>
+                        <option value="Boys">Boys</option>
+                        <option value="Girls">Girls</option>
+                        <option value="">[clear filter]</option>
+                      </select>
+
+                </div>
+            
+                <button type="submit" class="btn btn-primary col-md-auto">Filter</button>
+            </div>
+        </form>
+      
+            <div class="table-responsive">
+              <table class="table table-hover table-striped">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Short Desc</th>
+                    <th>Long Description</th>
+                    <th>Class</th>
+                    <th>ShortFile</th>
+                    <th>IP</th>
+                    <th>Ranking List</th>
+                    <th>Eventor ID</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for event in events %}
+                  <tr>
+                    <td>{{ event['date'] }}</td>
+                    <td>{{ event['short_desc'] }}</td>
+                    <td>{{ event['long_desc'] }}</td>
+                    <td>{{ event['class'] }}</td>
+                    <td>{{ event['short_file'] }}</td>
+                    <td>{{ event['ip'] }}</td>
+                    <td>{{ event['list'] }}</td>
+                    <td>{{ event['eventor_id'] }}</td>
+                    <td> 
+                        {% if event['short_file'] != 'WRE' and event['short_desc'].lower() in race_codes %} 
+                            <a href="/event/{{event['short_file']}}" type="button" class="btn btn-outline-primary">Details</a>
+                        {% endif %} 
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+    </div>
+    {% include "footer.html" %}
+  </body>
+    
+</html>
+    

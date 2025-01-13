@@ -9,8 +9,8 @@
         <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
 
     
-        <h4>Upload new race from Excel</h4>
-        <form action="/race/new" method="post">
+        <h4>Upload events from Excel</h4>
+        <form action="/events/import" method="post">
             <div class="mb-2">
             <label>Full path of Excel file</label><br>
             <input type="text" name="path_file" placeholder='/path/file.xls'>
@@ -18,9 +18,19 @@
 
             <div class="mb-2">
             <label>Worksheet</label><br>
-            <input type="text" name="sheet" placeholder='24cam21e'>
+            <input type="text" name="sheet" placeholder='races'>
             </div>
 
+            <div class="mb-2">
+                <label>Start Row</label><br>
+                <input type="text" name="start" placeholder='1'>
+            </div>
+    
+            <div class="mb-2">
+                    <label>End Row</label><br>
+                    <input type="text" name="finish" placeholder='5'>
+            </div>
+        
             <input type="submit">
 
         </form>

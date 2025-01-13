@@ -3,4 +3,4 @@ pymysql
 gunicorn
 python-dotenv
 pandas
-xlrd
+openpyxl
