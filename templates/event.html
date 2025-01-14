@@ -9,16 +9,21 @@
     <div class="container" id="container">
         <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
 
-        <h3 style='text-align:center' class="mb-5"><span style='color:#000099'>{{event['long_desc']}}</span></h3>
-      
+        <h4 style='text-align:center' class="mb-2">
+            <span style='color:#000099'>{{event['long_desc']}}</span>  
+            <!--{{event['long_desc']}}    -->
+        </h4>
+
+        <p>{{event['class']}}</p>
+
             <div class="table-responsive">
-              <table class="table table-hover table-striped">
+              <table class="table table-hover table-striped table-sm">
                 <thead>
                   <tr>
                     <th>Place</th>
                     <th>Name</th>
-                    <th>Time</th>
-                    <th>Ranking Points</th>
+                    <th class="text-end">Time</th>
+                    <th class="text-end">Ranking Points</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -26,14 +31,19 @@
                   <tr>
                     <td>{{ result['place'] }}</td>
                     <td>{{ result['athlete'] }}</td>
-                    <td>{{ result['race_time'] }}</td>
-                    <td>{{ result['race_points'] }}</td>
+                    <td class="text-end">{{ result['race_time'] }}</td>
+                    <td class="text-end">{{ result['race_points']|int }}</td>
                   </tr>
                   {% endfor %}
                 </tbody>
               </table>
             </div>
+            <div>
+                <p>Event date: {{ event['date']|_jinja2_filter_datetime }}</p>
+                <p>Race importance factor, IP: {{ event['ip']|float }}</p>
+                <a href="https://eventor.orienteering.asn.au/Events/ResultList?eventId={{ event['eventor_id'] }}" target="_blank">Eventor</a>
 
+            </div>
     </div>
     {% include "footer.html" %}
   </body>

@@ -20,7 +20,7 @@
                 <div class="col-md-auto"> 
                     <input type="date" name="end_date" class="form-control" placeholder="End date" value="{{ request.form.end_date }}"> 
                 </div>            
-
+            <!--
                 <div class="col-md-auto">
                     
                     <select name="list_filter" class="form-select" aria-label="Default select example">
@@ -33,7 +33,7 @@
                       </select>
 
                 </div>
-            
+            -->            
                 <button type="submit" class="btn btn-primary col-md-auto">Filter</button>
             </div>
         </form>
@@ -43,27 +43,17 @@
                 <thead>
                   <tr>
                     <th>Date</th>
-                    <th>Short Desc</th>
                     <th>Long Description</th>
                     <th>Class</th>
-                    <th>ShortFile</th>
-                    <th>IP</th>
-                    <th>Ranking List</th>
-                    <th>Eventor ID</th>
                     <th>Details</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for event in events %}
                   <tr>
-                    <td>{{ event['date'] }}</td>
-                    <td>{{ event['short_desc'] }}</td>
+                    <td class="text-nowrap">{{ event['date']|_jinja2_filter_datetime }}</td>
                     <td>{{ event['long_desc'] }}</td>
                     <td>{{ event['class'] }}</td>
-                    <td>{{ event['short_file'] }}</td>
-                    <td>{{ event['ip'] }}</td>
-                    <td>{{ event['list'] }}</td>
-                    <td>{{ event['eventor_id'] }}</td>
                     <td> 
                         {% if event['short_file'] != 'WRE' and event['short_desc'].lower() in race_codes %} 
                             <a href="/event/{{event['short_file']}}" type="button" class="btn btn-outline-primary">Details</a>

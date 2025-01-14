@@ -4,9 +4,16 @@ from flask import Flask, render_template, send_from_directory, jsonify, request
 from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db
 from excel import load_from_xls, load_from_xlsx
 from datetime import datetime
-
+from formatting import convert_to_time_format
 
 app = Flask(__name__)
+
+@app.template_filter('strftime') 
+def _jinja2_filter_datetime(date, fmt=None): 
+    return date.strftime(fmt) if fmt else date.strftime('%d/%m/%Y')
+
+app.jinja_env.filters['_jinja2_filter_datetime'] = _jinja2_filter_datetime
+
 
 
 @app.route("/")
@@ -80,6 +87,13 @@ def show_event(short_file):
     event, results = load_event_from_db(short_file)
     if not event:
         return "Not found", 404
+    
+    # Convert race_time to datetime objects 
+        
+    for result in results: 
+        if result['race_time']:
+            result['race_time'] = convert_to_time_format(result['race_time'])
+
     return render_template('event.html',event=event,results=results)
 
 
@@ -120,6 +134,9 @@ def uploaded_race():
     partial_df = df.iloc[1:91, 1:5] 
     # Drop rows that are empty column 2 in the sliced DataFrame 
     parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
+    
+
+    
     # Convert the DataFrame to a list of tuples for insertion into MySQL 
     data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
     #store this in the DB
@@ -135,9 +152,6 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.png', mimetype='image/png')
 
 
-@app.template_filter('strftime') 
-def _jinja2_filter_datetime(date, fmt=None): 
-    return date.strftime(fmt) if fmt else date.strftime('%d/%m/%Y')
 
 
 if __name__ == "__main__":
