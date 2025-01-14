@@ -74,6 +74,24 @@ def load_events_staging_from_db():
         return events, race_codes
 
 
+def store_athletes_in_db(data_to_insert):
+    with connection.cursor() as cursor:
+        # Insert data 
+        insert_query = "INSERT INTO athletes (eventor_id, athlete, given, family, gender, yob, nationality_code, club_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.executemany(insert_query, data_to_insert) 
+        connection.commit() 
+        print("Data inserted successfully!")
+
+
+
+def store_clubs_in_db(data_to_insert):
+    with connection.cursor() as cursor:
+        # Insert data 
+        insert_query = "INSERT INTO clubs (club_type, id, name, short_name, state, country) VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.executemany(insert_query, data_to_insert) 
+        connection.commit() 
+        print("Data inserted successfully!")
+
 
 def store_events_from_excel(data_to_insert):
     with connection.cursor() as cursor:

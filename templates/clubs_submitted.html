@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
+
+        <h4>Confirmation of clubs submitted</h4>
+        {% for club in club_list %}
+            {{club}}
+        {% endfor %}
+    </div>
+    {% include "footer.html" %}
+  </body>
+</html>

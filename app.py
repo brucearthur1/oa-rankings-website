@@ -1,10 +1,11 @@
 import os
 import pandas as pd
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db
 from excel import load_from_xls, load_from_xlsx
 from datetime import datetime
 from formatting import convert_to_time_format
+from xml_util import load_clubs_from_xml, load_athletes_from_xml
 
 app = Flask(__name__)
 
@@ -58,6 +59,26 @@ def update_athlete(id):
     return render_template('update_submitted.html', 
                            update=data,
                            athlete=athlete)
+
+
+@app.route('/athletes/read_xml')
+def read_athletes_from_xml():
+    athlete_list = load_athletes_from_xml()
+    #store this in the DB
+    store_athletes_in_db(athlete_list)
+
+    #display an acknowledgement 
+    return render_template('athletes_submitted.html', athlete_list=athlete_list)
+
+@app.route('/clubs/read_xml')
+def read_clubs_from_xml():
+    club_list = load_clubs_from_xml()
+    #store this in the DB
+    store_clubs_in_db(club_list)
+
+    #display an acknowledgement 
+    return render_template('clubs_submitted.html', club_list=club_list)
+
 
 @app.route("/events", methods=['GET', 'POST']) 
 def events_page(): 
