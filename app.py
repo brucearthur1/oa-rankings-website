@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db
 from excel import load_from_xls, load_from_xlsx
 from datetime import datetime
 from formatting import convert_to_time_format
@@ -40,10 +40,61 @@ def about_page():
 def admin_page():
     return render_template('admin.html')
 
+
+@app.route("/athlete/add")
+def add_athlete():
+    ########### continue this
+
+
+    athletes = load_athletes_from_db()
+    return render_template('athletes.html', athletes=athletes)
+
+@app.route("/athlete/ineligible")
+def add_ineligible_athlete():
+    ########## test this
+
+    full_name = request.args.get('full_name')
+    list = request.args.get('list')
+    
+    if list:
+        if list.lower() in ('men','boys'):
+            gender = 'M'
+        elif list.lower() in ('women','girls'):
+            gender = 'F'
+        else:
+            gender = None
+    else:
+        gender = None
+
+    # Split the full_name string into parts 
+    name_parts = full_name.split(' ') 
+    # Extract given_name and family_name 
+    given_name = name_parts[0] 
+    family_name = ' '.join(name_parts[1:])  # Join remaining parts in case of multiple surnames 
+    
+    update = {}
+    update['eventor_id'] = None
+    update['full_name'] = full_name
+    update['given'] = given_name
+    update['family'] = family_name
+    update['gender'] = gender
+    update['yob'] = None
+    update['nationality_code'] = None
+    update['club_id'] = None
+    update['eligible'] = 'N'
+
+    print(update)
+    insert_athlete_db(update=update)
+    
+    return render_template('update_submitted.html', update=update)
+    
+
 @app.route("/athletes")
 def athletes_page():
     athletes = load_athletes_from_db()
     return render_template('athletes.html', athletes=athletes)
+
+
 
 @app.route("/api/athletes")
 def list_athletes():
@@ -71,11 +122,10 @@ def update_athlete(id):
     #store this in the DB
     update_to_athlete_db(id, data)
 
-    athlete = load_athlete_from_db(id)
+    #athlete = load_athlete_from_db(id)
     #display an acknowledgement 
     return render_template('update_submitted.html', 
-                           update=data,
-                           athlete=athlete)
+                           update=data)
 
 
 @app.route('/athletes/read_xml')
@@ -99,24 +149,24 @@ def read_clubs_from_xml():
 
 @app.route("/events", methods=['GET', 'POST']) 
 def events_page(): 
-    list_filter = request.form.get('list_filter', '').strip().lower() 
-    start_date = request.form.get('start_date', '').strip() 
-    end_date = request.form.get('end_date', '').strip()    
+    #list_filter = request.form.get('list_filter', '').strip().lower() 
+    #start_date = request.form.get('start_date', '').strip() 
+    #end_date = request.form.get('end_date', '').strip()    
     # Ensure date_filter is in the 'YYYY-MM-DD' format 
-    try:
-        start_date = pd.to_datetime(start_date).strftime('%Y-%m-%d') if start_date else '' 
-        end_date = pd.to_datetime(end_date).strftime('%Y-%m-%d') if end_date else '' 
-    except ValueError:
-        start_date = ''
-        end_date = ''    
+    #try:
+    #    start_date = pd.to_datetime(start_date).strftime('%Y-%m-%d') if start_date else '' 
+    #    end_date = pd.to_datetime(end_date).strftime('%Y-%m-%d') if end_date else '' 
+    #except ValueError:
+    #    start_date = ''
+    #    end_date = ''    
     
     events, race_codes = load_events_staging_from_db() 
     
-    if list_filter: 
-        events = [event for event in events if list_filter == event['list'].lower()] 
-    if start_date and end_date:
-        events = [event for event in events if start_date <= pd.to_datetime(event['date']).strftime('%Y-%m-%d') <= end_date]        
-        #events = [event for event in events if pd.to_datetime(event['date']).strftime('%Y-%m-%d') == date_filter] 
+    #if list_filter: 
+    #    events = [event for event in events if list_filter == event['list'].lower()] 
+    #if start_date and end_date:
+    #    events = [event for event in events if start_date <= pd.to_datetime(event['date']).strftime('%Y-%m-%d') <= end_date]        
+    #    #events = [event for event in events if pd.to_datetime(event['date']).strftime('%Y-%m-%d') == date_filter] 
     
     return render_template('events.html', events=events, race_codes=race_codes)
 

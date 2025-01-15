@@ -30,6 +30,7 @@
                 <th>Athlete</th>
                 <th>Club</th>
                 <th>State</th>
+                <th>Latest Ranking Event</th> <!-- Make this column visible and move it before Details -->
                 <th>Details</th>
                 <th style="display:none;">SortName</th> <!-- Hidden sorting column -->
               </tr>
@@ -40,6 +41,7 @@
                 <td>{{ athlete['full_name'] }}</td>
                 <td>{{ athlete['club_name'] }}</td>
                 <td>{{ athlete['state'] }}</td>
+                <td>{{ athlete['last_event_date'] }}</td> <!-- Make this column visible -->
                 <td> 
                   <a href="/athlete/{{athlete['id']}}" type="button" class="btn btn-outline-primary">Details</a>
                 </td>
@@ -60,14 +62,21 @@
 <script> 
   $(document).ready( function () {
     $('#athletesTable').DataTable({
-      "order": [[ 4, "asc" ]], // Sort by hidden SortName column
+      "order": [[3, "desc"], [5, 'asc']], // Sort by Latest Ranking Event then by SortName
       "columnDefs": [
-        { "targets": [ 4 ], "visible": false, "searchable": false } // Hide the SortName column
+        { "targets": [5], "visible": false, "searchable": false }, // Hide the SortName column
+        {
+          "targets": 3, // Target the LastEventDate column
+          "type": "date", // Ensure it's treated as a date
+          "render": function(data, type, row) {
+            // Handle null or empty dates
+            return data ? data : '';
+          }
+        }
       ]
     }); 
   } ); 
 </script>
 
 </body>
-
 </html>

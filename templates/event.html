@@ -36,13 +36,13 @@
                 <td class="text-end">{{ result['race_time'] }}</td>
                 <td class="text-end">{{ result['race_points'] | int }}</td>
                 <td>
-                  {% if result['nationality_code'] and result['nationality_code'] != 'AUS' %}
+                  {% if result['eligible'] == 'N' %}
                       *
                   {% elif result['athlete_id'] %} 
                       <a href="/athlete/{{result['athlete_id']}}" type="button" class="btn btn-outline-primary">Details</a>
                   {% else %}
-                      <a href="/athlete/add/?full_name={{result['full_name']}}" type="button" class="btn btn-outline-primary">Add</a>
-                      <a href="/athlete/ineligible/?full_name={{result['full_name']}}" type="button" class="btn btn-outline-primary">*</a>
+                      <a href="/athlete/add?full_name={{result['full_name']}}" type="button" class="btn btn-outline-warning">Add</a>
+                      <a href="/athlete/ineligible?full_name={{ result['full_name'] | urlencode }}&list={{ event['list'] | urlencode }}" type="button" class="btn btn-outline-warning">*</a>
                   {% endif %} 
                 </td>
               </tr>
@@ -54,6 +54,9 @@
             <p>Event date: {{ event['date'] | _jinja2_filter_datetime }}</p>
             <p>Race importance factor, IP: {{ event['ip'] | float }}</p>
             <a href="https://eventor.orienteering.asn.au/Events/ResultList?eventId={{ event['eventor_id'] }}" target="_blank">Eventor</a>
+            {% if results | selectattr('eligible', 'equalto', 'N') | list %} 
+              <p class="mt-3 fs-6">* ineligible</p> 
+            {% endif %}        
         </div>
     </div>
     {% include "footer.html" %}
