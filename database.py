@@ -5,7 +5,7 @@ from database_connection import connection
 def load_athletes_from_db():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM athletes")
+        cursor.execute("SELECT * FROM athletes LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE nationality_code = 'AUS'")
         result = cursor.fetchall()
         athletes = []
         for row in result:
@@ -16,7 +16,7 @@ def load_athlete_from_db(id):
     connection.autocommit(True)
     with connection.cursor() as cursor:
         # Define the query with a placeholder 
-        query = "SELECT * FROM athletes WHERE id = %s" 
+        query = "SELECT * FROM athletes LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE nationality_code = 'AUS' AND athletes.id = %s" 
         #Execute the query with the parameter 
         cursor.execute(query, (id,)) 
         # Fetch the results 
@@ -31,9 +31,9 @@ def load_athlete_from_db(id):
 def update_to_athlete_db(id, update):
     with connection.cursor() as cursor:
         # Define the query with a placeholder 
-        query = "UPDATE athletes SET athlete=%s WHERE id=%s" 
+        query = "UPDATE athletes SET full_name=%s WHERE id=%s" 
         #Execute the query with the parameter 
-        cursor.execute(query, (update['athlete'], id)
+        cursor.execute(query, (update['full_name'], id)
                        ) 
         connection.commit()
 
@@ -77,7 +77,7 @@ def load_events_staging_from_db():
 def store_athletes_in_db(data_to_insert):
     with connection.cursor() as cursor:
         # Insert data 
-        insert_query = "INSERT INTO athletes (eventor_id, athlete, given, family, gender, yob, nationality_code, club_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+        insert_query = "INSERT INTO athletes (eventor_id, full_name, given, family, gender, yob, nationality_code, club_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         cursor.executemany(insert_query, data_to_insert) 
         connection.commit() 
         print("Data inserted successfully!")
@@ -87,7 +87,7 @@ def store_athletes_in_db(data_to_insert):
 def store_clubs_in_db(data_to_insert):
     with connection.cursor() as cursor:
         # Insert data 
-        insert_query = "INSERT INTO clubs (club_type, id, name, short_name, state, country) VALUES (%s, %s, %s, %s, %s, %s)"
+        insert_query = "INSERT INTO clubs (club_type, id, club_name, short_name, state, country) VALUES (%s, %s, %s, %s, %s, %s)"
         cursor.executemany(insert_query, data_to_insert) 
         connection.commit() 
         print("Data inserted successfully!")
@@ -121,7 +121,7 @@ def store_race_from_excel(sheetname, data_to_insert):
     with connection.cursor() as cursor:
         # Insert data 
         insert_query = """ 
-        INSERT INTO result_staging (race_code, place, athlete, race_time, race_points) 
+        INSERT INTO result_staging (race_code, place, full_name, race_time, race_points) 
         VALUES ('""" + sheetname + """', %s, %s, %s, %s) 
         """ 
         cursor.executemany(insert_query, data_to_insert) 

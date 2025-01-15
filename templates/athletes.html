@@ -2,24 +2,62 @@
 <html>
   <head>
     {% include 'head.html' %}
+    <!-- DataTables CSS --> 
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css"> 
+    <!-- jQuery --> 
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script> 
+    <!-- DataTables JS --> 
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <style> 
+      /* Custom CSS to remove horizontal lines between table rows */ 
+      #athletesTable tbody tr td { 
+        border-top: none !important;
+        border-bottom: none !important; 
+      }    
+    </style>
   </head>
   <body>
     {% include 'nav.html' %}
     <div class="container" id="container">
       <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
   
-
       <h3 align=center style='text-align:center' class="mb-5"><span style='color:#000099'>Athletes</span></h3>
   
-      <div>
-        {% for athlete in athletes %}
-          {% include 'athleteitem.html' %}
-        {% endfor %}
+      <div class="table-responsive">
+        <table id="athletesTable" class="table table-hover table-striped">
+          <thead>
+              <tr>
+                <th>Athlete</th>
+                <th>Club</th>
+                <th>State</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for athlete in athletes %}
+              <tr>
+                <td>{{ athlete['full_name'] }}</td>
+                <td>{{ athlete['club_name'] }}</td>
+                <td>{{ athlete['state'] }}</td>
+                <td> 
+                  <a href="/athlete/{{athlete['id']}}" type="button" class="btn btn-outline-primary">Details</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <br>
 
 </div>
 {% include "footer.html" %}
+
+<script> 
+  $(document).ready( function () {
+    $('#athletesTable').DataTable(); 
+  } ); 
+</script>
+
 </body>
 
 </html>

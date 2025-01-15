@@ -33,7 +33,7 @@ def admin_page():
 @app.route("/athletes")
 def athletes_page():
     athletes = load_athletes_from_db()
-    return render_template('athletes.html', athletes=athletes, group='W')
+    return render_template('athletes.html', athletes=athletes)
 
 @app.route("/api/athletes")
 def list_athletes():
@@ -47,14 +47,21 @@ def show_athlete(id):
         return "Not found", 404
     return render_template('athletepage.html',athlete=athlete)
 
+@app.route("/athlete/<id>/edit")
+def edit_athlete(id):
+    athlete= load_athlete_from_db(id)
+    if not athlete:
+        return "Not found", 404
+    return render_template('edit_athlete.html',athlete=athlete)
+
 
 @app.route("/athlete/<id>/apply", methods=['post'])
 def update_athlete(id):
     data = request.form
-    athlete = load_athlete_from_db(id)
     #store this in the DB
     update_to_athlete_db(id, data)
-    #send an email
+
+    athlete = load_athlete_from_db(id)
     #display an acknowledgement 
     return render_template('update_submitted.html', 
                            update=data,

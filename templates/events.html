@@ -2,72 +2,65 @@
 <html>
   <head>
     {% include 'head.html' %}
+    <!-- DataTables CSS --> 
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css"> 
+    <!-- jQuery --> 
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script> 
+    <!-- DataTables JS --> 
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <!-- moment.js --> 
+    <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <!-- DataTables DateTime plug-in -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/plug-ins/1.11.5/sorting/datetime-moment.js"></script>
+    <style> 
+      /* Custom CSS to remove horizontal lines between table rows */ 
+      #eventsTable tbody tr td { 
+        border-top: none !important;
+        border-bottom: none !important; 
+      }    
+    </style>
   </head>
   <body>
     {% include 'nav.html' %}
     <div class="container" id="container">
         <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
-  
-
-        <h3 style='text-align:center' class="mb-5"><span style='color:#000099'>Events</span></h3>
-
-      
-        <form method="post" action="/events">
-            <div class="row mb-3">
-                <div class="col-md-auto"> 
-                    <input type="date" name="start_date" class="form-control" placeholder="Start date" value="{{ request.form.start_date }}"> 
-                </div> 
-                <div class="col-md-auto"> 
-                    <input type="date" name="end_date" class="form-control" placeholder="End date" value="{{ request.form.end_date }}"> 
-                </div>            
-            <!--
-                <div class="col-md-auto">
-                    
-                    <select name="list_filter" class="form-select" aria-label="Default select example">
-                        <option selected>Ranking List</option>
-                        <option value="Men">Men</option>
-                        <option value="Women">Women</option>
-                        <option value="Boys">Boys</option>
-                        <option value="Girls">Girls</option>
-                        <option value="">[clear filter]</option>
-                      </select>
-
-                </div>
-            -->            
-                <button type="submit" class="btn btn-primary col-md-auto">Filter</button>
-            </div>
-        </form>
-      
-            <div class="table-responsive">
-              <table class="table table-hover table-striped">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Long Description</th>
-                    <th>Class</th>
-                    <th>Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for event in events %}
-                  <tr>
-                    <td class="text-nowrap">{{ event['date']|_jinja2_filter_datetime }}</td>
-                    <td>{{ event['long_desc'] }}</td>
-                    <td>{{ event['class'] }}</td>
-                    <td> 
-                        {% if event['short_file'] != 'WRE' and event['short_desc'].lower() in race_codes %} 
-                            <a href="/event/{{event['short_file']}}" type="button" class="btn btn-outline-primary">Details</a>
-                        {% endif %} 
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-
+        <h3 style='text-align:center' class="mb-5"><span style='color:#000099'>Ranking Events</span></h3>
+        <div class="table-responsive">
+          <table id="eventsTable" class="table table-hover table-striped">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Long Description</th>
+                <th>Class</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+              <tr>
+                <td class="text-nowrap">{{ event['date']|_jinja2_filter_datetime }}</td>
+                <td>{{ event['long_desc'] }}</td>
+                <td>{{ event['class'] }}</td>
+                <td> 
+                    {% if event['short_file'] != 'WRE' and event['short_desc'].lower() in race_codes %} 
+                        <a href="/event/{{event['short_file']}}" type="button" class="btn btn-outline-primary">Details</a>
+                    {% endif %} 
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
     </div>
     {% include "footer.html" %}
+    <script> 
+      $(document).ready( function () {
+        // Initialize DataTables DateTime sorting plug-in
+        $.fn.dataTable.moment('DD/MM/YYYY'); // Adjust the date format to match your data
+        $('#eventsTable').DataTable({ 
+          "order": [[ 0, "desc" ]] // Order by the first column (date) in descending order 
+        });      
+      } ); 
+    </script>
   </body>
-    
 </html>
-    

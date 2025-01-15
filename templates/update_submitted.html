@@ -9,19 +9,10 @@
         <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
 
             <h3>Update Submitted</h3>
-            <p>Your update for <b>{{athlete['athlete']}}</b> has been submitted</p>
+            <p>Your update for <b>{{athlete['full_name']}}</b> has been submitted</p>
 
             <b>Full Name</b>
-            <div class="mb-2">{{update['athlete']}}</div>
-
-            <b>Gender</b>
-            <div class="mb-2">{{update['gender']}}</div>
-
-            <b>State</b>
-            <div class="mb-2">{{update['state']}}</div>
-
-            <b>Year of birth</b>
-            <div class="mb-2">{{update['yob']}}</div>
+            <div class="mb-2">{{update['full_name']}}</div>
 
         </div>
         {% include "footer.html" %}
