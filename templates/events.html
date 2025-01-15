@@ -41,9 +41,13 @@
                 <td class="text-nowrap">{{ event['date']|_jinja2_filter_datetime }}</td>
                 <td>{{ event['long_desc'] }}</td>
                 <td>{{ event['class'] }}</td>
-                <td> 
-                    {% if event['short_file'] != 'WRE' and event['short_desc'].lower() in race_codes %} 
+                <td>
+                    {% if event['short_file'] == 'WRE' %} 
+                        WRE
+                    {% elif event['short_desc'].lower() in race_codes %} 
                         <a href="/event/{{event['short_file']}}" type="button" class="btn btn-outline-primary">Details</a>
+                    {% else %}
+                        <a href="/race/new/{{event['short_file']}}?list={{event['list']}}" type="button" class="btn btn-outline-primary">Upload</a>
                     {% endif %} 
                 </td>
               </tr>

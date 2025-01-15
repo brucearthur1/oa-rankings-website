@@ -16,6 +16,16 @@ def _jinja2_filter_datetime(date, fmt=None):
 app.jinja_env.filters['_jinja2_filter_datetime'] = _jinja2_filter_datetime
 
 
+def is_valid_time_format(time_str):
+    try: 
+        datetime.strptime(time_str, "%H:%M:%S") 
+        return True 
+    except ValueError:
+        return False 
+
+app.jinja_env.filters['is_valid_time_format'] = is_valid_time_format
+
+
 
 @app.route("/")
 def home_page():
@@ -45,7 +55,7 @@ def show_athlete(id):
     athlete= load_athlete_from_db(id)
     if not athlete:
         return "Not found", 404
-    return render_template('athletepage.html',athlete=athlete)
+    return render_template('athletepage.html',athlete=athlete, datetime=datetime)
 
 @app.route("/athlete/<id>/edit")
 def edit_athlete(id):
@@ -122,6 +132,8 @@ def show_event(short_file):
         if result['race_time']:
             result['race_time'] = convert_to_time_format(result['race_time'])
 
+
+
     return render_template('event.html',event=event,results=results)
 
 
@@ -162,9 +174,6 @@ def uploaded_race():
     partial_df = df.iloc[1:91, 1:5] 
     # Drop rows that are empty column 2 in the sliced DataFrame 
     parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
-    
-
-    
     # Convert the DataFrame to a list of tuples for insertion into MySQL 
     data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
     #store this in the DB
@@ -174,6 +183,28 @@ def uploaded_race():
     #display an acknowledgement 
     return render_template('race_submitted.html', df_html=df_html)
     
+@app.route("/race/new/<event_code>")
+def upload_race(event_code):
+    ranking_list = request.args.get('list')
+    print(ranking_list)
+    input = {}
+    input['path_file'] = "s:/Rankings/source/2024/" + ranking_list + ".xls"
+    input['sheet'] = event_code
+    df = load_from_xlsx(input)
+    # Slice the DataFrame to start from row 2 (index 1) and columns C to E (index 2 to 4) 
+    partial_df = df.iloc[1:91, 1:5] 
+    # Drop rows that are empty column 2 in the sliced DataFrame 
+    parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
+    # Convert the DataFrame to a list of tuples for insertion into MySQL 
+    data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
+    #store this in the DB
+    store_race_from_excel(input['sheet'], data_to_insert)
+
+    df_html = parsed_df.to_html()
+    #display an acknowledgement 
+    return render_template('race_submitted.html', df_html=df_html)
+
+
 
 @app.route('/favicon.png')
 def favicon():

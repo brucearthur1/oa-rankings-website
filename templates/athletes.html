@@ -31,6 +31,7 @@
                 <th>Club</th>
                 <th>State</th>
                 <th>Details</th>
+                <th style="display:none;">SortName</th> <!-- Hidden sorting column -->
               </tr>
             </thead>
             <tbody>
@@ -41,6 +42,10 @@
                 <td>{{ athlete['state'] }}</td>
                 <td> 
                   <a href="/athlete/{{athlete['id']}}" type="button" class="btn btn-outline-primary">Details</a>
+                </td>
+                <td style="display:none;">
+                  {% set names = athlete['full_name'].split(' ') %}
+                  {{ names[-1] }}{{ ' ' }}{{ names[0] }}
                 </td>
               </tr>
               {% endfor %}
@@ -54,7 +59,12 @@
 
 <script> 
   $(document).ready( function () {
-    $('#athletesTable').DataTable(); 
+    $('#athletesTable').DataTable({
+      "order": [[ 4, "asc" ]], // Sort by hidden SortName column
+      "columnDefs": [
+        { "targets": [ 4 ], "visible": false, "searchable": false } // Hide the SortName column
+      ]
+    }); 
   } ); 
 </script>
 

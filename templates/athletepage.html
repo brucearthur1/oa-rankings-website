@@ -8,21 +8,32 @@
     <div class="container" id="container">
         <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
         
-        <h4>{{athlete.full_name}}</h4>
+        <h4>{{ athlete.full_name }}</h4>
 
         <div class="m-2 p-2">
-            <b>Gender</b>
-            <p>{{athlete.gender}}</p>
+            <b>Category</b>
+            <p>
+              {% set current_year = datetime.utcnow().year %}
+              {% set age = current_year - athlete.yob %}
+              {% if age < 21 %}
+                Junior 
+              {% endif %}
+              {% if athlete.gender == 'M' %}
+                Men
+              {% elif athlete.gender == 'F' %}
+                Women
+              {% endif %}
+            </p>
             <b>Year of birth</b>
-            <p>{{athlete.yob}}</p>
+            <p>{{ athlete.yob }}</p>
             <b>State</b>
-            <p>{{athlete.state}}</p>
+            <p>{{ athlete.state }}</p>
             <b>Club</b>
-            <p>{{athlete.club_name}}</p>
+            <p>{{ athlete.club_name }}</p>
 
         </div>
 
-        <a href="/athlete/{{athlete.id}}/edit" type="button" class="btn btn-outline-primary">Edit athlete name</a>
+        <a href="/athlete/{{ athlete.id }}/edit" type="button" class="btn btn-outline-primary">Edit athlete name</a>
 
     </div>
     {% include "footer.html" %}

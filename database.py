@@ -39,7 +39,7 @@ def update_to_athlete_db(id, update):
 
 def load_event_from_db(short_file):
     query1 = "SELECT * FROM events_staging WHERE short_file = %s"
-    query2 = "SELECT * FROM result_staging WHERE race_code = %s"
+    query2 = "SELECT result_staging.*, athletes.id as athlete_id, athletes.nationality_code, clubs.* FROM result_staging LEFT JOIN athletes ON result_staging.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE result_staging.race_code = %s ORDER BY place"
     connection.autocommit(True)
     with connection.cursor() as cursor:
         cursor.execute(query1, short_file)
@@ -47,9 +47,9 @@ def load_event_from_db(short_file):
         
         # Load race codes data 
         cursor.execute(query2, short_file)
-        result = cursor.fetchall()
+        data = cursor.fetchall()
         results = []
-        for row in result:
+        for row in data:
             results.append(row)
 
         return event, results
