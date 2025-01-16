@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
+
+    
+        <h4>Upload all events not yet uploaded from class</h4>
+        <form action="/races/new" method="post">
+            
+            <label for="exampleDataList" class="form-label">Ranking list</label>
+            <input class="form-control" list="datalistOptions" name="list" placeholder="Type to search...">
+            <datalist id="datalistOptions">
+              <option value="Men">
+              <option value="Women">
+              <option value="Boys">
+              <option value="Girls">
+            </datalist>
+
+            <div class="mb-3">
+                <label for="formFile" class="form-label">Default file input</label>
+                <input class="form-control" type="file" name="path_file">
+            </div>
+
+            <input type="submit">
+
+        </form>
+    </div>
+    {% include "footer.html" %}
+  </body>
+</html>

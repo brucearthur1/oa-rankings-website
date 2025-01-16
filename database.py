@@ -2,6 +2,17 @@ import pandas as pd
 from database_connection import connection
 
 
+def get_sheets_from_event(list):
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = "SELECT events_staging.short_file FROM events_staging LEFT JOIN result_staging ON events_staging.short_file = result_staging.race_code WHERE list = %s AND result_staging.id IS NULL"         
+        cursor.execute(query, list)
+        result = cursor.fetchall()
+        sheets = []
+        for row in result:
+            sheets.append(row)
+        return sheets
+
 def insert_athlete_db(update):
     with connection.cursor() as cursor:
         # Define the query with a placeholder 

@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db
-from excel import load_from_xls, load_from_xlsx
+from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime
 from formatting import convert_to_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
@@ -216,6 +216,11 @@ def imported_events():
 def race_read_xls():
     return render_template('race_read_xls.html')
 
+@app.route('/races/read_xls')
+def races_read_xls():
+    return render_template('races_read_xls.html')
+
+
 @app.route("/race/new", methods=['post'])
 def uploaded_race():
     input = request.form
@@ -232,7 +237,7 @@ def uploaded_race():
     df_html = parsed_df.to_html()
     #display an acknowledgement 
     return render_template('race_submitted.html', df_html=df_html)
-    
+
 @app.route("/race/new/<event_code>")
 def upload_race(event_code):
     ranking_list = request.args.get('list')
@@ -256,6 +261,26 @@ def upload_race(event_code):
 
 
 
+@app.route("/races/new", methods=['post'])
+def uploaded_races():
+    input = request.form
+    
+    df_list = load_multiple_from_xlsx(input)
+    # Slice the DataFrame to start from row 2 (index 1) and columns C to E (index 2 to 4) 
+    for df in df_list:
+        partial_df = df[1].iloc[1:91, 1:5] 
+        # Drop rows that are empty column 2 in the sliced DataFrame 
+        parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
+        # Convert the DataFrame to a list of tuples for insertion into MySQL 
+        data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
+        #store this in the DB
+        store_race_from_excel(df[0]['short_file'], data_to_insert)
+        
+    #display an acknowledgement 
+    return render_template('races_submitted.html', df_list=df_list )
+
+
+
 @app.route('/favicon.png')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.png', mimetype='image/png')
@@ -264,5 +289,5 @@ def favicon():
 
 
 if __name__ == "__main__":
-  app.run(host='0.0.0.0', debug=True) 
+    app.run(host='0.0.0.0', debug=True)    
 
