@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime
 from formatting import convert_to_time_format
@@ -41,21 +41,18 @@ def admin_page():
     return render_template('admin.html')
 
 
+
 @app.route("/athlete/add")
 def add_athlete():
-    ########### continue this
-
-
+    ########### continue this if we need to add an athlete manually
     athletes = load_athletes_from_db()
     return render_template('athletes.html', athletes=athletes)
 
+
 @app.route("/athlete/ineligible")
 def add_ineligible_athlete():
-    ########## test this
-
     full_name = request.args.get('full_name')
     list = request.args.get('list')
-    
     if list:
         if list.lower() in ('men','boys'):
             gender = 'M'
@@ -65,13 +62,11 @@ def add_ineligible_athlete():
             gender = None
     else:
         gender = None
-
     # Split the full_name string into parts 
     name_parts = full_name.split(' ') 
     # Extract given_name and family_name 
     given_name = name_parts[0] 
     family_name = ' '.join(name_parts[1:])  # Join remaining parts in case of multiple surnames 
-    
     update = {}
     update['eventor_id'] = None
     update['full_name'] = full_name
@@ -82,10 +77,7 @@ def add_ineligible_athlete():
     update['nationality_code'] = None
     update['club_id'] = None
     update['eligible'] = 'N'
-
-    print(update)
     insert_athlete_db(update=update)
-    
     return render_template('update_submitted.html', update=update)
     
 
@@ -93,8 +85,6 @@ def add_ineligible_athlete():
 def athletes_page():
     athletes = load_athletes_from_db()
     return render_template('athletes.html', athletes=athletes)
-
-
 
 @app.route("/api/athletes")
 def list_athletes():
@@ -106,7 +96,12 @@ def show_athlete(id):
     athlete= load_athlete_from_db(id)
     if not athlete:
         return "Not found", 404
-    return render_template('athletepage.html',athlete=athlete, datetime=datetime)
+    results=load_results_by_athlete(full_name=athlete['full_name'])
+    for result in results: 
+        if result['race_time']:
+            result['race_time'] = convert_to_time_format(result['race_time'])
+    return render_template('athletepage.html',athlete=athlete, results=results, datetime=datetime)
+
 
 @app.route("/athlete/<id>/edit")
 def edit_athlete(id):
@@ -133,9 +128,18 @@ def read_athletes_from_xml():
     athlete_list = load_athletes_from_xml()
     #store this in the DB
     store_athletes_in_db(athlete_list)
-
     #display an acknowledgement 
     return render_template('athletes_submitted.html', athlete_list=athlete_list)
+
+
+@app.route('/athletes/unmatched')
+def unmatched_athletes():
+
+    ### under construction
+    results = load_athletes_from_results()
+
+    return render_template('unmatched_athletes.html',results=results)
+
 
 @app.route('/clubs/read_xml')
 def read_clubs_from_xml():

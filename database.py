@@ -50,6 +50,19 @@ def load_athlete_from_db(id):
             return result[0]
 
 
+def load_athletes_from_results():
+    query = "SELECT result_staging.*, athletes.id as athlete_id, athletes.eligible, clubs.* FROM result_staging LEFT JOIN athletes ON result_staging.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id "
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        data = cursor.fetchall()
+        results = []
+        for row in data:
+            results.append(row)
+
+        return results
+
+
 def update_to_athlete_db(id, update):
     with connection.cursor() as cursor:
         # Define the query with a placeholder 
@@ -94,6 +107,18 @@ def load_events_staging_from_db():
         for row in result:
             race_codes.append(row['race_code'])
         return events, race_codes
+
+
+
+def load_results_by_athlete(full_name):
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM result_staging LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_file WHERE result_staging.full_name = %s ORDER BY events_staging.date DESC;", full_name)
+        result = cursor.fetchall()
+        results = []
+        for row in result:
+            results.append(row)
+        return results
 
 
 def store_athletes_in_db(data_to_insert):
