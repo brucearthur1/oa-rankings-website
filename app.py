@@ -1,11 +1,12 @@
 import os
 import pandas as pd
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
+from collections import defaultdict
 
 app = Flask(__name__)
 
@@ -26,11 +27,55 @@ def is_valid_time_format(time_str):
 app.jinja_env.filters['is_valid_time_format'] = is_valid_time_format
 
 
+#under construction
+@app.route('/')
+def index():
+    athletes = load_rankings_from_db()  # Your function to get athletes
+    current_date = datetime.now().date()
+    twelve_months_ago = current_date - timedelta(days=365)
 
-@app.route("/")
-def home_page():
-    athletes = load_athletes_from_db()
-    return render_template('index.html', athletes=athletes, group='M')
+    # Ensure athlete['date'] and athlete['race_points'] are in the correct format
+    for athlete in athletes:
+        if isinstance(athlete['date'], str):
+            athlete['date'] = datetime.strptime(athlete['date'], '%Y-%m-%d').date()
+        athlete['race_points'] = float(athlete['race_points'])
+        athlete['athlete_id'] = str(athlete['athlete_id'])  # Convert athlete_id to string
+        athlete['list'] = str.lower(athlete['list'])
+
+    # Filter and aggregate athletes
+    aggregated_athletes = {}
+    for athlete in athletes:
+        if athlete['date'] >= twelve_months_ago:
+            key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'])
+            if key not in aggregated_athletes:
+                aggregated_athletes[key] = []
+            aggregated_athletes[key].append(athlete['race_points'])
+
+    # Calculate the sum of the top 5 race points for each aggregated item
+    final_aggregated_athletes = []
+    for key, points in aggregated_athletes.items():
+        points.sort(reverse=True)
+        top_5_points = points[:5]
+        sum_top_5_points = sum(top_5_points)
+        final_aggregated_athletes.append({
+            'full_name': key[0],
+            'club_name': key[1],
+            'state': key[2],
+            'list': key[3],
+            'athlete_id': key[4],  
+            'sum_top_5_points': sum_top_5_points
+        })
+
+    # Sort athletes in descending order based on sum of top 5 race points
+    final_aggregated_athletes.sort(key=lambda x: x['sum_top_5_points'], reverse=True)
+
+    # Get unique lists
+    unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes))
+
+    formatted_date = current_date.strftime('%d %B %Y')
+    return render_template('index.html', athletes=final_aggregated_athletes, unique_lists=unique_lists, current_date=formatted_date)
+
+
 
 @app.route("/about")
 def about_page():
@@ -100,7 +145,48 @@ def show_athlete(id):
     for result in results: 
         if result['race_time']:
             result['race_time'] = convert_to_time_format(result['race_time'])
-    return render_template('athletepage.html',athlete=athlete, results=results, datetime=datetime)
+
+    # Convert date strings to datetime.date objects and race_points to int if necessary
+    for result in results:
+        if isinstance(result['date'], str):
+            result['date'] = datetime.strptime(result['date'], '%Y-%m-%d').date()  # Adjust format as needed
+        if isinstance(result['race_points'], str):
+            result['race_points'] = float(result['race_points'])
+        if isinstance(result['list'], str):
+            result['list'] = str.lower(result['list'])
+
+    # Get the current date and the date 12 months ago using timezone-aware objects
+    current_date = datetime.now(timezone.utc)
+    twelve_months_ago = (current_date - timedelta(days=365)).date()
+
+    # Segment results by result['list'] and filter within the last 12 months
+    segmented_results = defaultdict(list)
+    for result in results:
+        if result['date'] >= twelve_months_ago:
+            segmented_results[result['list']].append(result)
+
+    # Calculate top 5, total, average, and count for each segment
+    segmented_stats = {}
+    for list_name, recent_results in segmented_results.items():
+        sorted_recent_results = sorted(recent_results, key=lambda x: x['race_points'], reverse=True)
+        top_5_recent_results = sorted_recent_results[:5]
+        total_top_5_recent = sum(result['race_points'] for result in top_5_recent_results)
+        average_recent_points = sum(result['race_points'] for result in recent_results) / len(recent_results) if recent_results else 0
+        count_recent_results = len(recent_results)
+        
+        segmented_stats[list_name] = {
+            'top_5_recent_results': top_5_recent_results,
+            'total_top_5_recent': total_top_5_recent,
+            'average_recent_points': average_recent_points,
+            'count_recent_results': count_recent_results
+        }
+
+    return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, datetime=datetime)
+
+
+
+
+
 
 
 @app.route("/athlete/<id>/edit")

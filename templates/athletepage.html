@@ -2,42 +2,160 @@
 <html>
   <head>
     {% include 'head.html' %}
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn-group .btn.active {
+        background-color: #0056b3 !important;
+        color: white !important;
+        border-color: #0056b3 !important;
+      }
+      .btn-group .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 20px;
+      }
+      .table {
+        border-collapse: separate;
+        border-spacing: 0 10px;
+      }
+      .table th, .table td {
+        border-top: none;
+        border-bottom: 1px solid #dee2e6;
+      }
+      .table th {
+        background-color: #f1f1f1;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+      }
+      h4, h5 {
+        color: #333;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+    <script>
+      function switchView(listName) {
+        var lists = document.querySelectorAll('.race-list');
+        var buttons = document.querySelectorAll('.btn-group button');
+
+        lists.forEach(function(list) {
+          list.style.display = 'none';
+        });
+        buttons.forEach(function(button) {
+          button.classList.remove('active');
+        });
+
+        var targetList = document.getElementById(listName);
+        if (targetList) {
+          targetList.style.display = 'block';
+        }
+
+        var targetButton = document.getElementById('btn-' + listName);
+        if (targetButton) {
+          targetButton.classList.add('active');
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        var defaultList = document.querySelector('.race-list.default-list');
+        if (defaultList) {
+          defaultList.style.display = 'block';
+          var defaultButton = document.getElementById('btn-' + defaultList.id);
+          if (defaultButton) {
+            defaultButton.classList.add('active');
+          }
+        }
+      });
+    </script>
   </head>
   <body>
     {% include 'nav.html' %}
     <div class="container" id="container">
-        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
-        
-        <h4>{{ athlete.full_name }}</h4>
+      <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
+      
+      <h4>{{ athlete.full_name }}</h4>
 
+      <div class="m-2 p-2">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Year of birth</th>
+              <th>State</th>
+              <th>Club</th>
+            </tr>
+            <tr>
+              <td>
+                {% set current_year = datetime.utcnow().year %}
+                {% set age = current_year - athlete.yob %}
+                {% if age < 21 %}
+                  Junior 
+                {% endif %}
+                {% if athlete.gender == 'M' %}
+                  Men
+                {% elif athlete.gender == 'F' %}
+                  Women
+                {% endif %}
+              </td>
+              <td>
+                {{ athlete.yob }}
+              </td>
+              <td>{{ athlete.state }}</td>
+              <td>{{ athlete.club_name }}</td>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+      <div class="container">
+        <div class="row">
+          <div class="col-md-8">
+            <h5 class="mb-1"><span style='color:rgb(120,120,120)'>Results summary from last 12 months</span></h5>
+          </div>
+          <div class="col-md-4 text-end">
+            <div class="btn-group" role="group" aria-label="Race List">
+              {% for btn_list_name in segmented_stats.keys() %}
+                <button type="button" class="btn btn-outline-primary text-capitalize" id="btn-{{ btn_list_name }}" onclick="switchView('{{ btn_list_name }}')">{{ btn_list_name }}</button>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% for list_name, stats in segmented_stats.items() %}
+      <div id="{{ list_name }}" class="race-list {% if loop.first %}default-list{% endif %}" style="display: none;">
         <div class="m-2 p-2">
-            <b>Category</b>
-            <p>
-              {% set current_year = datetime.utcnow().year %}
-              {% set age = current_year - athlete.yob %}
-              {% if age < 21 %}
-                Junior 
-              {% endif %}
-              {% if athlete.gender == 'M' %}
-                Men
-              {% elif athlete.gender == 'F' %}
-                Women
-              {% endif %}
-            </p>
-            <b>Year of birth</b>
-            <p>{{ athlete.yob }}</p>
-            <b>State</b>
-            <p>{{ athlete.state }}</p>
-            <b>Club</b>
-            <p>{{ athlete.club_name }}</p>
-            <b>Latest ranking event date</b>
-            <p>{{ athlete.last_event_date }}</p>
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="text-end">Ranking races</th>
+                <th class="text-end">Top 5 total</th>
+                <th class="text-end">Average points</th>
+              </tr>
+              <tr>
+                <td class="text-end">{{ stats.count_recent_results | int }}</td>
+                <td class="text-end">{{ stats.total_top_5_recent | int }}</td>
+                <td class="text-end">{{ stats.average_recent_points | int }}</td>
+              </tr>
+            </thead>
+          </table>
         </div>
 
-        <h4 align=center style='text-align:center' class="mb-5"><span style='color:#000099'>Results in ranking races</span></h4>
-  
+        <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in ranking races - <span class="text-capitalize">{{ list_name }}</span></span></h5>
         <div class="table-responsive">
-          <table id="resultsTable" class="table table-hover table-striped">
+          <table id="resultsTable_{{ list_name }}" class="table table-hover table-striped">
             <thead>
                 <tr>
                   <th>Date</th>
@@ -50,14 +168,14 @@
                 </tr>
               </thead>
               <tbody>
-                {% for result in results %}
-                <tr>
+                {% for result in results if result['list'] == list_name %}
+                <tr class="{% if result in stats.top_5_recent_results %}table-success{% endif %}">
                   <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
                   <td>{{ result['long_desc'] }}</td>
                   <td>{{ result['class'] }}</td>
                   <td class="text-end">{% if result['race_time'] | is_valid_time_format %}{{ result['place'] }}{% endif %}</td>
                   <td class="text-end">{{ result['race_time'] }}</td>
-                  <td class="text-end">{{ result['race_points'] |int }}</td>
+                  <td class="text-end">{{ result['race_points'] | int }}</td>
                   <td> 
                     <a href="/event/{{result['short_file']}}" type="button" class="btn btn-outline-primary">Details</a>
                   </td>
@@ -67,6 +185,7 @@
             </table>
           </div>
         </div>
+      {% endfor %}
 
     </div>
     {% include "footer.html" %}

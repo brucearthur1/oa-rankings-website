@@ -108,6 +108,16 @@ def load_events_staging_from_db():
             race_codes.append(row['race_code'])
         return events, race_codes
 
+def load_rankings_from_db():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT result_staging.* , athletes.id as athlete_id, events_staging.*, clubs.* FROM result_staging INNER JOIN athletes ON result_staging.full_name = athletes.full_name AND athletes.eligible= 'Y' LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_file LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE 1=1 ORDER BY athletes.id;")
+        result = cursor.fetchall()
+        rankings = []
+        for row in result:
+            rankings.append(row)
+        return rankings
+
 
 
 def load_results_by_athlete(full_name):

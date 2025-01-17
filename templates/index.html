@@ -2,29 +2,140 @@
 <html>
   <head>
     {% include 'head.html' %}
+    
+    <meta name="description" content="A current ranking list of Australian Elite Orienteers. This list is used by the OFA selectors to determine the official Australian Rankings">
+    <meta name="keywords" content="orienteering, rankings, Australia, OFA, elite, easter, champs, championships, ratings, seedings, sport">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn.active {
+        background-color: #0056b3 !important;
+        color: white !important;
+        border-color: #0056b3 !important;
+      }
+      .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 20px;
+      }
+      .sum-top-5-points {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: right;
+        color: #007bff;
+      }
+      .ranking-number {
+        font-size: 2rem;
+        background-color: #007bff;
+        color: white;
+        display: inline-block;
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+        text-align: center;
+        border-radius: 10px;
+      }
+      h4 {
+        margin-bottom: 4px;
+        color: #333;
+      }
+      .club-state {
+        font-size: 0.9rem;
+        color: #666;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+    <script>
+      function filterAthletes(listName) {
+        var rows = document.querySelectorAll('.athlete-row');
+        var buttons = document.querySelectorAll('.btn-group .btn');
+        var rank = 1;
 
-    <meta name=description content="A current ranking list of Australian Elite Orienteers.  This list is used by the OFA selectors to determine the official Australian Rankings">
-    <meta name=keywords content="orienteering, rankings, Australia, OFA, elite, easter, champs, championships, ratings, seedings, sport">
+        rows.forEach(function(row) {
+          if (row.getAttribute('data-list') === listName) {
+            row.style.display = 'block';
+            row.querySelector('.ranking-number').textContent = rank++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
 
+        buttons.forEach(function(button) {
+          if (button.getAttribute('data-list') === listName) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        filterAthletes('women');
+      });
+    </script>
   </head>
   <body>
     {% include 'nav.html' %}
 
     <div class="container" id="container">
-      <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
-  
+      <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
 
-      <h3 align=center style='text-align:center' class="mb-5"><span style='color:#000099'>Rankings</span></h3>
-  
+      <h3 align="center" class="mb-5" style="text-align:left">
+        <span style="color:#007bff">Rankings</span>
+        <span style="font-size: smaller; color: grey;">(as of {{ current_date }})</span>
+      </h3>
+
+      <div class="btn-group mb-3" role="group" aria-label="List Filter">
+        {% for list_name in unique_lists %}
+        <button class="btn btn-outline-primary" onclick="filterAthletes('{{ list_name }}')" data-list="{{ list_name }}">{{ list_name }}</button>
+        {% endfor %}
+      </div>
+
       <div>
         {% for athlete in athletes %}
-          {% include 'athleteitem.html' %}
+        <div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-list="{{ athlete['list'] }}">
+          <div class="container">
+            <div class="row">
+              <div class="col-2">
+                <span class="ranking-number"></span>
+              </div>
+              <div class="col-6">
+                <h4>{{ athlete['full_name'] }}</h4>
+                {% if athlete['club_name'] %}
+                <div class="club-state">
+                  <b>Club</b>: {{ athlete['club_name'] }}
+                </div>
+                {% endif %}
+                {% if athlete['state'] %}
+                <div class="club-state">
+                  <b>State</b>: {{ athlete['state'] }}
+                </div>
+                {% endif %}
+              </div>
+              <div class="col-2 sum-top-5-points">
+                {{ athlete['sum_top_5_points'] | int }}
+              </div>
+              <div class="col-2">
+                <a href="/athlete/{{ athlete['athlete_id'] }}" type="button" class="btn btn-outline-primary">Details</a>
+              </div>
+            </div>
+          </div>
+        </div>
         {% endfor %}
       </div>
       <br>
-
-</div>
-{% include "footer.html" %}
-</body>
-
+    </div>
+    {% include 'footer.html' %}
+  </body>
 </html>

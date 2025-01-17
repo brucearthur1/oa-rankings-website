@@ -2,64 +2,104 @@
 <html>
   <head>
     {% include 'head.html' %}
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .container {
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      h4 {
+        margin-bottom: 1rem;
+        color: #007bff;
+      }
+      p {
+        line-height: 1.6;
+        color: #666;
+      }
+      .btn-outline-primary {
+        border-color: #007bff;
+        color: #007bff;
+      }
+      .btn-outline-primary:hover {
+        background-color: #007bff;
+        color: white;
+      }
+      .border-bottom {
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #dee2e6;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
   </head>
   <body>
     {% include 'nav.html' %}
     <div class="container" id="container">
-        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
         
         <h4 class="mb-3">Administration</h4>
       
-        <div class="border-bottom row" style=margin-bottom:16px;padding-bottom:8px;>
+        <div class="border-bottom row">
             <div class="col-10">
-              <p style="color:rgb(120,120,120); margin-bottom:4px;">Add race from Excel</p>
+              <p>Add race from Excel</p>
             </div>
             <div class="col-2">
               <a href="/race/read_xls" type="button" class="btn btn-outline-primary">Select</a>
             </div>  
         </div>
     
-        <div class="border-bottom row" style=margin-bottom:16px;padding-bottom:8px;>
+        <div class="border-bottom row">
           <div class="col-10">
-            <p style="color:rgb(120,120,120); margin-bottom:4px;">Add multiple races from Excel</p>
+            <p>Add multiple races from Excel</p>
           </div>
           <div class="col-2">
             <a href="/races/read_xls" type="button" class="btn btn-outline-primary">Select</a>
           </div>  
         </div>
   
-        <div class="border-bottom row" style=margin-bottom:16px;padding-bottom:8px;>
+        <div class="border-bottom row">
           <div class="col-10">
-            <p style="color:rgb(120,120,120); margin-bottom:4px;">Add events from Excel</p>
+            <p>Add events from Excel</p>
           </div>
           <div class="col-2">
             <a href="/events/read_xls" type="button" class="btn btn-outline-primary">Select</a>
           </div>  
         </div>
 
-        <div class="border-bottom row" style=margin-bottom:16px;padding-bottom:8px;>
+        <div class="border-bottom row">
           <div class="col-10">
-            <p style="color:rgb(120,120,120); margin-bottom:4px;">Add clubs from xml</p>
+            <p>Add clubs from xml</p>
           </div>
           <div class="col-2">
             <a href="/clubs/read_xml" type="button" class="btn btn-outline-primary">Select</a>
           </div>  
         </div>
   
-
-        <div class="border-bottom row" style=margin-bottom:16px;padding-bottom:8px;>
+        <div class="border-bottom row">
           <div class="col-10">
-            <p style="color:rgb(120,120,120); margin-bottom:4px;">Add athletes from xml</p>
+            <p>Add athletes from xml</p>
           </div>
           <div class="col-2">
             <a href="/athletes/read_xml" type="button" class="btn btn-outline-primary">Select</a>
           </div>  
         </div>
 
-
-        <div class="border-bottom row" style=margin-bottom:16px;padding-bottom:8px;>
+        <div class="border-bottom row">
           <div class="col-10">
-            <p style="color:rgb(120,120,120); margin-bottom:4px;">Unmatched athletes</p>
+            <p>Unmatched athletes</p>
           </div>
           <div class="col-2">
             <a href="/athletes/unmatched" type="button" class="btn btn-outline-primary">Select</a>
@@ -67,8 +107,7 @@
         </div>
 
       </div>
-
     </div>
-  {% include "footer.html" %}
+    {% include "footer.html" %}
   </body>
 </html>
