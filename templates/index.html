@@ -62,9 +62,15 @@
         var rows = document.querySelectorAll('.athlete-row');
         var buttons = document.querySelectorAll('.btn-group .btn');
         var rank = 1;
+        var currentYear = new Date().getFullYear();
+        var lowerListName = listName.toLowerCase(); // Convert list name to lowercase
 
         rows.forEach(function(row) {
-          if (row.getAttribute('data-list') === listName) {
+          var yob = parseInt(row.getAttribute('data-yob'), 10);
+          var age = currentYear - yob;
+          var rowListName = row.getAttribute('data-list').toLowerCase(); // Convert row list name to lowercase
+
+          if (rowListName === lowerListName && (lowerListName !== 'junior men' && lowerListName !== 'junior women' || age < 21)) {
             row.style.display = 'block';
             row.querySelector('.ranking-number').textContent = rank++;
           } else {
@@ -73,7 +79,7 @@
         });
 
         buttons.forEach(function(button) {
-          if (button.getAttribute('data-list') === listName) {
+          if (button.getAttribute('data-list').toLowerCase() === lowerListName) {
             button.classList.add('active');
           } else {
             button.classList.remove('active');
@@ -105,7 +111,7 @@
 
       <div>
         {% for athlete in athletes %}
-        <div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-list="{{ athlete['list'] }}">
+        <div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-list="{{ athlete['list'] }}" data-yob="{{ athlete['yob'] }}">
           <div class="container">
             <div class="row 'align-items': 'flex-start' 'line-height': '48px'">
               <div class="col-2">
@@ -128,8 +134,8 @@
                 {{ athlete['sum_top_5_points'] | int }}
               </div>
               <div class="col-3">
-                <a href="/athlete/{{ athlete['athlete_id'] }}" type="button" class="btn btn-outline-primary btn-sm" style="--bs-btn-line-height: 16px"};
-                >Details</a>
+                <a href="/athlete/{{ athlete['athlete_id'] }}" type="button" class="btn btn-outline-primary btn-sm" style="--bs-btn-line-height: 16px;">
+                Details</a>
               </div>
             </div>
           </div>

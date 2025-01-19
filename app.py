@@ -46,7 +46,7 @@ def index():
     aggregated_athletes = {}
     for athlete in athletes:
         if athlete['date'] >= twelve_months_ago:
-            key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'])
+            key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'],  athlete['yob'])
             if key not in aggregated_athletes:
                 aggregated_athletes[key] = []
             aggregated_athletes[key].append(athlete['race_points'])
@@ -63,6 +63,7 @@ def index():
             'state': key[2],
             'list': key[3],
             'athlete_id': key[4],  
+            'yob': key[5],
             'sum_top_5_points': sum_top_5_points
         })
 
