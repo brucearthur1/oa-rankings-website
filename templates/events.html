@@ -87,9 +87,13 @@
                 <td>{{ event['class'] }}</td>
                 <td>
                     {% if event['short_file'] == 'WRE' %} 
-                        WRE
+                        {% if event['short_desc'][:3] == 'wrm' %}
+                          <a href="/event/{{event['short_desc']}}" type="button" class="btn btn-outline-primary">Details(WRE)</a>  
+                        {% else %}
+                          WRE
+                        {% endif %}
                     {% elif event['short_desc'].lower() in race_codes %} 
-                        <a href="/event/{{event['short_file']}}" type="button" class="btn btn-outline-primary">Details</a>
+                        <a href="/event/{{event['short_desc']}}" type="button" class="btn btn-outline-primary">Details</a>
                     {% else %}
                         <a href="/race/new/{{event['short_file']}}?list={{event['list']}}" type="button" class="btn btn-outline-primary">Upload</a>
                     {% endif %} 

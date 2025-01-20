@@ -73,7 +73,7 @@ def update_to_athlete_db(id, update):
         connection.commit()
 
 def load_event_from_db(short_file):
-    query1 = "SELECT * FROM events_staging WHERE short_file = %s"
+    query1 = "SELECT * FROM events_staging WHERE short_desc = %s"
     query2 = "SELECT result_staging.*, athletes.id as athlete_id, athletes.eligible, clubs.* FROM result_staging LEFT JOIN athletes ON result_staging.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE result_staging.race_code = %s ORDER BY place"
     connection.autocommit(True)
     with connection.cursor() as cursor:
@@ -123,7 +123,7 @@ def load_rankings_from_db():
 def load_results_by_athlete(full_name):
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM result_staging LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_file WHERE result_staging.full_name = %s ORDER BY events_staging.date DESC;", full_name)
+        cursor.execute("SELECT * FROM result_staging LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_desc WHERE result_staging.full_name = %s ORDER BY events_staging.date DESC;", full_name)
         result = cursor.fetchall()
         results = []
         for row in result:
@@ -174,6 +174,42 @@ def store_events_from_excel(data_to_insert):
         print("Data inserted successfully!")
 
 
+
+def store_events_from_WRE(data_to_insert):
+    with connection.cursor() as cursor:
+        for event in data_to_insert:
+        
+            select_query = "SELECT * FROM `events_staging` WHERE `short_desc` = %s" 
+            cursor.execute(select_query, event[1]) 
+            result = cursor.fetchone() 
+            if result:
+                print(f"Event '{event[2]}' already exists in the database.") 
+            else:
+                # Insert data 
+                insert_query = """ 
+                INSERT INTO events_staging (
+                date, 
+                short_desc, 
+                long_desc, 
+                class, 
+                short_file,
+                map_link,
+                graph,
+                ip,
+                list,
+                eventor_id
+                ) 
+                VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+                """ 
+                
+                print(event)
+
+                cursor.execute(insert_query, event) 
+        connection.commit() 
+        print("Data inserted successfully!")
+
+
+
 def store_race_from_excel(sheetname, data_to_insert):
     with connection.cursor() as cursor:
         # Insert data 
@@ -202,3 +238,71 @@ def store_race_from_excel(sheetname, data_to_insert):
         connection.commit()
 
         print("Data inserted successfully!")
+
+
+
+def store_results_from_WRE(data_to_insert):
+    with connection.cursor() as cursor:
+        for result in data_to_insert:
+
+            select_query = "SELECT * FROM `result_staging` WHERE `race_code` = %s and full_name = %s" 
+            cursor.execute(select_query, (result[0], result[2])) 
+            exists = cursor.fetchone() 
+            if exists:
+                print(f"Result '{result[0]}{result[2]}' already exists in the database.") 
+            else:
+                # Insert results data 
+                insert_query = """ 
+                INSERT INTO result_staging (race_code, place, full_name, race_time, race_points) 
+                VALUES (%s, %s, %s, %s, %s) 
+                """ 
+                cursor.execute(insert_query, result)
+                print(f"WRE '{result[0]}{result[2]}' resutls inserted")
+
+                # check if athlete exists.  If not, add them to the athletes table 
+                # Check if the athlete exists 
+                select_query = "SELECT * FROM `athletes` WHERE `full_name` = %s" 
+                cursor.execute(select_query, result[2]) 
+                athlete_exists = cursor.fetchone() 
+                if athlete_exists:
+                    print(f"Athlete '{result[2]}' already exists in the database.") 
+                else:
+                    names = result[2].split(' ') 
+                    # Assume the first part is the given name and the last part is the family name 
+                    given_name = names[0] 
+                    family_name = ' '.join(names[1:])
+                    if result[0][2] == 'm':
+                        gender = 'M' 
+                    elif result[0][2] == 'w':
+                        gender = 'F' 
+                    else: 
+                        gender = None
+
+                    # Insert the new athlete 
+                    insert_query = """ INSERT INTO `athletes` ( 
+                    `eventor_id`, `full_name`, `given`, `family`, `gender`, `yob`, `nationality_code`, `club_id`, `eligible`, `last_event_date` 
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """ 
+                    cursor.execute(insert_query, ( None, result[2], given_name, family_name, gender, None, 'AUS', None, 'Y', None )) 
+                    connection.commit() 
+                    print(f"Athlete '{result[0]}{result[2]}' has been added to the database.")
+
+
+                # Fetch the event date
+                select_query = "SELECT date FROM events_staging WHERE short_desc = %s"
+                cursor.execute(select_query, result[0])
+                event_date = cursor.fetchone()
+                if event_date:
+                    update_query = """
+                        UPDATE athletes
+                        SET last_event_date = %s
+                        WHERE IFNULL(last_event_date, '0000-01-01') < %s
+                        AND full_name = %s
+                        """
+
+                    cursor.execute(update_query, (event_date['date'], event_date['date'], result[2]))
+                else:
+                    print(f"event '{result[0]}' not in database")
+
+        connection.commit()
+
+        print("Athlete last_event_date updated successfully!")

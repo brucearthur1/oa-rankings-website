@@ -5,3 +5,5 @@ python-dotenv
 pandas
 openpyxl
 xlrd
+selenium
+bs4

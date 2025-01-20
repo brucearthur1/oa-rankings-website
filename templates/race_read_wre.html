@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
+
+    
+        <h4>Upload new race from IOF World Ranking</h4>
+        <form action="/race/new_WRE" method="post">
+            <div class="mb-2">
+            <label>Enter IOF Event ID</label><br>
+            <input type="text" name="IOF_event_id" placeholder='xxxx'>
+            </div>
+
+            <input type="submit">
+
+        </form>
+    </div>
+    {% include "footer.html" %}
+  </body>
+</html>

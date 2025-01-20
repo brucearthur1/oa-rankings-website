@@ -1,12 +1,13 @@
 import os
 import pandas as pd
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
+from scraping import load_from_WRE
 
 app = Flask(__name__)
 
@@ -163,8 +164,11 @@ def show_athlete(id):
     # Segment results by result['list'] and filter within the last 12 months
     segmented_results = defaultdict(list)
     for result in results:
-        if result['date'] >= twelve_months_ago:
-            segmented_results[result['list']].append(result)
+        if result['date'] is not None:
+            if result['date'] >= twelve_months_ago:
+                segmented_results[result['list']].append(result)
+        else:
+            print(f"'{result['race_code']}' date is None")
 
     # Calculate top 5, total, average, and count for each segment
     segmented_stats = {}
@@ -303,6 +307,10 @@ def imported_events():
     #display an acknowledgement 
     return render_template('events_submitted.html', df_html=df_html)
 
+@app.route('/race/read_WRE')
+def race_read_WRE():
+    return render_template('race_read_wre.html')
+
 @app.route('/race/read_xls')
 def race_read_xls():
     return render_template('race_read_xls.html')
@@ -310,6 +318,57 @@ def race_read_xls():
 @app.route('/races/read_xls')
 def races_read_xls():
     return render_template('races_read_xls.html')
+
+
+@app.route("/race/new_WRE", methods=['post'])
+def upload_WRE_race():
+    input = request.form
+    new_events, new_results = load_from_WRE(input)
+# under construction
+
+    #Convert new_events to a list of tuples for insertion into MySQL 
+    new_event_data = [
+        ( 
+            datetime.strptime(event['date'], '%d/%m/%Y').strftime('%Y-%m-%d'), # Convert 'dd/mm/yyyy' to 'yyyy-mm-dd'
+            event['short_desc'], 
+            event['long_desc'], 
+            event['class'], 
+            event['short_file'], 
+            event['map_link'], 
+            event['graph'], 
+            event['ip'], 
+            event['list'],
+            event['eventor_id'] 
+        ) 
+        for event in new_events 
+    ]
+    #store this in the DB
+    store_events_from_WRE(new_event_data)
+
+    def parse_race_time(race_time_str):
+        minutes, seconds = map(int, race_time_str.split(':')) 
+        race_time = timedelta(minutes=minutes, seconds=seconds) 
+        return race_time
+
+    #Convert new_events to a list of tuples for insertion into MySQL 
+    new_result_data = [
+        ( 
+            result['race_code'],
+            int(result['place']), 
+            result['athlete_name'], 
+            parse_race_time(result['race_time']), # Convert string to time object            
+            result['race_points']
+        ) 
+        for result in new_results 
+    ]
+    
+    #store this in the DB
+    store_results_from_WRE(new_result_data)
+
+
+    #input_html = input.to_html()
+    #display an acknowledgement 
+    return render_template('events_submitted.html', df_html=input)
 
 
 @app.route("/race/new", methods=['post'])
