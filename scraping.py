@@ -89,7 +89,8 @@ def load_from_WRE(input):
                 'graph': None,
                 'ip': event_ip,
                 'list': 'men',
-                'eventor_id': None
+                'eventor_id': None,
+                'iof_id': input['IOF_event_id']
             }
             new_events.append(new_event)
     else:
@@ -97,17 +98,17 @@ def load_from_WRE(input):
 
     panel2 = soup.find('div', id='panel2')
     if panel2:
-        rows = panel2.find_all('tr')
-        for row in rows:
-            cells = row.find_all('td')
-            if cells:
-                federation = cells[2].get_text()
+        wrows = panel2.find_all('tr')
+        for wrow in wrows:
+            wcells = wrow.find_all('td')
+            if wcells:
+                federation = wcells[2].get_text()
                 if federation == 'AUS':
                     result_w += 1
-                    place = cells[0].get_text()
-                    athlete_name = cells[1].get_text()
-                    race_time = cells[3].get_text()
-                    race_points = cells[4].get_text()
+                    place = wcells[0].get_text()
+                    athlete_name = wcells[1].get_text()
+                    race_time = wcells[3].get_text()
+                    race_points = wcells[4].get_text()
                     new_result = {
                         'race_code': "wrw" + input['IOF_event_id'],
                         'place': place,
@@ -127,7 +128,8 @@ def load_from_WRE(input):
                 'graph': None,
                 'ip': event_ip,
                 'list': 'women',
-                'eventor_id': None
+                'eventor_id': None,
+                'iof_id': input['IOF_event_id']
             }
             new_events.append(new_event)
     else:

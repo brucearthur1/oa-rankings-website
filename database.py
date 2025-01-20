@@ -108,10 +108,23 @@ def load_events_staging_from_db():
             race_codes.append(row['race_code'])
         return events, race_codes
 
+
+
+def load_oldWRE_events_from_db():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute("select mid(short_desc,3) as 'IOF_event_id' from events_staging where short_file = 'WRE' and created_at < '2025-01-20 00:00:00.00';")
+        result = cursor.fetchall()
+        list = []
+        for row in result:
+            list.append(row)
+        return list
+
+
 def load_rankings_from_db():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT result_staging.* , athletes.id as athlete_id, athletes.yob, events_staging.*, clubs.* FROM result_staging INNER JOIN athletes ON result_staging.full_name = athletes.full_name AND athletes.eligible= 'Y' LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_file LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE 1=1 ORDER BY athletes.id;")
+        cursor.execute("SELECT result_staging.* , athletes.id as athlete_id, athletes.yob, events_staging.*, clubs.* FROM result_staging INNER JOIN athletes ON result_staging.full_name = athletes.full_name AND athletes.eligible= 'Y' LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_desc LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE 1=1 ORDER BY athletes.id;")
         result = cursor.fetchall()
         rankings = []
         for row in result:
@@ -197,9 +210,10 @@ def store_events_from_WRE(data_to_insert):
                 graph,
                 ip,
                 list,
-                eventor_id
+                eventor_id,
+                iof_id
                 ) 
-                VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+                VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
                 """ 
                 
                 print(event)

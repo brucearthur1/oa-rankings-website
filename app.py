@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_oldWRE_events_from_db
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format
@@ -41,7 +41,10 @@ def index():
             athlete['date'] = datetime.strptime(athlete['date'], '%Y-%m-%d').date()
         athlete['race_points'] = float(athlete['race_points'])
         athlete['athlete_id'] = str(athlete['athlete_id'])  # Convert athlete_id to string
-        athlete['list'] = str.lower(athlete['list'])
+        if athlete['list']:
+            athlete['list'] = str.lower(athlete['list'])
+        else:
+            print(f"athlete '{athlete['full_name']}' has no list")
 
     # Filter and aggregate athletes
     aggregated_athletes = {}
@@ -324,7 +327,6 @@ def races_read_xls():
 def upload_WRE_race():
     input = request.form
     new_events, new_results = load_from_WRE(input)
-# under construction
 
     #Convert new_events to a list of tuples for insertion into MySQL 
     new_event_data = [
@@ -338,15 +340,28 @@ def upload_WRE_race():
             event['graph'], 
             event['ip'], 
             event['list'],
-            event['eventor_id'] 
+            event['eventor_id'] ,
+            event['iof_id']
         ) 
         for event in new_events 
     ]
     #store this in the DB
     store_events_from_WRE(new_event_data)
 
+    # Convert and prepare new_result_data with a default value for empty strings 
+    def convert_place(place):
+        # Remove any whitespace characters (including non-breaking spaces) and check if the string is empty 
+        cleaned_place = place.strip().replace('\xa0', '') # Remove non-breaking spaces 
+        if cleaned_place: 
+            return int(cleaned_place) 
+        return 999 # or you can return 0 if you prefer
+    
     def parse_race_time(race_time_str):
-        minutes, seconds = map(int, race_time_str.split(':')) 
+        if race_time_str == 'NC':
+            minutes = 0
+            seconds = 0
+        else:    
+            minutes, seconds = map(int, race_time_str.split(':')) 
         race_time = timedelta(minutes=minutes, seconds=seconds) 
         return race_time
 
@@ -354,7 +369,7 @@ def upload_WRE_race():
     new_result_data = [
         ( 
             result['race_code'],
-            int(result['place']), 
+            convert_place(result['place']), # Convert place with handling for empty strings            
             result['athlete_name'], 
             parse_race_time(result['race_time']), # Convert string to time object            
             result['race_points']
@@ -369,6 +384,73 @@ def upload_WRE_race():
     #input_html = input.to_html()
     #display an acknowledgement 
     return render_template('events_submitted.html', df_html=input)
+
+
+
+@app.route("/races/read_WRE")
+def upload_WRE_races():
+    event_list = load_oldWRE_events_from_db()
+    for input in event_list:
+        
+        new_events, new_results = load_from_WRE(input)
+
+        #Convert new_events to a list of tuples for insertion into MySQL 
+        new_event_data = [
+            ( 
+                datetime.strptime(event['date'], '%d/%m/%Y').strftime('%Y-%m-%d'), # Convert 'dd/mm/yyyy' to 'yyyy-mm-dd'
+                event['short_desc'], 
+                event['long_desc'], 
+                event['class'], 
+                event['short_file'], 
+                event['map_link'], 
+                event['graph'], 
+                event['ip'], 
+                event['list'],
+                event['eventor_id'] ,
+                event['iof_id']
+            ) 
+            for event in new_events 
+        ]
+        #store this in the DB
+        store_events_from_WRE(new_event_data)
+
+        # Convert and prepare new_result_data with a default value for empty strings 
+        def convert_place(place):
+            # Remove any whitespace characters (including non-breaking spaces) and check if the string is empty 
+            cleaned_place = place.strip().replace('\xa0', '') # Remove non-breaking spaces 
+            if cleaned_place: 
+                return int(cleaned_place) 
+            return 999 # or you can return 0 if you prefer
+        
+        def parse_race_time(race_time_str):
+            if race_time_str == 'NC':
+                minutes = 0
+                seconds = 0
+            else:    
+                minutes, seconds = map(int, race_time_str.split(':')) 
+            race_time = timedelta(minutes=minutes, seconds=seconds) 
+            return race_time
+
+        #Convert new_events to a list of tuples for insertion into MySQL 
+        new_result_data = [
+            ( 
+                result['race_code'],
+                convert_place(result['place']), # Convert place with handling for empty strings            
+                result['athlete_name'], 
+                parse_race_time(result['race_time']), # Convert string to time object            
+                result['race_points']
+            ) 
+            for result in new_results 
+        ]
+        
+        #store this in the DB
+        store_results_from_WRE(new_result_data)
+
+
+    #input_html = input.to_html()
+    #display an acknowledgement 
+    return render_template('events_submitted.html', df_html="multiple")
+
 
 
 @app.route("/race/new", methods=['post'])
