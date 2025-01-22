@@ -77,6 +77,18 @@
             defaultButton.classList.add('active');
           }
         }
+
+        // Calculate and update average points excluding race_points <= 0
+        document.querySelectorAll('.race-list').forEach(function(list) {
+          var points = Array.from(list.querySelectorAll('.race-points')).map(function(td) {
+            return parseFloat(td.textContent);
+          }).filter(function(point) {
+            return point > 0;
+          });
+
+          var average = points.length ? (points.reduce((a, b) => a + b, 0) / points.length) : 0;
+          list.querySelector('.average-points').textContent = Math.round(average); // Rounded to 0 decimal points
+        });
       });
     </script>
   </head>
@@ -151,7 +163,7 @@
               <tr>
                 <td class="text-end">{{ stats.count_recent_results | int }}</td>
                 <td class="text-end">{{ stats.total_top_5_recent | int }}</td>
-                <td class="text-end">{{ stats.average_recent_points | int }}</td>
+                <td class="text-end average-points">{{ stats.average_recent_points | int }}</td>
               </tr>
             </thead>
           </table>
@@ -167,7 +179,7 @@
                   <th>Class</th>
                   <th class="text-end">Place</th>
                   <th class="text-end">Time</th>
-                  <th class="text-end">Points</th>
+                  <th class="text-end race-points">Points</th>
                   <th>Details</th>
                 </tr>
               </thead>
@@ -179,7 +191,7 @@
                   <td>{{ result['class'] }}</td>
                   <td class="text-end">{% if result['race_time'] | is_valid_time_format %}{{ result['place'] }}{% endif %}</td>
                   <td class="text-end">{{ result['race_time'] }}</td>
-                  <td class="text-end">{{ result['race_points'] | int }}</td>
+                  <td class="text-end race-points">{{ result['race_points'] | int }}</td>
                   <td> 
                     <a href="/event/{{result['short_desc']}}" type="button" class="btn btn-outline-primary">Details</a>
                   </td>
