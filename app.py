@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_oldWRE_events_from_db
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_oldWRE_events_from_db, check_database
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format
@@ -520,7 +520,12 @@ def favicon():
 
 @app.route('/health-check')
 def health_check():
-    return jsonify({"status": "OK"}) 
+    # Simulated checks
+    database_status = check_database()  # Simulated function
+
+    status = 'healthy' if database_status else 'unhealthy'
+    return jsonify({'status': status}), 200 if status == 'healthy' else 503
+    #return jsonify({"status": "OK"}) 
 
 
 

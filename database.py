@@ -2,6 +2,18 @@ import pandas as pd
 from database_connection import connection
 
 
+def check_database():
+    query = "SELECT id FROM clubs "
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        data = cursor.fetchone()
+    if data:
+        return True
+    else:
+        return False
+
+
 def get_sheets_from_event(list):
     connection.autocommit(True)
     with connection.cursor() as cursor:
