@@ -518,6 +518,10 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.png', mimetype='image/png')
 
 
+@app.route('/health-check')
+def health_check():
+    return jsonify({"status": "OK"}) 
+
 
 
 if __name__ == "__main__":
