@@ -4,7 +4,7 @@ from database_connection import connection
 
 def check_database():
     query = "SELECT id FROM clubs "
-    connection.autocommit(True)
+    #connection.autocommit(True)
     with connection.cursor() as cursor:
         cursor.execute(query)
         data = cursor.fetchone()
