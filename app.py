@@ -391,7 +391,7 @@ def upload_WRE_race():
 
 # scraping 18s
 # stroing new events 0.5s
-# storing new results 54s for 57 results; 2s for 2 results
+# storing new results 28s for 57 results; 2s for 2 results
 
 @app.route("/races/read_WRE")
 def upload_WRE_races():

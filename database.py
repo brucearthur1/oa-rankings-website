@@ -271,6 +271,7 @@ def store_race_from_excel(sheetname, data_to_insert):
 def store_results_from_WRE(data_to_insert):
 # this function may need to insert numerous results. This can take up to 60 seconds and can time out in a Render production deployment
     print("store_results_from_WRE starting:", datetime.now())
+    prev_event = ''
     with connection.cursor() as cursor:
         for result in data_to_insert:
 
@@ -325,13 +326,15 @@ def store_results_from_WRE(data_to_insert):
                     print("insert athlete time:", datetime.now())
 
 
+                if result[0] != prev_event:
+                    # Fetch the event date
+                    select_query = "SELECT date FROM events_staging WHERE short_desc = %s"
+                    cursor.execute(select_query, result[0])
+                    #connection.commit()
 
-                # Fetch the event date
-                select_query = "SELECT date FROM events_staging WHERE short_desc = %s"
-                cursor.execute(select_query, result[0])
-                #connection.commit()
-                print("fetch event date result time:", datetime.now())
-                event_date = cursor.fetchone()
+                    print("fetch event date result time:", datetime.now())
+                    event_date = cursor.fetchone()
+                prev_event = result[0]
                 if event_date:
                     update_query = """
                         UPDATE athletes
