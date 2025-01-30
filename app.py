@@ -325,8 +325,10 @@ def races_read_xls():
 
 @app.route("/race/new_WRE", methods=['post'])
 def upload_WRE_race():
+    print("Starting upload_WRE_race():", datetime.now())
     input = request.form
     new_events, new_results = load_from_WRE(input)
+    print("Finished scraping from WRE site:", datetime.now())
 
     #Convert new_events to a list of tuples for insertion into MySQL 
     new_event_data = [
@@ -347,6 +349,7 @@ def upload_WRE_race():
     ]
     #store this in the DB
     store_events_from_WRE(new_event_data)
+    print("Finished storing new events:", datetime.now())
 
     # Convert and prepare new_result_data with a default value for empty strings 
     def convert_place(place):
@@ -379,6 +382,7 @@ def upload_WRE_race():
     
     #store this in the DB
     store_results_from_WRE(new_result_data)
+    print("Finished storing new results:", datetime.now())
 
 
     #input_html = input.to_html()
