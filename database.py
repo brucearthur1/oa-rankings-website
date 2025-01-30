@@ -274,7 +274,8 @@ def store_results_from_WRE(data_to_insert):
         for result in data_to_insert:
 
             select_query = "SELECT * FROM `result_staging` WHERE `race_code` = %s and full_name = %s" 
-            cursor.execute(select_query, (result[0], result[2])) 
+            cursor.execute(select_query, (result[0], result[2]))
+            connection.commit() 
             exists = cursor.fetchone() 
             if exists:
                 print(f"Result '{result[0]}{result[2]}' already exists in the database.") 
@@ -292,6 +293,7 @@ def store_results_from_WRE(data_to_insert):
                 # Check if the athlete exists 
                 select_query = "SELECT * FROM `athletes` WHERE `full_name` = %s" 
                 cursor.execute(select_query, result[2]) 
+                connection.commit()
                 athlete_exists = cursor.fetchone() 
                 if athlete_exists:
                     print(f"Athlete '{result[2]}' already exists in the database.") 
@@ -319,6 +321,7 @@ def store_results_from_WRE(data_to_insert):
                 # Fetch the event date
                 select_query = "SELECT date FROM events_staging WHERE short_desc = %s"
                 cursor.execute(select_query, result[0])
+                connection.commit()
                 event_date = cursor.fetchone()
                 if event_date:
                     update_query = """
