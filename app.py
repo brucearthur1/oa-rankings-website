@@ -389,7 +389,9 @@ def upload_WRE_race():
     #display an acknowledgement 
     return render_template('events_submitted.html', df_html=input)
 
-
+# scraping 18s
+# stroing new events 0.5s
+# storing new results 54s for 57 results; 2s for 2 results
 
 @app.route("/races/read_WRE")
 def upload_WRE_races():
