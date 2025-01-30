@@ -4,7 +4,7 @@ import os
 
 load_dotenv() 
 
-timeout = 60
+timeout = 10
 connection = pymysql.connect(
     charset="utf8mb4",
     connect_timeout=timeout,
