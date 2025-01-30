@@ -340,4 +340,4 @@ def store_results_from_WRE(data_to_insert):
 
         #connection.commit()
 
-        print("store_results_from_WRE finished!")
+    print("store_results_from_WRE finished!")
