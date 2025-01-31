@@ -7,3 +7,5 @@ openpyxl
 xlrd
 selenium
 bs4
+celery
+redis
