@@ -8,4 +8,4 @@ xlrd
 selenium
 bs4
 celery
-redis
+Flask-Celery-Helper

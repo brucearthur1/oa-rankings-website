@@ -8,8 +8,29 @@ from formatting import convert_to_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
 from scraping import load_from_WRE
+from celery import Celery
+
 
 app = Flask(__name__)
+
+# Task Queue configuation
+def make_celery(app):
+    celery = Celery(
+        app.import_name,
+        backend=app.config['CELERY_RESULT_BACKEND'],
+        broker=app.config['CELERY_BROKER_URL']
+    )
+    celery.conf.update(app.config)
+    return celery
+
+app.config.update(
+    CELERY_BROKER_URL='redis://localhost:6379/0',
+    CELERY_RESULT_BACKEND='redis://localhost:6379/0'
+)
+
+celery = make_celery(app)
+
+
 
 @app.template_filter('strftime') 
 def _jinja2_filter_datetime(date, fmt=None): 
