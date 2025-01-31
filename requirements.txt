@@ -7,5 +7,4 @@ openpyxl
 xlrd
 selenium
 bs4
-celery
-Flask-Celery-Helper
+flask[async]

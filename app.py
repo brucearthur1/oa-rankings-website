@@ -1,5 +1,4 @@
 import os
-import pandas as pd
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_oldWRE_events_from_db, check_database
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
@@ -8,28 +7,10 @@ from formatting import convert_to_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
 from scraping import load_from_WRE
-from celery import Celery
 
+from threading import Thread
 
 app = Flask(__name__)
-
-# Task Queue configuation
-def make_celery(app):
-    celery = Celery(
-        app.import_name,
-        backend=app.config['CELERY_RESULT_BACKEND'],
-        broker=app.config['CELERY_BROKER_URL']
-    )
-    celery.conf.update(app.config)
-    return celery
-
-app.config.update(
-    CELERY_BROKER_URL='redis://localhost:6379/0',
-    CELERY_RESULT_BACKEND='redis://localhost:6379/0'
-)
-
-celery = make_celery(app)
-
 
 
 @app.template_filter('strftime') 
@@ -344,75 +325,6 @@ def races_read_xls():
     return render_template('races_read_xls.html')
 
 
-@app.route("/race/new_WRE", methods=['post'])
-def upload_WRE_race():
-    print("Starting upload_WRE_race():", datetime.now())
-    input = request.form
-    new_events, new_results = load_from_WRE(input)
-    print("Finished scraping from WRE site:", datetime.now())
-
-    #Convert new_events to a list of tuples for insertion into MySQL 
-    new_event_data = [
-        ( 
-            datetime.strptime(event['date'], '%d/%m/%Y').strftime('%Y-%m-%d'), # Convert 'dd/mm/yyyy' to 'yyyy-mm-dd'
-            event['short_desc'], 
-            event['long_desc'], 
-            event['class'], 
-            event['short_file'], 
-            event['map_link'], 
-            event['graph'], 
-            event['ip'], 
-            event['list'],
-            event['eventor_id'] ,
-            event['iof_id']
-        ) 
-        for event in new_events 
-    ]
-    #store this in the DB
-    store_events_from_WRE(new_event_data)
-    print("Finished storing new events:", datetime.now())
-
-    # Convert and prepare new_result_data with a default value for empty strings 
-    def convert_place(place):
-        # Remove any whitespace characters (including non-breaking spaces) and check if the string is empty 
-        cleaned_place = place.strip().replace('\xa0', '') # Remove non-breaking spaces 
-        if cleaned_place: 
-            return int(cleaned_place) 
-        return 999 # or you can return 0 if you prefer
-    
-    def parse_race_time(race_time_str):
-        if race_time_str == 'NC':
-            minutes = 0
-            seconds = 0
-        else:    
-            minutes, seconds = map(int, race_time_str.split(':')) 
-        race_time = timedelta(minutes=minutes, seconds=seconds) 
-        return race_time
-
-    #Convert new_events to a list of tuples for insertion into MySQL 
-    new_result_data = [
-        ( 
-            result['race_code'],
-            convert_place(result['place']), # Convert place with handling for empty strings            
-            result['athlete_name'], 
-            parse_race_time(result['race_time']), # Convert string to time object            
-            result['race_points']
-        ) 
-        for result in new_results 
-    ]
-    
-    #store this in the DB
-    store_results_from_WRE(new_result_data)
-    print("Finished storing new results:", datetime.now())
-
-
-    #input_html = input.to_html()
-    #display an acknowledgement 
-    return render_template('events_submitted.html', df_html=input)
-
-# scraping 18s
-# stroing new events 0.5s
-# storing new results 23s for 57 results; 2s for 2 results
 
 @app.route("/races/read_WRE")
 def upload_WRE_races():
@@ -553,6 +465,78 @@ def health_check():
     #status = 'healthy' if database_status else 'unhealthy'
     #return jsonify({'status': status}), 200 if status == 'healthy' else 503
     return jsonify({"status": "OK"}) 
+
+
+
+
+@app.route("/race/new_WRE", methods=['POST'])
+def upload_wre_race():
+    input = request.form
+    print("Starting upload_WRE_race_task():", datetime.now())
+
+    # Start the background task
+    thread = Thread(target=process_and_store_data, args=(input,))
+    thread.start()
+
+    # Render the template using Jinja2
+    print("Render response upload_wRE_race_task():", datetime.now())
+
+    return render_template('events_submitted.html', df_html=input)
+
+
+def process_and_store_data(input):
+    print("process_and_store_data started:", datetime.now())
+    
+    new_events, new_results = load_from_WRE(input)
+    print("Finished scraping from WRE site:", datetime.now())
+
+    new_event_data = [
+        (
+            datetime.strptime(event['date'], '%d/%m/%Y').strftime('%Y-%m-%d'),
+            event['short_desc'],
+            event['long_desc'],
+            event['class'],
+            event['short_file'],
+            event['map_link'],
+            event['graph'],
+            event['ip'],
+            event['list'],
+            event['eventor_id'],
+            event['iof_id']
+        )
+        for event in new_events
+    ]
+    store_events_from_WRE(new_event_data)
+    print("Finished storing new events:", datetime.now())
+
+    def convert_place(place):
+        cleaned_place = place.strip().replace('\xa0', '')
+        if cleaned_place:
+            return int(cleaned_place)
+        return 999
+
+    def parse_race_time(race_time_str):
+        if race_time_str == 'NC':
+            minutes = 0
+            seconds = 0
+        else:
+            minutes, seconds = map(int, race_time_str.split(':'))
+        race_time = timedelta(minutes=minutes, seconds=seconds)
+        return race_time
+
+    new_result_data = [
+        (
+            result['race_code'],
+            convert_place(result['place']),
+            result['athlete_name'],
+            parse_race_time(result['race_time']),
+            result['race_points']
+        )
+        for result in new_results
+    ]
+    store_results_from_WRE(new_result_data)
+    print("Finished storing new results:", datetime.now())
+    #return render_template('events_submitted.html', df_html=input)
 
 
 

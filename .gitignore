@@ -174,3 +174,6 @@ cython_debug/
 # database_connection.py
 database_sqlalchemy.py
 
+templates/__events_submitted1.html
+templates/__head1.html
+__asynch.py
