@@ -8,15 +8,8 @@ from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
 from scraping import load_from_WRE, load_latest_from_WRE
 from threading import Thread
-from apscheduler.schedulers.background import BackgroundScheduler
-from scheduled_tasks import scheduled_task
 
 app = Flask(__name__)
-
-# Initialize the APScheduler
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=scheduled_task, trigger="interval", seconds=20)
-scheduler.start()
 
 
 @app.template_filter('strftime') 
@@ -533,10 +526,4 @@ def process_latest_WRE_races():
 
 if __name__ == "__main__":
     # Use the reloader, but prevent the re-scheduling by checking for the reloader
-    if not app.debug or os.getenv("WERKZEUG_RUN_MAIN") == "true":
-        scheduler.start()
-    try:
-        app.run(debug=True, port=5000)
-    finally:
-        # Shut down the scheduler when exiting the app
-        scheduler.shutdown()
+    app.run(debug=True, port=5000)
