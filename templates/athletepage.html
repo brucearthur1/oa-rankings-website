@@ -159,11 +159,13 @@
                 <th class="text-end">Ranking races</th>
                 <th class="text-end">Top 5 total</th>
                 <th class="text-end">Average points</th>
+                <th class="text-end">Ranking</th> <!-- New column for ranking -->
               </tr>
               <tr>
                 <td class="text-end">{{ stats.count_recent_results | int }}</td>
                 <td class="text-end">{{ stats.total_top_5_recent | int }}</td>
                 <td class="text-end average-points">{{ stats.average_recent_points | int }}</td>
+                <td class="text-end">{{ athlete_ranking[list_name] }}</td> <!-- Display athlete's ranking -->
               </tr>
             </thead>
           </table>

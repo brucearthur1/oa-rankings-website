@@ -176,6 +176,18 @@ def load_results_by_athlete(full_name):
         return results
 
 
+def load_results_for_all_athletes():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM result_staging LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_desc LEFT JOIN athletes ON athletes.full_name = result_staging.full_name WHERE athletes.eligible = 'Y' ORDER BY events_staging.date DESC;")
+        result = cursor.fetchall()
+        results = []
+        for row in result:
+            results.append(row)
+        return results
+
+
+
 def store_athletes_in_db(data_to_insert):
     with connection.cursor() as cursor:
         # Insert data 

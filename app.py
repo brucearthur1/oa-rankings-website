@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_oldWRE_events_from_db, store_events_and_results
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_staging_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_oldWRE_events_from_db, store_events_and_results, load_results_for_all_athletes
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format
@@ -142,41 +142,45 @@ def list_athletes():
     athletes = load_athletes_from_db()
     return jsonify(athletes)
 
+###################
+###################
+
 @app.route("/athlete/<id>")
 def show_athlete(id):
-    athlete= load_athlete_from_db(id)
+    athlete = load_athlete_from_db(id)
     if not athlete:
         return "Not found", 404
-    results=load_results_by_athlete(full_name=athlete['full_name'])
-    for result in results: 
+    
+    results = load_results_by_athlete(full_name=athlete['full_name'])
+    
+    # Convert data types and format race time
+    for result in results:
         if result['race_time']:
             result['race_time'] = convert_to_time_format(result['race_time'])
-
-    # Convert date strings to datetime.date objects and race_points to int if necessary
-    for result in results:
+        
+        # Convert dates and points
         if isinstance(result['date'], str):
-            result['date'] = datetime.strptime(result['date'], '%Y-%m-%d').date()  # Adjust format as needed
+            result['date'] = datetime.strptime(result['date'], '%Y-%m-%d').date()
         if isinstance(result['race_points'], str):
             result['race_points'] = float(result['race_points'])
         if isinstance(result['list'], str):
-            result['list'] = str.lower(result['list'])
+            result['list'] = result['list'].lower()
         if result['place'] is None:
-            result['place'] = ""            
-
-    # Get the current date and the date 12 months ago using timezone-aware objects
+            result['place'] = ""
+    
+    # Calculate the date range
     current_date = datetime.now(timezone.utc)
     twelve_months_ago = (current_date - timedelta(days=365)).date()
-
-    # Segment results by result['list'] and filter within the last 12 months
+    
+    # Segment results by list and filter within the last 12 months
     segmented_results = defaultdict(list)
     for result in results:
-        if result['date'] is not None:
-            if result['date'] >= twelve_months_ago:
-                segmented_results[result['list']].append(result)
+        if result['date'] and result['date'] >= twelve_months_ago:
+            segmented_results[result['list']].append(result)
         else:
             print(f"'{result['race_code']}' date is None")
-
-    # Calculate top 5, total, average, and count for each segment
+    
+    # Calculate statistics for each segment
     segmented_stats = {}
     for list_name, recent_results in segmented_results.items():
         sorted_recent_results = sorted(recent_results, key=lambda x: x['race_points'], reverse=True)
@@ -192,14 +196,37 @@ def show_athlete(id):
             'count_recent_results': count_recent_results
         }
 
-    return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, datetime=datetime)
+    # Load results for all athletes to calculate ranking
+    all_results = load_results_for_all_athletes()
 
+    # Convert data types for all results and filter within the last 12 months
+    all_athlete_stats = defaultdict(lambda: defaultdict(list))
+    for result in all_results:
+        if result['date'] and result['date'] >= twelve_months_ago:
+            if isinstance(result['race_points'], str):
+                result['race_points'] = float(result['race_points'])
+            if isinstance(result['list'], str):
+                result['list'] = result['list'].lower()
+            all_athlete_stats[result['full_name']][result['list']].append(result)
+    
+    # Calculate rankings
+    rankings = defaultdict(lambda: defaultdict(int))
+    for athlete_name, athlete_results in all_athlete_stats.items():
+        for list_name, recent_results in athlete_results.items():
+            sorted_recent_results = sorted(recent_results, key=lambda x: x['race_points'], reverse=True)
+            top_5_recent_results = sorted_recent_results[:5]
+            total_top_5_recent = sum(result['race_points'] for result in top_5_recent_results)
+            rankings[athlete_name][list_name] = total_top_5_recent
+    
+    # Determine the rank of the current athlete
+    athlete_ranking = {}
+    for list_name in segmented_stats.keys():
+        sorted_rankings = sorted(rankings.items(), key=lambda x: x[1][list_name], reverse=True)
+        athlete_ranking[list_name] = next((rank + 1 for rank, (name, _) in enumerate(sorted_rankings) if name == athlete['full_name']), None)
 
+    return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, athlete_ranking=athlete_ranking, datetime=datetime)
 
-
-
-
-
+##############################
 @app.route("/athlete/<id>/edit")
 def edit_athlete(id):
     athlete= load_athlete_from_db(id)
