@@ -1,11 +1,20 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from datetime import date, datetime
 import time
+import re
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
+from database import get_latest_WRE_date
+
 
 
 def load_from_WRE(input):
     print(input)
+    #print(type(input))
     
     # Set up Chrome options to run in headless mode
     chrome_options = Options()
@@ -15,7 +24,7 @@ def load_from_WRE(input):
     # Initialize the Chrome WebDriver
     driver = webdriver.Chrome(options=chrome_options)
     
-    url = "https://ranking.orienteering.org/ResultsView?event=" + input['IOF_event_id'] + "&"
+    url = "https://ranking.orienteering.org/ResultsView?event=" + input + "&"
 
     print('Open browser for', url)
     page = ''
@@ -70,7 +79,7 @@ def load_from_WRE(input):
                     race_time = cells[3].get_text()
                     race_points = cells[4].get_text()
                     new_result = {
-                        'race_code': "wrm" + input['IOF_event_id'],
+                        'race_code': "wrm" + input,
                         'place': place,
                         'athlete_name': athlete_name,
                         'race_time': race_time,
@@ -81,7 +90,7 @@ def load_from_WRE(input):
 
             new_event = {
                 'date': event_date,
-                'short_desc': "wrm" + input['IOF_event_id'],
+                'short_desc': "wrm" + input,
                 'long_desc': event_name,
                 'class': "Men",
                 'short_file': "WRE",
@@ -90,7 +99,7 @@ def load_from_WRE(input):
                 'ip': event_ip,
                 'list': 'men',
                 'eventor_id': None,
-                'iof_id': input['IOF_event_id']
+                'iof_id': "" + input
             }
             new_events.append(new_event)
     else:
@@ -110,7 +119,7 @@ def load_from_WRE(input):
                     race_time = wcells[3].get_text()
                     race_points = wcells[4].get_text()
                     new_result = {
-                        'race_code': "wrw" + input['IOF_event_id'],
+                        'race_code': "wrw" + input,
                         'place': place,
                         'athlete_name': athlete_name,
                         'race_time': race_time,
@@ -120,7 +129,7 @@ def load_from_WRE(input):
         if result_w > 0:
             new_event = {
                 'date': event_date,
-                'short_desc': "wrw" + input['IOF_event_id'],
+                'short_desc': "wrw" + input,
                 'long_desc': event_name,
                 'class': "Women",
                 'short_file': "WRE",
@@ -129,7 +138,7 @@ def load_from_WRE(input):
                 'ip': event_ip,
                 'list': 'women',
                 'eventor_id': None,
-                'iof_id': input['IOF_event_id']
+                'iof_id': input
             }
             new_events.append(new_event)
     else:
@@ -140,4 +149,156 @@ def load_from_WRE(input):
     print('Close browser for', url)
     time.sleep(1)
     
+    return new_events, new_results
+
+
+def get_event_ids(current_date, latest_date_str):
+    # get event ids with results between last date and current date
+    print(f"Get IOF EventIDs between {latest_date_str} and {current_date}")
+
+    # Set up the Chrome driver
+    service = Service(ChromeDriverManager().install())
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    driver = webdriver.Chrome(service=service, options=options)
+
+    url = "https://ranking.orienteering.org/Calendar/"
+
+    # Load the webpage
+    driver.get(url)  # Replace with the path to your HTML file
+
+    new_events = []
+
+    # Convert the date strings to datetime objects
+    latest_date = datetime.strptime(latest_date_str, '%Y-%m-%d').date()
+    #current_date = datetime.strptime(current_date_str, '%Y-%m-%d')
+
+    # Get the year from the datetime object
+    current_year = current_date.year
+    latest_year = latest_date.year
+    years = []
+
+    if latest_year <= current_year:
+        for year in range(latest_year, current_year + 1):
+            years.append(str(year))
+
+
+    options = ['F','FS']
+
+    for year in years:
+        print(f"Searching: {year}")
+        # Find the dropdown element
+        select_element = driver.find_element(By.ID, "MainContent_ddlSelectYear")
+
+        # Create a Select object
+        select = Select(select_element)
+
+        # Select an option by value
+        select.select_by_value(year)
+
+        # Optionally, wait for the page to load the new content (adjust the sleep time as needed)
+        time.sleep(2)
+
+        for option in options:
+            print(f"Searching: {option}")
+            # Find the dropdown element
+            select_element = driver.find_element(By.ID, "MainContent_ddlSelectDiscipline")
+
+            # Create a Select object
+            select = Select(select_element)
+
+            # Select an option by value
+            select.select_by_value(option)
+
+            # Optionally, wait for the page to load the new content (adjust the sleep time as needed)
+            time.sleep(2)
+
+            # Get the updated page source
+            updated_html = driver.page_source
+
+            # Parse the updated HTML with BeautifulSoup
+            soup = BeautifulSoup(updated_html, 'html.parser')
+
+
+            gvCalendar = soup.find('table', id='MainContent_gvCalendar')
+            if gvCalendar:
+                rows = gvCalendar.find_all('tr')
+                for row in rows:
+                    # Check if the row contains any <th> elements
+                    if row.find_all('th'):
+                        continue  # Skip rows with <th> elements
+                    
+                    # Process rows with <td> elements            event_date = row.find_all('td')[0].get_text()
+                    event_date_str = row.find_all('td')[0].get_text()
+                    event_date = datetime.strptime(event_date_str, '%d/%m/%Y').date()
+
+                    # Check if event_date is between latest_date and current_date
+                    if latest_date < event_date <= current_date:
+                        event_name = row.find_all('td')[2].get_text()
+
+                        # Use a regular expression to find the img tag with id starting with 'MainContent_gvCalendar_Image2'
+                        img_tag = row.find('img', id=re.compile(r'^MainContent_gvCalendar_Image2'))
+                        # Initialize the completed variable
+                        completed = False
+                        # Check the src attribute
+                        if img_tag and img_tag.get('src') == "../Content/Check.png":
+                            print(event_date)
+                            print(event_name)
+                            completed = True
+                            # Extract the <a> tag
+                            a_tag = row.find_all('td')[2].find('a')
+
+                            # Get the href attribute
+                            href_text = a_tag.get('href')
+                            print(href_text)
+
+                            # Use a regular expression to extract the event ID
+                            match = re.search(r'event=(\d+)', href_text)
+                            if match:
+                                event_id = match.group(1)
+                                print(event_id)
+                                new_events.append(event_id)
+                            else:
+                                print("Event ID not found")
+
+                        #print(f"Has WRE scores: {completed}")
+                    #else:
+                        #print("The event_date is not between latest_date and current_date.")
+                
+            else:
+                print(f"Table of events not found: {option}")
+
+    # Close the browser
+    driver.quit()
+
+    return new_events
+
+
+def load_latest_from_WRE():
+
+    # get current date
+    current_date = date.today()
+    #print(f"Today's date is: {current_date}")
+
+    # get latest event date from WREs in events table
+    latest_date = get_latest_WRE_date()
+    #print(f"Latest WRE date is: {latest_date}")
+
+    # get event ids with results between last date and current date
+    event_ids = get_event_ids(current_date, latest_date)
+    print(event_ids)
+
+    # for each event, retrieve the new_events and new_results by scraping the web page
+    new_events = []
+    new_results = []
+
+    for event_id in event_ids:
+        print(type(event_id))
+        #event_id_int = int(event_id)
+        events, results = load_from_WRE(event_id)
+        for event in events:
+            new_events.append(event)
+        for result in results:
+            new_results.append(result)
+
     return new_events, new_results

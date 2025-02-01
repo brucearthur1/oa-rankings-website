@@ -190,7 +190,7 @@
                   <td>{{ result['long_desc'] }}</td>
                   <td>{{ result['class'] }}</td>
                   <td class="text-end">{% if result['race_time'] | is_valid_time_format %}{{ result['place'] }}{% endif %}</td>
-                  <td class="text-end">{{ result['race_time'] }}</td>
+                  <td class="text-end">{% if result['race_time'] == '00:00:00' %}{% else %}{{ result['race_time'] }}{% endif %}</td>
                   <td class="text-end race-points">{{ result['race_points'] | int }}</td>
                   <td> 
                     <a href="/event/{{result['short_desc']}}" type="button" class="btn btn-outline-primary">Details</a>

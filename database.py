@@ -1,6 +1,7 @@
 import pandas as pd
 from database_connection import connection
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 
 def check_database():
@@ -25,6 +26,24 @@ def get_sheets_from_event(list):
         for row in result:
             sheets.append(row)
         return sheets
+
+
+def get_latest_WRE_date():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = "SELECT max(date) FROM events_staging WHERE short_file = 'WRE';"         
+        cursor.execute(query)
+        date_dict = cursor.fetchone()
+
+        # Access the date value
+        max_date = date_dict['max(date)']
+
+        # Convert to string format 'YYYY-MM-DD'
+        formatted_date = max_date.strftime('%Y-%m-%d')
+
+        return formatted_date
+
+
 
 def insert_athlete_db(update):
     with connection.cursor() as cursor:
@@ -174,6 +193,56 @@ def store_clubs_in_db(data_to_insert):
         cursor.executemany(insert_query, data_to_insert) 
         connection.commit() 
         print("Data inserted successfully!")
+
+
+def store_events_and_results(new_events, new_results):
+    new_event_data = [
+        (
+            datetime.strptime(event['date'], '%d/%m/%Y').strftime('%Y-%m-%d'),
+            event['short_desc'],
+            event['long_desc'],
+            event['class'],
+            event['short_file'],
+            event['map_link'],
+            event['graph'],
+            event['ip'],
+            event['list'],
+            event['eventor_id'],
+            event['iof_id']
+        )
+        for event in new_events
+    ]
+    store_events_from_WRE(new_event_data)
+    print("Finished storing new events:", datetime.now())
+
+    def convert_place(place):
+        cleaned_place = place.strip().replace('\xa0', '')
+        if cleaned_place:
+            return int(cleaned_place)
+        return None
+
+    def parse_race_time(race_time_str):
+        if race_time_str == 'NC':
+            minutes = 0
+            seconds = 0
+        else:
+            minutes, seconds = map(int, race_time_str.split(':'))
+        race_time = timedelta(minutes=minutes, seconds=seconds)
+        return race_time
+
+    new_result_data = [
+        (
+            result['race_code'],
+            convert_place(result['place']),
+            result['athlete_name'],
+            parse_race_time(result['race_time']),
+            result['race_points']
+        )
+        for result in new_results
+    ]
+    store_results_from_WRE(new_result_data)
+    print("Finished storing new results:", datetime.now())
+
 
 
 def store_events_from_excel(data_to_insert):

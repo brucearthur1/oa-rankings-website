@@ -8,3 +8,6 @@ xlrd
 selenium
 bs4
 flask[async]
+selenium 
+webdriver-manager
+APScheduler
