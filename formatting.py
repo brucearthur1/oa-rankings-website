@@ -15,4 +15,11 @@ def convert_to_time_format(time_str):
         return time_str  # Return original if not time format
 
 
+def is_valid_time_format(time_str):
+    try: 
+        datetime.strptime(time_str, "%H:%M:%S") 
+        return True 
+    except ValueError:
+        return False 
+
 

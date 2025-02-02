@@ -139,7 +139,7 @@ def load_events_from_db():
         return events, race_codes
 
 
-
+# Admin function to identify WRE event loaded into db without associated results
 def load_oldWRE_events_from_db():
     connection.autocommit(True)
     with connection.cursor() as cursor:
@@ -213,8 +213,6 @@ def store_events_and_results(new_events, new_results):
             event['long_desc'],
             event['class'],
             event['short_file'],
-            event['map_link'],
-            event['graph'],
             event['ip'],
             event['list'],
             event['eventor_id'],
@@ -265,13 +263,11 @@ def store_events_from_excel(data_to_insert):
         long_desc, 
         class, 
         short_file,
-        map_link,
-        graph,
         ip,
         list,
         eventor_id
         ) 
-        VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+        VALUES ( %s, %s, %s, %s, %s, %s, %s, %s) 
         """ 
         print(data_to_insert)
         cursor.executemany(insert_query, data_to_insert) 
@@ -298,14 +294,12 @@ def store_events_from_WRE(data_to_insert):
                 long_desc, 
                 class, 
                 short_file,
-                map_link,
-                graph,
                 ip,
                 list,
                 eventor_id,
                 iof_id
                 ) 
-                VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+                VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s) 
                 """ 
                 
                 print(event)
