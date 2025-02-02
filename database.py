@@ -19,7 +19,7 @@ def check_database():
 def get_sheets_from_event(list):
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        query = "SELECT events_staging.short_file FROM events_staging LEFT JOIN result_staging ON events_staging.short_file = result_staging.race_code WHERE list = %s AND result_staging.id IS NULL"         
+        query = "SELECT events.short_file FROM events LEFT JOIN results ON events.short_file = results.race_code WHERE list = %s AND results.id IS NULL"         
         cursor.execute(query, list)
         result = cursor.fetchall()
         sheets = []
@@ -31,7 +31,7 @@ def get_sheets_from_event(list):
 def get_latest_WRE_date():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        query = "SELECT max(date) FROM events_staging WHERE short_file = 'WRE';"         
+        query = "SELECT max(date) FROM events WHERE short_file = 'WRE';"         
         cursor.execute(query)
         date_dict = cursor.fetchone()
 
@@ -83,7 +83,7 @@ def load_athlete_from_db(id):
 
 
 def load_athletes_from_results():
-    query = "SELECT result_staging.*, athletes.id as athlete_id, athletes.eligible, clubs.* FROM result_staging LEFT JOIN athletes ON result_staging.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id "
+    query = "SELECT results.*, athletes.id as athlete_id, athletes.eligible, clubs.* FROM results LEFT JOIN athletes ON results.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id "
     connection.autocommit(True)
     with connection.cursor() as cursor:
         cursor.execute(query)
@@ -105,8 +105,8 @@ def update_to_athlete_db(id, update):
         connection.commit()
 
 def load_event_from_db(short_file):
-    query1 = "SELECT * FROM events_staging WHERE short_desc = %s"
-    query2 = "SELECT result_staging.*, athletes.id as athlete_id, athletes.eligible, clubs.* FROM result_staging LEFT JOIN athletes ON result_staging.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE result_staging.race_code = %s ORDER BY place"
+    query1 = "SELECT * FROM events WHERE short_desc = %s"
+    query2 = "SELECT results.*, athletes.id as athlete_id, athletes.eligible, clubs.* FROM results LEFT JOIN athletes ON results.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE results.race_code = %s ORDER BY place"
     connection.autocommit(True)
     with connection.cursor() as cursor:
         cursor.execute(query1, short_file)
@@ -123,17 +123,17 @@ def load_event_from_db(short_file):
 
 
 
-def load_events_staging_from_db():
+def load_events_from_db():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM events_staging")
+        cursor.execute("SELECT * FROM events")
         result = cursor.fetchall()
         events = []
         for row in result:
             events.append(row)
         
         # Load race codes data 
-        cursor.execute("SELECT DISTINCT race_code FROM result_staging") 
+        cursor.execute("SELECT DISTINCT race_code FROM results") 
         result = cursor.fetchall()
         race_codes = []
         for row in result:
@@ -145,7 +145,7 @@ def load_events_staging_from_db():
 def load_oldWRE_events_from_db():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("select mid(short_desc,3) as 'IOF_event_id' from events_staging where short_file = 'WRE' and created_at < '2025-01-20 00:00:00.00';")
+        cursor.execute("select mid(short_desc,3) as 'IOF_event_id' from events where short_file = 'WRE' and created_at < '2025-01-20 00:00:00.00';")
         result = cursor.fetchall()
         list = []
         for row in result:
@@ -156,7 +156,7 @@ def load_oldWRE_events_from_db():
 def load_rankings_from_db():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT result_staging.* , athletes.id as athlete_id, athletes.yob, events_staging.*, clubs.* FROM result_staging INNER JOIN athletes ON result_staging.full_name = athletes.full_name AND athletes.eligible= 'Y' LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_desc LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE 1=1 ORDER BY athletes.id;")
+        cursor.execute("SELECT results.* , athletes.id as athlete_id, athletes.yob, events.*, clubs.* FROM results INNER JOIN athletes ON results.full_name = athletes.full_name AND athletes.eligible= 'Y' LEFT JOIN events ON results.race_code = events.short_desc LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE 1=1 ORDER BY athletes.id;")
         result = cursor.fetchall()
         rankings = []
         for row in result:
@@ -168,7 +168,7 @@ def load_rankings_from_db():
 def load_results_by_athlete(full_name):
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM result_staging LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_desc WHERE result_staging.full_name = %s ORDER BY events_staging.date DESC;", full_name)
+        cursor.execute("SELECT * FROM results LEFT JOIN events ON results.race_code = events.short_desc WHERE results.full_name = %s ORDER BY events.date DESC;", full_name)
         result = cursor.fetchall()
         results = []
         for row in result:
@@ -179,7 +179,7 @@ def load_results_by_athlete(full_name):
 def load_results_for_all_athletes():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM result_staging LEFT JOIN events_staging ON result_staging.race_code = events_staging.short_desc LEFT JOIN athletes ON athletes.full_name = result_staging.full_name WHERE athletes.eligible = 'Y' ORDER BY events_staging.date DESC;")
+        cursor.execute("SELECT * FROM results LEFT JOIN events ON results.race_code = events.short_desc LEFT JOIN athletes ON athletes.full_name = results.full_name WHERE athletes.eligible = 'Y' ORDER BY events.date DESC;")
         result = cursor.fetchall()
         results = []
         for row in result:
@@ -261,7 +261,7 @@ def store_events_from_excel(data_to_insert):
     with connection.cursor() as cursor:
         # Insert data 
         insert_query = """ 
-        INSERT INTO events_staging (
+        INSERT INTO events (
         date, 
         short_desc, 
         long_desc, 
@@ -286,7 +286,7 @@ def store_events_from_WRE(data_to_insert):
     with connection.cursor() as cursor:
         for event in data_to_insert:
         
-            select_query = "SELECT * FROM `events_staging` WHERE `short_desc` = %s" 
+            select_query = "SELECT * FROM `events` WHERE `short_desc` = %s" 
             cursor.execute(select_query, event[1]) 
             result = cursor.fetchone() 
             if result:
@@ -294,7 +294,7 @@ def store_events_from_WRE(data_to_insert):
             else:
                 # Insert data 
                 insert_query = """ 
-                INSERT INTO events_staging (
+                INSERT INTO events (
                 date, 
                 short_desc, 
                 long_desc, 
@@ -322,14 +322,14 @@ def store_race_from_excel(sheetname, data_to_insert):
     with connection.cursor() as cursor:
         # Insert data 
         insert_query = """ 
-        INSERT INTO result_staging (race_code, place, full_name, race_time, race_points) 
+        INSERT INTO results (race_code, place, full_name, race_time, race_points) 
         VALUES (%s, %s, %s, %s, %s) 
         """ 
         cursor.executemany(insert_query, [(sheetname, place, full_name, race_time, race_points) for place, full_name, race_time, race_points in data_to_insert])
         
 
         # Fetch the event date
-        select_query = "SELECT date FROM events_staging WHERE short_file = %s"
+        select_query = "SELECT date FROM events WHERE short_file = %s"
         cursor.execute(select_query, (sheetname,))
         event_date = cursor.fetchone()
 
@@ -356,7 +356,7 @@ def store_results_from_WRE(data_to_insert):
     with connection.cursor() as cursor:
         for result in data_to_insert:
 
-            select_query = "SELECT * FROM `result_staging` WHERE `race_code` = %s and full_name = %s" 
+            select_query = "SELECT * FROM `results` WHERE `race_code` = %s and full_name = %s" 
             cursor.execute(select_query, (result[0], result[2]))
             #connection.commit() 
             print("existing result check, time:", datetime.now())
@@ -367,7 +367,7 @@ def store_results_from_WRE(data_to_insert):
             else:
                 # Insert results data 
                 insert_query = """ 
-                INSERT INTO result_staging (race_code, place, full_name, race_time, race_points) 
+                INSERT INTO results (race_code, place, full_name, race_time, race_points) 
                 VALUES (%s, %s, %s, %s, %s) 
                 """ 
                 cursor.execute(insert_query, result)
@@ -409,7 +409,7 @@ def store_results_from_WRE(data_to_insert):
 
                 if result[0] != prev_event:
                     # Fetch the event date
-                    select_query = "SELECT date FROM events_staging WHERE short_desc = %s"
+                    select_query = "SELECT date FROM events WHERE short_desc = %s"
                     cursor.execute(select_query, result[0])
                     #connection.commit()
 
