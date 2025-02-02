@@ -136,10 +136,10 @@
 
       <div class="container">
         <div class="row">
-          <div class="col-md-8">
-            <h5 class="mb-1"><span style='color:rgb(120,120,120)'>Results summary from last 12 months</span></h5>
+          <div class="col-md-3">
+            <h5 class="mb-1"><span style='color:rgb(120,120,120)'>Last 12 months</span></h5>
           </div>
-          <div class="col-md-4 text-end">
+          <div class="col-md-9 text-end">
             <div class="btn-group" role="group" aria-label="Race List">
               {% set default_list = segmented_stats.keys() | list | first %}
               {% for btn_list_name in segmented_stats.keys() %}
