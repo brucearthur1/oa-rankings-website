@@ -58,28 +58,65 @@
       }
     </style>
     <script>
-      function filterAthletes(listName) {
-        var rows = document.querySelectorAll('.athlete-row');
-        var buttons = document.querySelectorAll('.btn-group .btn');
+      function filterAthletes(listName, discipline) {
+        var listButtons = document.querySelectorAll('.btn-group .btn-list');
+        var disciplineButtons = document.querySelectorAll('.btn-group .btn-discipline');
         var rank = 1;
         var currentYear = new Date().getFullYear();
         var lowerListName = listName.toLowerCase(); // Convert list name to lowercase
+        var lowerDiscipline = discipline.toLowerCase(); // Convert discipline to lowercase
 
-        rows.forEach(function(row) {
-          var yob = parseInt(row.getAttribute('data-yob'), 10);
-          var age = currentYear - yob;
-          var rowListName = row.getAttribute('data-list').toLowerCase(); // Convert row list name to lowercase
+        // Clear existing rows
+        var athleteContainer = document.getElementById('athleteContainer');
+        athleteContainer.innerHTML = '';
 
-          if (rowListName === lowerListName && (lowerListName !== 'junior men' && lowerListName !== 'junior women' || age < 21)) {
-            row.style.display = 'block';
-            row.querySelector('.ranking-number').textContent = rank++;
-          } else {
-            row.style.display = 'none';
+        // Determine which list to loop through based on discipline
+        var athletes = [];
+        {% for key, value in final_aggregated_athletes.items() %}
+          if (lowerDiscipline === "{{ key }}") {
+            athletes = {{ value | tojson }};
+          }
+        {% endfor %}
+
+        // Loop through the selected athletes list
+        athletes.forEach(function(athlete) {
+          if ((athlete['list'].toLowerCase() === lowerListName || lowerListName === "all") && 
+              (lowerListName !== 'junior men' && lowerListName !== 'junior women' || currentYear - athlete['yob'] < 21)) {
+            var row = `<div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-list="${athlete['list']}" data-discipline="${athlete['discipline']}" data-yob="${athlete['yob']}">
+                <div class="container">
+                  <div class="row 'align-items': 'flex-start' 'line-height': '48px'">
+                    <div class="col-2">
+                      <span class="ranking-number">${rank++}</span>
+                    </div>
+                    <div class="col-4">
+                      <h4>${athlete['full_name']}</h4>
+                      ${athlete['club_name'] ? `<div class="club-state"><b>Club</b>: ${athlete['club_name']}</div>` : ''}
+                      ${athlete['state'] ? `<div class="club-state"><b>State</b>: ${athlete['state']}</div>` : ''}
+                    </div>
+                    <div class="col-3 sum-top-5-points">
+                      ${parseInt(athlete['sum_top_5_points'])}
+                    </div>
+                    <div class="col-3">
+                      <a href="/athlete/${athlete['athlete_id']}" type="button" class="btn btn-outline-primary btn-sm" style="--bs-btn-line-height: 16px;">
+                      Details</a>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+            athleteContainer.innerHTML += row;
           }
         });
 
-        buttons.forEach(function(button) {
+        listButtons.forEach(function(button) {
           if (button.getAttribute('data-list').toLowerCase() === lowerListName) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+
+        disciplineButtons.forEach(function(button) {
+          if (button.getAttribute('data-discipline').toLowerCase() === lowerDiscipline) {
             button.classList.add('active');
           } else {
             button.classList.remove('active');
@@ -88,7 +125,7 @@
       }
 
       document.addEventListener("DOMContentLoaded", function() {
-        filterAthletes('women');
+        filterAthletes('women', 'all');
       });
     </script>
   </head>
@@ -103,44 +140,21 @@
         <span style="font-size: smaller; color: grey;">(as of {{ current_date }})</span>
       </h3>
 
-      <div class="btn-group mb-3" role="group" aria-label="List Filter">
-        {% for list_name in unique_lists %}
-        <button class="btn btn-outline-primary" onclick="filterAthletes('{{ list_name }}')" data-list="{{ list_name }}">{{ list_name }}</button>
-        {% endfor %}
+      <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+        <div class="btn-group mb-3 px-2" role="group" aria-label="List Filter">
+          {% for list_name in unique_lists %}
+          <button class="btn btn-outline-primary btn-list" onclick="filterAthletes('{{ list_name }}', document.querySelector('.btn-discipline.active').getAttribute('data-discipline'))" data-list="{{ list_name }}">{{ list_name }}</button>
+          {% endfor %}
+        </div>
+        <div class="btn-group mb-3 px-2" role="group" aria-label="Discipline Filter">
+          <button class="btn btn-outline-secondary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'all')" data-discipline="all">All</button>
+          <button class="btn btn-outline-secondary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'sprint')" data-discipline="sprint">Sprint</button>
+          <button class="btn btn-outline-secondary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'middle/long')" data-discipline="middle/long">Middle/Long</button>
+        </div>
       </div>
 
-      <div>
-        {% for athlete in athletes %}
-        <div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-list="{{ athlete['list'] }}" data-yob="{{ athlete['yob'] }}">
-          <div class="container">
-            <div class="row 'align-items': 'flex-start' 'line-height': '48px'">
-              <div class="col-2">
-                <span class="ranking-number"></span>
-              </div>
-              <div class="col-4">
-                <h4>{{ athlete['full_name'] }}</h4>
-                {% if athlete['club_name'] %}
-                <div class="club-state">
-                  <b>Club</b>: {{ athlete['club_name'] }}
-                </div>
-                {% endif %}
-                {% if athlete['state'] %}
-                <div class="club-state">
-                  <b>State</b>: {{ athlete['state'] }}
-                </div>
-                {% endif %}
-              </div>
-              <div class="col-3 sum-top-5-points">
-                {{ athlete['sum_top_5_points'] | int }}
-              </div>
-              <div class="col-3">
-                <a href="/athlete/{{ athlete['athlete_id'] }}" type="button" class="btn btn-outline-primary btn-sm" style="--bs-btn-line-height: 16px;">
-                Details</a>
-              </div>
-            </div>
-          </div>
-        </div>
-        {% endfor %}
+      <div id="athleteContainer">
+        <!-- Athlete rows will be dynamically rendered here -->
       </div>
       <br>
     </div>

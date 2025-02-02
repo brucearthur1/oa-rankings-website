@@ -188,7 +188,6 @@
                 <tr>
                   <th>Date</th>
                   <th>Event</th>
-                  <th>Class</th>
                   <th class="text-end">Place</th>
                   <th class="text-end">Time</th>
                   <th class="text-end race-points">Points</th>
@@ -200,7 +199,6 @@
                 <tr class="{% if result in stats.top_5_recent_results %}table-success{% endif %}">
                   <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
                   <td>{{ result['long_desc'] }}</td>
-                  <td>{{ result['class'] }}</td>
                   <td class="text-end">{% if result['race_time'] | is_valid_time_format %}{{ result['place'] }}{% endif %}</td>
                   <td class="text-end">{% if result['race_time'] == '00:00:00' %}{% else %}{{ result['race_time'] }}{% endif %}</td>
                   <td class="text-end race-points">{{ result['race_points'] | int }}</td>
