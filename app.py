@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_oldWRE_events_from_db, store_events_and_results, load_results_for_all_athletes
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_oldWRE_events_from_db, store_events_and_results, load_results_for_all_athletes, check_database
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format
@@ -254,11 +254,7 @@ def update_athlete(id):
     data = request.form
     #store this in the DB
     update_to_athlete_db(id, data)
-
-    #athlete = load_athlete_from_db(id)
-    #display an acknowledgement 
-    return render_template('update_submitted.html', 
-                           update=data)
+    return render_template('update_submitted.html', update=data)
 
 
 @app.route('/athletes/read_xml')
@@ -272,8 +268,9 @@ def read_athletes_from_xml():
 
 @app.route('/athletes/unmatched')
 def unmatched_athletes():
-
+    ###
     ### under construction
+    ###
     results = load_athletes_from_results()
 
     return render_template('unmatched_athletes.html',results=results)
@@ -291,26 +288,9 @@ def read_clubs_from_xml():
 
 @app.route("/events", methods=['GET', 'POST']) 
 def events_page(): 
-    #list_filter = request.form.get('list_filter', '').strip().lower() 
-    #start_date = request.form.get('start_date', '').strip() 
-    #end_date = request.form.get('end_date', '').strip()    
-    # Ensure date_filter is in the 'YYYY-MM-DD' format 
-    #try:
-    #    start_date = pd.to_datetime(start_date).strftime('%Y-%m-%d') if start_date else '' 
-    #    end_date = pd.to_datetime(end_date).strftime('%Y-%m-%d') if end_date else '' 
-    #except ValueError:
-    #    start_date = ''
-    #    end_date = ''    
-    
     events, race_codes = load_events_from_db() 
-    
-    #if list_filter: 
-    #    events = [event for event in events if list_filter == event['list'].lower()] 
-    #if start_date and end_date:
-    #    events = [event for event in events if start_date <= pd.to_datetime(event['date']).strftime('%Y-%m-%d') <= end_date]        
-    #    #events = [event for event in events if pd.to_datetime(event['date']).strftime('%Y-%m-%d') == date_filter] 
-    
     return render_template('events.html', events=events, race_codes=race_codes)
+
 
 @app.route("/event/<short_file>")
 def show_event(short_file):
@@ -319,7 +299,6 @@ def show_event(short_file):
         return "Not found", 404
     
     # Convert race_time to datetime objects 
-        
     for result in results: 
         if result['race_time']:
             result['race_time'] = convert_to_time_format(result['race_time'])
@@ -328,13 +307,13 @@ def show_event(short_file):
 
     # Sort results to place rows with empty place at the bottom
     results = sorted(results, key=lambda x: (x['place'] == "", x['place']))
-
     return render_template('event.html',event=event,results=results)
 
 
 @app.route('/events/read_xls')
 def events_read_xls():
     return render_template('events_read_xls.html')
+
 
 @app.route("/events/import", methods=['post'])
 def imported_events():
@@ -357,18 +336,20 @@ def imported_events():
     #display an acknowledgement 
     return render_template('events_submitted.html', df_html=df_html)
 
+
 @app.route('/race/read_WRE')
 def race_read_WRE():
     return render_template('race_read_wre.html')
+
 
 @app.route('/race/read_xls')
 def race_read_xls():
     return render_template('race_read_xls.html')
 
+
 @app.route('/races/read_xls')
 def races_read_xls():
     return render_template('races_read_xls.html')
-
 
 
 @app.route("/races/read_WRE")
@@ -430,8 +411,6 @@ def upload_WRE_races():
         #store this in the DB
         store_results_from_WRE(new_result_data)
 
-
-    #input_html = input.to_html()
     #display an acknowledgement 
     return render_template('events_submitted.html', df_html="multiple")
 
@@ -453,6 +432,7 @@ def uploaded_race():
     df_html = parsed_df.to_html()
     #display an acknowledgement 
     return render_template('race_submitted.html', df_html=df_html)
+
 
 @app.route("/race/new/<event_code>")
 def upload_race(event_code):
@@ -476,7 +456,6 @@ def upload_race(event_code):
     return render_template('race_submitted.html', df_html=df_html)
 
 
-
 @app.route("/races/new", methods=['post'])
 def uploaded_races():
     input = request.form
@@ -496,7 +475,6 @@ def uploaded_races():
     return render_template('races_submitted.html', df_list=df_list )
 
 
-
 @app.route('/favicon.png')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.png', mimetype='image/png')
@@ -505,11 +483,11 @@ def favicon():
 @app.route('/health-check')
 def health_check():
     # Simulated checks
-    #database_status = check_database()  # Simulated function
+    database_status = check_database()  # Simulated function
 
-    #status = 'healthy' if database_status else 'unhealthy'
-    #return jsonify({'status': status}), 200 if status == 'healthy' else 503
-    return jsonify({"status": "OK"}) 
+    status = 'healthy' if database_status else 'unhealthy'
+    return jsonify({'status': status}), 200 if status == 'healthy' else 503
+    #return jsonify({"status": "OK"}) 
 
 
 

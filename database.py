@@ -2,8 +2,6 @@ import pandas as pd
 from database_connection import connection
 from datetime import datetime, timedelta
 
-
-
 def check_database():
     query = "SELECT id FROM clubs "
     #connection.autocommit(True)
