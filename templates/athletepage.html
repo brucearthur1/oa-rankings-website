@@ -197,9 +197,6 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for result in results  %}
-                    {{ result['discipline'] }}
-                  {% endfor %}
                   {% for result in results if result['list'] == list_name and (result['discipline'] == discipline or discipline == 'all') %}
                     <tr class="{% if result in stats.top_5_recent_results %}table-success{% endif %}">
                       <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
