@@ -143,13 +143,13 @@
       <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
         <div class="btn-group mb-3 px-2" role="group" aria-label="List Filter">
           {% for list_name in unique_lists %}
-          <button class="btn btn-outline-primary btn-list" onclick="filterAthletes('{{ list_name }}', document.querySelector('.btn-discipline.active').getAttribute('data-discipline'))" data-list="{{ list_name }}">{{ list_name }}</button>
+          <button class="btn btn-outline-primary text-capitalize btn-list" onclick="filterAthletes('{{ list_name }}', document.querySelector('.btn-discipline.active').getAttribute('data-discipline'))" data-list="{{ list_name }}">{{ list_name }}</button>
           {% endfor %}
         </div>
         <div class="btn-group mb-3 px-2" role="group" aria-label="Discipline Filter">
-          <button class="btn btn-outline-secondary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'all')" data-discipline="all">All</button>
-          <button class="btn btn-outline-secondary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'sprint')" data-discipline="sprint">Sprint</button>
-          <button class="btn btn-outline-secondary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'middle/long')" data-discipline="middle/long">Middle/Long</button>
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'all')" data-discipline="all">All</button>
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'sprint')" data-discipline="sprint">Sprint</button>
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'middle/long')" data-discipline="middle/long">Middle/Long</button>
         </div>
       </div>
 

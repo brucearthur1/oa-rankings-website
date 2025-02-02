@@ -50,7 +50,16 @@
       }
     </style>
     <script>
-      function switchView(listName) {
+      var currentList = '{{ segmented_stats.keys() | list | first }}';
+      var currentDiscipline = 'all';
+
+      function switchView(listName, discipline) {
+        currentList = listName;
+        currentDiscipline = discipline;
+        updateView();
+      }
+
+      function updateView() {
         var lists = document.querySelectorAll('.race-list');
         var buttons = document.querySelectorAll('.btn-group button');
 
@@ -61,38 +70,24 @@
           button.classList.remove('active');
         });
 
-        var targetList = document.getElementById(listName);
+        var targetList = document.getElementById(currentList + '-' + currentDiscipline);
         if (targetList) {
           targetList.style.display = 'block';
         }
 
-        var targetButton = document.getElementById('btn-' + listName);
-        if (targetButton) {
-          targetButton.classList.add('active');
+        var targetListButton = document.getElementById('btn-' + currentList + '-any');
+        if (targetListButton) {
+          targetListButton.classList.add('active');
+        }
+
+        var targetDisciplineButton = document.getElementById('btn-any-' + currentDiscipline);
+        if (targetDisciplineButton) {
+          targetDisciplineButton.classList.add('active');
         }
       }
 
       document.addEventListener("DOMContentLoaded", function() {
-        var defaultList = document.querySelector('.race-list.default-list');
-        if (defaultList) {
-          defaultList.style.display = 'block';
-          var defaultButton = document.getElementById('btn-' + defaultList.id);
-          if (defaultButton) {
-            defaultButton.classList.add('active');
-          }
-        }
-
-        // Calculate and update average points excluding race_points <= 0
-        document.querySelectorAll('.race-list').forEach(function(list) {
-          var points = Array.from(list.querySelectorAll('.race-points')).map(function(td) {
-            return parseFloat(td.textContent);
-          }).filter(function(point) {
-            return point > 0;
-          });
-
-          var average = points.length ? (points.reduce((a, b) => a + b, 0) / points.length) : 0;
-          list.querySelector('.average-points').textContent = Math.round(average); // Rounded to 0 decimal points
-        });
+        updateView();
       });
     </script>
   </head>
@@ -146,73 +141,83 @@
           </div>
           <div class="col-md-4 text-end">
             <div class="btn-group" role="group" aria-label="Race List">
+              {% set default_list = segmented_stats.keys() | list | first %}
               {% for btn_list_name in segmented_stats.keys() %}
-                <button type="button" class="btn btn-outline-primary text-capitalize" id="btn-{{ btn_list_name }}" onclick="switchView('{{ btn_list_name }}')">{{ btn_list_name }}</button>
+                <button type="button" class="btn btn-outline-primary text-capitalize" id="btn-{{ btn_list_name }}-any" onclick="switchView('{{ btn_list_name }}', currentDiscipline)">{{ btn_list_name }}</button>
               {% endfor %}
+            </div>
+            <div class="btn-group" role="group" aria-label="Discipline">
+              <button type="button" class="btn btn-outline-primary" id="btn-any-all" onclick="switchView(currentList, 'all')">All</button>
+              <button type="button" class="btn btn-outline-primary" id="btn-any-sprint" onclick="switchView(currentList, 'sprint')">Sprint</button>
+              <button type="button" class="btn btn-outline-primary" id="btn-any-middle/long" onclick="switchView(currentList, 'middle/long')">Middle/Long</button>
             </div>
           </div>
         </div>
       </div>
 
-      {% for list_name, stats in segmented_stats.items() %}
-      <div id="{{ list_name }}" class="race-list {% if loop.first %}default-list{% endif %}" style="display: none;">
-        <div class="m-2 p-2">
-          <table class="table">
-            <thead>
-              <tr>
-                <th class="text-end">Ranking races</th>
-                <th class="text-end">Top 5 total</th>
-                <th class="text-end">Average points</th>
-                <th class="text-end">Ranking</th> <!-- New column for ranking -->
-              </tr>
-              <tr>
-                <td class="text-end">{{ stats.count_recent_results | int }}</td>
-                <td class="text-end">{{ stats.total_top_5_recent | int }}</td>
-                <td class="text-end average-points">{{ stats.average_recent_points | int }}</td>
-                <td class="text-end">
-                  {% if athlete_ranking[list_name] == 'no longer eligible' %}
-                    <span class="no-eligible">{{ athlete_ranking[list_name] }}</span>
-                  {% else %}
-                    {{ athlete_ranking[list_name] }}
-                  {% endif %}
-                </td> <!-- Display athlete's ranking or 'No longer eligible' -->
-              </tr>
-            </thead>
-          </table>
-        </div>
+      {% for list_name, discipline_stats in segmented_stats.items() %}
+        {% for discipline, stats in discipline_stats.items() %}
+          <div id="{{ list_name }}-{{ discipline }}" class="race-list {% if list_name == default_list and discipline == 'all' %}default-list{% endif %}" style="display: none;">
+            <div class="m-2 p-2">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th class="text-end">Ranking races</th>
+                    <th class="text-end">Top 5 total</th>
+                    <th class="text-end">Average points</th>
+                    <th class="text-end">Ranking</th>
+                  </tr>
+                  <tr>
+                    <td class="text-end">{{ stats.count_recent_results | int }}</td>
+                    <td class="text-end">{{ stats.total_top_5_recent | int }}</td>
+                    <td class="text-end average-points">{{ stats.average_recent_points | int }}</td>
+                    <td class="text-end">
+                      {% if athlete_ranking[list_name][discipline] == 'no longer eligible' %}
+                        <span class="no-eligible">{{ athlete_ranking[list_name][discipline] }}</span>
+                      {% else %}
+                        {{ athlete_ranking[list_name][discipline] }}
+                      {% endif %}
+                    </td>
+                  </tr>
+                </thead>
+              </table>
+            </div>
 
-        <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in ranking races - <span class="text-capitalize">{{ list_name }}</span></span></h5>
-        <div class="table-responsive">
-          <table id="resultsTable_{{ list_name }}" class="table table-hover table-striped">
-            <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Event</th>
-                  <th class="text-end">Place</th>
-                  <th class="text-end">Time</th>
-                  <th class="text-end race-points">Points</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for result in results if result['list'] == list_name %}
-                <tr class="{% if result in stats.top_5_recent_results %}table-success{% endif %}">
-                  <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
-                  <td>{{ result['long_desc'] }}</td>
-                  <td class="text-end">{% if result['race_time'] | is_valid_time_format %}{{ result['place'] }}{% endif %}</td>
-                  <td class="text-end">{% if result['race_time'] == '00:00:00' %}{% else %}{{ result['race_time'] }}{% endif %}</td>
-                  <td class="text-end race-points">{{ result['race_points'] | int }}</td>
-                  <td> 
-                    <a href="/event/{{result['short_desc']}}" type="button" class="btn btn-outline-primary">Details</a>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in ranking races - <span class="text-capitalize">{{ list_name }}</span> - {{ discipline | capitalize }}</span></h5>
+            <div class="table-responsive">
+              <table id="resultsTable_{{ list_name }}_{{ discipline }}" class="table table-hover table-striped">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Event</th>
+                    <th class="text-end">Place</th>
+                    <th class="text-end">Time</th>
+                    <th class="text-end race-points">Points</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for result in results  %}
+                    {{ result['discipline'] }}
+                  {% endfor %}
+                  {% for result in results if result['list'] == list_name and (result['discipline'] == discipline or discipline == 'all') %}
+                    <tr class="{% if result in stats.top_5_recent_results %}table-success{% endif %}">
+                      <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
+                      <td>{{ result['long_desc'] }}</td>
+                      <td class="text-end">{% if result['race_time'] | is_valid_time_format %}{{ result['place'] }}{% endif %}</td>
+                      <td class="text-end">{% if result['race_time'] == '00:00:00' %}{% else %}{{ result['race_time'] }}{% endif %}</td>
+                      <td class="text-end race-points">{{ result['race_points'] | int }}</td>
+                      <td> 
+                        <a href="/event/{{result['short_desc']}}" type="button" class="btn btn-outline-primary">Details</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        {% endfor %}
       {% endfor %}
-
     </div>
     {% include "footer.html" %}
   </body>
