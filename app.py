@@ -171,6 +171,7 @@ def show_athlete(id):
     # Calculate the date range
     current_date = datetime.now(timezone.utc)
     twelve_months_ago = (current_date - timedelta(days=365)).date()
+    current_year = current_date.year
     
     # Segment results by list and filter within the last 12 months
     segmented_results = defaultdict(list)
@@ -213,6 +214,12 @@ def show_athlete(id):
     rankings = defaultdict(lambda: defaultdict(int))
     for athlete_name, athlete_results in all_athlete_stats.items():
         for list_name, recent_results in athlete_results.items():
+            if list_name in ["junior men", "junior women"]:
+                athlete_yob = next((result['yob'] for result in recent_results if result.get('yob')), None)
+                if athlete_yob and current_year - athlete_yob >= 21:
+                    rankings[athlete_name][list_name] = "No longer eligible"
+                    continue
+
             sorted_recent_results = sorted(recent_results, key=lambda x: x['race_points'], reverse=True)
             top_5_recent_results = sorted_recent_results[:5]
             total_top_5_recent = sum(result['race_points'] for result in top_5_recent_results)
@@ -221,12 +228,19 @@ def show_athlete(id):
     # Determine the rank of the current athlete
     athlete_ranking = {}
     for list_name in segmented_stats.keys():
-        sorted_rankings = sorted(rankings.items(), key=lambda x: x[1][list_name], reverse=True)
-        athlete_ranking[list_name] = next((rank + 1 for rank, (name, _) in enumerate(sorted_rankings) if name == athlete['full_name']), None)
+        if list_name in ["junior men", "junior women"] and current_year - athlete['yob'] >= 21:
+            athlete_ranking[list_name] = "no longer eligible"
+        else:
+            sorted_rankings = sorted(
+                [(name, rank_points) for name, rank_points in rankings.items() if isinstance(rank_points[list_name], (int, float))],
+                key=lambda x: x[1][list_name], reverse=True
+            )
+            athlete_ranking[list_name] = next((rank + 1 for rank, (name, _) in enumerate(sorted_rankings) if name == athlete['full_name']), None)
 
     return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, athlete_ranking=athlete_ranking, datetime=datetime)
 
-##############################
+###################
+
 @app.route("/athlete/<id>/edit")
 def edit_athlete(id):
     athlete= load_athlete_from_db(id)
