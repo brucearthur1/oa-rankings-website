@@ -75,6 +75,7 @@
               <tr>
                 <th>Date</th>
                 <th>Long Description</th>
+                <th>Type</th>
                 <th>Class</th>
                 <th>Details</th>
               </tr>
@@ -84,6 +85,7 @@
               <tr>
                 <td class="text-nowrap">{{ event.date|_jinja2_filter_datetime }}</td>
                 <td>{{ event.long_desc }}</td>
+                <td>{{ event.discipline }}</td>
                 <td>{{ event.class }}</td>
                 <td>
                     {% if event.short_file == 'WRE' %} 
