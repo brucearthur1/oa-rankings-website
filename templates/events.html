@@ -112,7 +112,8 @@
         // Initialize DataTables DateTime sorting plug-in
         $.fn.dataTable.moment('DD/MM/YYYY'); // Adjust the date format to match your data
         $('#eventsTable').DataTable({ 
-          "order": [[ 0, "desc" ]] // Order by the first column (date) in descending order 
+          "order": [[ 0, "desc" ]], // Order by the first column (date) in descending order 
+          "pageLength": 100 // Set default number of entries to display to 100
         });      
       }); 
     </script>

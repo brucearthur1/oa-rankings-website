@@ -103,6 +103,7 @@
       $(document).ready(function() {
         $('#athletesTable').DataTable({
           "order": [[3, "desc"], [5, 'asc']],
+          "pageLength": 100, // Set default number of entries to display to 100
           "columnDefs": [
             { "targets": [5], "visible": false, "searchable": false },
             {
