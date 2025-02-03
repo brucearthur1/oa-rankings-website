@@ -197,7 +197,9 @@ def show_athlete(id):
             sorted_recent_results = sorted(recent_results, key=lambda x: x['race_points'], reverse=True)
             top_5_recent_results = sorted_recent_results[:5]
             total_top_5_recent = sum(result['race_points'] for result in top_5_recent_results)
-            average_recent_points = sum(result['race_points'] for result in recent_results) / len(recent_results) if recent_results else 0
+            # Filter out results with race_points <= 0
+            positive_results = [result for result in recent_results if result['race_points'] > 0]
+            average_recent_points = sum(result['race_points'] for result in positive_results) / len(positive_results) if positive_results else 0
             count_recent_results = len(recent_results)
             
             segmented_stats[list_name][discipline] = {
