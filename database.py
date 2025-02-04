@@ -3,6 +3,16 @@ from database_connection import connection
 from datetime import datetime, timedelta
 
 def check_database():
+    """
+    Checks if the database contains any records in the 'clubs' table.
+
+    Executes a SQL query to select the 'id' from the 'clubs' table with a limit of 1.
+    If a record is found, it returns True, indicating that the database is not empty.
+    Otherwise, it returns False.
+
+    Returns:
+        bool: True if the 'clubs' table contains at least one record, False otherwise.
+    """
     query = "SELECT id FROM clubs LIMIT 1"
     #connection.autocommit(True)
     with connection.cursor() as cursor:
@@ -342,7 +352,19 @@ def store_race_from_excel(sheetname, data_to_insert):
 
 
 def store_results_from_WRE(data_to_insert):
-# this function may need to insert numerous results. This can take up to 60 seconds and can time out in a Render production deployment
+    """
+    Stores results from a World Ranking Event (WRE) into the database.
+    This function processes a list of results, checks if each result already exists in the database,
+    and inserts new results if they do not exist. It also checks if the athlete associated with each
+    result exists in the database, and inserts new athletes if they do not exist. Additionally, it
+    updates the last event date for each athlete.
+    Args:
+        data_to_insert (list of tuples): A list of tuples where each tuple contains the following
+                                         information about a result:
+                                         (race_code, place, full_name, race_time, race_points).
+    Returns:
+        None
+    """
     print("store_results_from_WRE starting:", datetime.now())
     prev_event = ''
     with connection.cursor() as cursor:

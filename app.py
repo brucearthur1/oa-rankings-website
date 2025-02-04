@@ -9,6 +9,7 @@ from collections import defaultdict
 from scraping import load_from_WRE
 from threading import Thread
 from background import process_and_store_data, process_latest_WRE_races
+from pytz import timezone
 
 app = Flask(__name__)
 
@@ -26,7 +27,8 @@ app.jinja_env.filters['is_valid_time_format'] = is_valid_time_format
 @app.route('/')
 def index():
     athletes = load_rankings_from_db()  # Your function to get athletes
-    current_date = datetime.now().date()
+    sydney_tz = timezone('Australia/Sydney')
+    current_date = datetime.now(sydney_tz).date()
     twelve_months_ago = current_date - timedelta(days=365)
 
     # Ensure athlete['date'] and athlete['race_points'] are in the correct format
