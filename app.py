@@ -502,7 +502,7 @@ def favicon():
 @app.route('/health-check')
 def health_check():
     # Simulated checks
-    database_status = check_database()  # Simulated function
+    database_status = check_database()  # Simulated function to check database status
 
     status = 'healthy' if database_status else 'unhealthy'
     return jsonify({'status': status}), 200 if status == 'healthy' else 503

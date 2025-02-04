@@ -3,7 +3,7 @@ from database_connection import connection
 from datetime import datetime, timedelta
 
 def check_database():
-    query = "SELECT id FROM clubs "
+    query = "SELECT id FROM clubs LIMIT 1"
     #connection.autocommit(True)
     with connection.cursor() as cursor:
         cursor.execute(query)
