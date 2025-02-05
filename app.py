@@ -11,6 +11,11 @@ from threading import Thread
 from background import process_and_store_data, process_latest_WRE_races
 from pytz import timezone
 
+import requests
+from bs4 import BeautifulSoup
+
+
+
 app = Flask(__name__)
 
 # Ensure Sydney timezone is used
@@ -537,6 +542,22 @@ def upload_latest_wre_races():
     # Render the template using Jinja2
     print("Render response upload_latest_wre_races():", datetime.now(sydney_tz))
     return render_template('events_submitted.html', df_html=input)
+
+
+
+@app.route("/scrape")
+def scrape():
+    url = "https://ranking.orienteering.org"
+    response = requests.get(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        # Example: Extract all headings
+        headings = soup.find_all('p')
+        headings_text = [heading.text for heading in headings]
+        return "<br>".join(headings_text)
+    else:
+        return f"Failed to retrieve the webpage. Status code: {response.status_code}"
+
 
 
 # main function
