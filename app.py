@@ -13,6 +13,8 @@ from pytz import timezone
 
 app = Flask(__name__)
 
+# Ensure Sydney timezone is used
+sydney_tz = timezone('Australia/Sydney')
 
 @app.template_filter('strftime') 
 def _jinja2_filter_datetime(date, fmt=None): 
@@ -27,7 +29,6 @@ app.jinja_env.filters['is_valid_time_format'] = is_valid_time_format
 @app.route('/')
 def index():
     athletes = load_rankings_from_db()  # Your function to get athletes
-    sydney_tz = timezone('Australia/Sydney')
     current_date = datetime.now(sydney_tz).date()
     twelve_months_ago = current_date - timedelta(days=365)
 
@@ -179,7 +180,7 @@ def show_athlete(id):
             result['place'] = ""
     
     # Calculate the date range
-    current_date = datetime.now(timezone.utc)
+    current_date = datetime.now(sydney_tz)
     twelve_months_ago = (current_date - timedelta(days=365)).date()
     current_year = current_date.year
     
@@ -189,8 +190,6 @@ def show_athlete(id):
         if result['date'] and result['date'] >= twelve_months_ago:
             segmented_results[result['list']][result['discipline']].append(result)
             segmented_results[result['list']]['all'].append(result)
-        else:
-            print(f"'{result['race_code']}' date is None")
     
     # Calculate statistics for each segment (list and discipline)
     segmented_stats = defaultdict(lambda: defaultdict(dict))
@@ -515,13 +514,13 @@ def health_check():
 @app.route("/race/new_WRE", methods=['POST'])
 def upload_wre_race():
     input = request.form
-    print("Starting upload_WRE_race_task():", datetime.now())
+    print("Starting upload_WRE_race_task():", datetime.now(sydney_tz))
     # Start the background task
     thread = Thread(target=process_and_store_data, args=(input,))
     thread.start()
 
     # Render the template using Jinja2
-    print("Render response upload_wRE_race_task():", datetime.now())
+    print("Render response upload_wRE_race_task():", datetime.now(sydney_tz))
     return render_template('events_submitted.html', df_html=input)
 
 
@@ -530,13 +529,13 @@ def upload_wre_race():
 # returns a response in a few ms, but starts a background thread to perform the work
 @app.route("/race/latest_WRE")
 def upload_latest_wre_races():
-    print("Starting upload_latest_wre_races():", datetime.now())
+    print("Starting upload_latest_wre_races():", datetime.now(sydney_tz))
     # Start the background task
     thread = Thread(target=process_latest_WRE_races)
     thread.start()
 
     # Render the template using Jinja2
-    print("Render response upload_latest_wre_races():", datetime.now())
+    print("Render response upload_latest_wre_races():", datetime.now(sydney_tz))
     return render_template('events_submitted.html', df_html=input)
 
 

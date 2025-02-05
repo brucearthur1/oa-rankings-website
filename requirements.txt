@@ -8,6 +8,6 @@ xlrd
 selenium
 bs4
 flask[async]
-selenium 
+selenium
 webdriver-manager
-pytz
+pytz==2025.1

@@ -2,6 +2,8 @@ import pandas as pd
 from database_connection import connection
 from datetime import datetime, timedelta
 
+sydney_tz = 'Australia/Sydney'
+
 def check_database():
     """
     Checks if the database contains any records in the 'clubs' table.
@@ -231,7 +233,7 @@ def store_events_and_results(new_events, new_results):
         for event in new_events
     ]
     store_events_from_WRE(new_event_data)
-    print("Finished storing new events:", datetime.now())
+    print("Finished storing new events:", datetime.now(sydney_tz))
 
     def convert_place(place):
         cleaned_place = place.strip().replace('\xa0', '')
@@ -259,7 +261,7 @@ def store_events_and_results(new_events, new_results):
         for result in new_results
     ]
     store_results_from_WRE(new_result_data)
-    print("Finished storing new results:", datetime.now())
+    print("Finished storing new results:", datetime.now(sydney_tz))
 
 
 
@@ -365,7 +367,7 @@ def store_results_from_WRE(data_to_insert):
     Returns:
         None
     """
-    print("store_results_from_WRE starting:", datetime.now())
+    print("store_results_from_WRE starting:", datetime.now(sydney_tz))
     prev_event = ''
     with connection.cursor() as cursor:
         for result in data_to_insert:
@@ -373,7 +375,7 @@ def store_results_from_WRE(data_to_insert):
             select_query = "SELECT * FROM `results` WHERE `race_code` = %s and full_name = %s" 
             cursor.execute(select_query, (result[0], result[2]))
             #connection.commit() 
-            print("existing result check, time:", datetime.now())
+            print("existing result check, time:", datetime.now(sydney_tz))
 
             exists = cursor.fetchone() 
             if exists:
@@ -387,14 +389,14 @@ def store_results_from_WRE(data_to_insert):
                 cursor.execute(insert_query, result)
                 #connection.commit() 
                 print(f"WRE '{result[0]}{result[2]}' resutls inserted")
-                print("insert result time:", datetime.now())
+                print("insert result time:", datetime.now(sydney_tz))
 
                 # check if athlete exists.  If not, add them to the athletes table 
                 # Check if the athlete exists 
                 select_query = "SELECT * FROM `athletes` WHERE `full_name` = %s" 
                 cursor.execute(select_query, result[2]) 
                 #connection.commit()
-                print("check athlete exists time:", datetime.now())
+                print("check athlete exists time:", datetime.now(sydney_tz))
                
                 athlete_exists = cursor.fetchone() 
                 if athlete_exists:
@@ -418,7 +420,7 @@ def store_results_from_WRE(data_to_insert):
                     cursor.execute(insert_query, ( None, result[2], given_name, family_name, gender, None, 'AUS', None, 'Y', None )) 
                     #connection.commit() 
                     print(f"Athlete '{result[0]}{result[2]}' has been added to the database.")
-                    print("insert athlete time:", datetime.now())
+                    print("insert athlete time:", datetime.now(sydney_tz))
 
 
                 if result[0] != prev_event:
@@ -427,7 +429,7 @@ def store_results_from_WRE(data_to_insert):
                     cursor.execute(select_query, result[0])
                     #connection.commit()
 
-                    print("fetch event date result time:", datetime.now())
+                    print("fetch event date result time:", datetime.now(sydney_tz))
                     event_date = cursor.fetchone()
                 prev_event = result[0]
                 if event_date:
@@ -441,7 +443,7 @@ def store_results_from_WRE(data_to_insert):
                     cursor.execute(update_query, (event_date['date'], event_date['date'], result[2]))
                     #connection.commit() 
                     print(f"Athlete '{result[2]}' last update date has been modified to '{event_date['date']}'.")
-                    print("update athlete time:", datetime.now())
+                    print("update athlete time:", datetime.now(sydney_tz))
 
                 else:
                     print(f"event '{result[0]}' not in database")

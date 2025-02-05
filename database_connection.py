@@ -15,18 +15,5 @@ connection = pymysql.connect(
     read_timeout=timeout,
     port=int(os.getenv('PORTNO')),
     user=os.getenv('USER'),
-    write_timeout=timeout,
+    write_timeout=timeout
 )
-
-#try:
-#  cursor = connection.cursor()
-#  cursor.execute("SELECT * FROM athletes")
-
-#  result_dicts = []
-#  for row in cursor.fetchall():
-#    result_dicts.append(row)
-
-#  print(result_dicts)
-
-#finally:
-#  connection.close()
