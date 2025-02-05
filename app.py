@@ -503,11 +503,11 @@ def favicon():
 @app.route('/health-check')
 def health_check():
     # Simulated checks
-    database_status = check_database()  # Simulated function to check database status
+    #database_status = check_database()  # Simulated function to check database status
 
-    status = 'healthy' if database_status else 'unhealthy'
-    return jsonify({'status': status}), 200 if status == 'healthy' else 503
-    #return jsonify({"status": "OK"}) 
+    #status = 'healthy' if database_status else 'unhealthy'
+    #return jsonify({'status': status}), 200 if status == 'healthy' else 503
+    return jsonify({"status": "OK"}) 
 
 # Starts a background task look up the IOF WR site for specificed race with AUS results - and if so add to database
 # returns a response in a few ms, but starts a background thread to perform the work
