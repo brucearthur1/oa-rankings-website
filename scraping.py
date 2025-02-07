@@ -13,25 +13,26 @@ def setup_Chrome_driver():
     TOKEN = os.getenv('BROWSERLESS_TOKEN')
     browserless_url = "https://chrome.browserless.io/webdriver"
 
-    # Step 1: Set up Browserless.io connection
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.set_capability('browserless:token', TOKEN)
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--headless")
+    if os.getenv('VERCEL_ENV'):
+        # Set up Browserless.io connection
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.set_capability('browserless:token', TOKEN)
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--headless")
 
-    driver = webdriver.Remote(
-        command_executor=browserless_url,
-        options=chrome_options
-    )
+        driver = webdriver.Remote(
+            command_executor=browserless_url,
+            options=chrome_options
+        )
+    else:
+        print('setting up Chromium driver')
+        # original setting without Browserless.io
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-gpu')
 
-    # original setting without Browserless.io
-    #chrome_options = Options()
-    #chrome_options.add_argument('--headless')
-    #chrome_options.add_argument('--disable-gpu')
-
-    # Initialize the Chrome WebDriver
-    #driver = webdriver.Chrome(options=chrome_options)
-
+        # Initialize the Chrome WebDriver
+        driver = webdriver.Chrome(options=chrome_options)
 
     return driver
 
@@ -258,29 +259,32 @@ def get_event_ids(current_date, latest_date):
                         completed = False
                         # Check the src attribute
                         if img_tag and img_tag.get('src') == "../Content/Check.png":
-                            print(event_date)
-                            print(event_name)
-                            completed = True
-                            # Extract the <a> tag
-                            a_tag = row.find_all('td')[2].find('a')
+                            # if the WRE is in Australia, don't import this WRE
+                            event_country = row.find_all('td')[1].get_text()
+                            if event_country != 'AUS':
+                                print(event_date)
+                                print(event_name)
+                                completed = True
+                                # Extract the <a> tag
+                                a_tag = row.find_all('td')[2].find('a')
 
-                            # Get the href attribute
-                            href_text = a_tag.get('href')
-                            print(href_text)
+                                # Get the href attribute
+                                href_text = a_tag.get('href')
+                                print(href_text)
 
-                            # Use a regular expression to extract the event ID
-                            match = re.search(r'event=(\d+)', href_text)
-                            if match:
-                                event = {}
-                                event['event_id'] = match.group(1)
-                                print(event['event_id'])
-                                if option == 'F':
-                                    event['discipline'] = 'Middle/Long'
-                                elif option == 'FS':
-                                    event['discipline'] = 'Sprint'
-                                new_events.append(event)
-                            else:
-                                print("Event ID not found")
+                                # Use a regular expression to extract the event ID
+                                match = re.search(r'event=(\d+)', href_text)
+                                if match:
+                                    event = {}
+                                    event['event_id'] = match.group(1)
+                                    print(event['event_id'])
+                                    if option == 'F':
+                                        event['discipline'] = 'Middle/Long'
+                                    elif option == 'FS':
+                                        event['discipline'] = 'Sprint'
+                                    new_events.append(event)
+                                else:
+                                    print("Event ID not found")
 
                         #print(f"Has WRE scores: {completed}")
                     #else:
