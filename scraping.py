@@ -61,7 +61,7 @@ def load_from_WRE(input):
             continue
 
     # Wait for the page to fully load (you may need to adjust the sleep time based on the page)
-    #time.sleep(2)
+    time.sleep(1)
 
     # Get the full page source including data loaded by JavaScript
     full_page_source = driver.page_source
@@ -213,7 +213,7 @@ def get_event_ids(current_date, latest_date):
         select.select_by_value(year)
 
         # Optionally, wait for the page to load the new content (adjust the sleep time as needed)
-        time.sleep(2)
+        time.sleep(1)
 
         for option in options:
             print(f"Searching: {option}")
@@ -227,7 +227,7 @@ def get_event_ids(current_date, latest_date):
             select.select_by_value(option)
 
             # Optionally, wait for the page to load the new content (adjust the sleep time as needed)
-            time.sleep(2)
+            time.sleep(1)
 
             # Get the updated page source
             updated_html = driver.page_source

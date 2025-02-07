@@ -221,6 +221,7 @@ def store_events_and_results(new_events, new_results):
         )
         for event in new_events
     ]
+    print(new_event_data)
     store_events_from_WRE(new_event_data)
     print("Finished storing new events:", datetime.now())
 
@@ -249,6 +250,7 @@ def store_events_and_results(new_events, new_results):
         )
         for result in new_results
     ]
+    print(new_result_data)
     store_results_from_WRE(new_result_data)
     print("Finished storing new results:", datetime.now())
 
@@ -298,9 +300,10 @@ def store_events_from_WRE(data_to_insert):
                 ip,
                 list,
                 eventor_id,
-                iof_id
+                iof_id, 
+                discipline
                 ) 
-                VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+                VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
                 """ 
                 
                 print(event)
