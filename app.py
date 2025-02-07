@@ -541,7 +541,7 @@ def upload_latest_wre_races():
     print("Render response upload_latest_wre_races():", datetime.now(sydney_tz))
     return render_template('events_submitted.html', df_html=input)
 
-
+#commented out for now
 
 @app.route("/scrape")
 def scrape():
