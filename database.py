@@ -149,16 +149,6 @@ def load_events_from_db():
         return events, race_codes
 
 
-# Admin function to identify WRE event loaded into db without associated results
-def load_oldWRE_events_from_db():
-    connection.autocommit(True)
-    with connection.cursor() as cursor:
-        cursor.execute("select mid(short_desc,3) as 'IOF_event_id' from events where short_file = 'WRE' and created_at < '2025-01-20 00:00:00.00';")
-        result = cursor.fetchall()
-        list = []
-        for row in result:
-            list.append(row)
-        return list
 
 
 def load_rankings_from_db():

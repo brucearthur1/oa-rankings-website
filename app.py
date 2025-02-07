@@ -374,67 +374,6 @@ def race_read_xls():
 def races_read_xls():
     return render_template('races_read_xls.html')
 
-# admin function used to identify WRE events in database without results, and then load results for them
-@app.route("/races/read_WRE")
-def upload_WRE_races():
-    event_list = load_oldWRE_events_from_db()
-    for input in event_list:
-        
-        new_events, new_results = load_from_WRE(input['IOF_event_id'])
-
-        #Convert new_events to a list of tuples for insertion into MySQL 
-        new_event_data = [
-            ( 
-                datetime.strptime(event['date'], '%d/%m/%Y').strftime('%Y-%m-%d'), # Convert 'dd/mm/yyyy' to 'yyyy-mm-dd'
-                event['short_desc'], 
-                event['long_desc'], 
-                event['class'], 
-                event['short_file'], 
-                event['ip'], 
-                event['list'],
-                event['eventor_id'] ,
-                event['iof_id']
-            ) 
-            for event in new_events 
-        ]
-        #store this in the DB
-        store_events_from_WRE(new_event_data)
-
-        # Convert and prepare new_result_data with a default value for empty strings 
-        def convert_place(place):
-            # Remove any whitespace characters (including non-breaking spaces) and check if the string is empty 
-            cleaned_place = place.strip().replace('\xa0', '') # Remove non-breaking spaces 
-            if cleaned_place: 
-                return int(cleaned_place) 
-            return 999 # or you can return 0 if you prefer
-        
-        def parse_race_time(race_time_str):
-            if race_time_str == 'NC':
-                minutes = 0
-                seconds = 0
-            else:    
-                minutes, seconds = map(int, race_time_str.split(':')) 
-            race_time = timedelta(minutes=minutes, seconds=seconds) 
-            return race_time
-
-        #Convert new_events to a list of tuples for insertion into MySQL 
-        new_result_data = [
-            ( 
-                result['race_code'],
-                convert_place(result['place']), # Convert place with handling for empty strings            
-                result['athlete_name'], 
-                parse_race_time(result['race_time']), # Convert string to time object            
-                result['race_points']
-            ) 
-            for result in new_results 
-        ]
-        
-        #store this in the DB
-        store_results_from_WRE(new_result_data)
-
-    #display an acknowledgement 
-    return render_template('events_submitted.html', df_html="multiple")
-
 
 # Admin function to read the input file, load race data from Excel, and store race data
 @app.route("/race/new", methods=['post'])
