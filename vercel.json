@@ -13,8 +13,8 @@
     ],
     "crons": [
         {
-        "path": "/api/cron",
-        "schedule": "38 16 * * *" 
+        "path": "/api/cron/cron.py",
+        "schedule": "46 3 * * *" 
         }
     ]
 }
