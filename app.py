@@ -10,9 +10,7 @@ from scraping import load_from_WRE
 from threading import Thread
 from background import process_and_store_data, process_latest_WRE_races
 from pytz import timezone
-
-import requests
-from bs4 import BeautifulSoup
+from browserless import browserless_selenium
 
 
 
@@ -547,17 +545,20 @@ def upload_latest_wre_races():
 
 @app.route("/scrape")
 def scrape():
-    url = "https://ranking.orienteering.org"
-    response = requests.get(url)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.content, 'html.parser')
-        # Example: Extract all headings
-        headings = soup.find_all('p')
-        headings_text = [heading.text for heading in headings]
-        return "<br>".join(headings_text)
-    else:
-        return f"Failed to retrieve the webpage. Status code: {response.status_code}"
 
+    browserless_selenium()
+
+    #url = "https://ranking.orienteering.org"
+    #response = requests.get(url)
+    #if response.status_code == 200:
+    #    soup = BeautifulSoup(response.content, 'html.parser')
+    #    # Example: Extract all headings
+    #    headings = soup.find_all('p')
+    #    headings_text = [heading.text for heading in headings]
+    #    return "<br>".join(headings_text)
+    #else:
+    #    return f"Failed to retrieve the webpage. Status code: {response.status_code}"
+    return "Scraping"
 
 
 # main function
