@@ -534,10 +534,10 @@ def upload_wre_race():
 def upload_latest_wre_races():
     print("Starting upload_latest_wre_races():", datetime.now(sydney_tz))
     # Start the background task
-    thread = Thread(target=process_latest_WRE_races)
-    thread.start()
+    #thread = Thread(target=process_latest_WRE_races)
+    #thread.start()
 
-    #process_latest_WRE_races() #synchonous call for now
+    process_latest_WRE_races() #synchonous call for now
 
 
     # Render the template using Jinja2
