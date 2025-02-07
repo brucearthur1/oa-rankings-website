@@ -4,16 +4,16 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 import re
+import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
 
 
 r_url = "https://ranking.orienteering.org/Calendar/"
-TOKEN = "Rj8w0zg4AOMwlz47aae56c970af02cdccf56ff5bb7"
 #b_url = f"https://production-sfo.browserless.io/content?token={TOKEN}"
 browserless_url = 'https://chrome.browserless.io/webdriver'
-
+TOKEN = os.getenv('BROWSERLESS_TOKEN')
 
 
 def browserless_selenium():
