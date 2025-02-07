@@ -542,6 +542,7 @@ def upload_latest_wre_races():
     return render_template('events_submitted.html', df_html=input)
 
 
+
 @app.route("/scrape")
 def scrape():
     # test function for browserless.io
