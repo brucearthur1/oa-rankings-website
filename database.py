@@ -216,7 +216,8 @@ def store_events_and_results(new_events, new_results):
             event['ip'],
             event['list'],
             event['eventor_id'],
-            event['iof_id']
+            event['iof_id'],
+            event['discipline']  # this defaults to middle/long, but can be changed to sprint if needed
         )
         for event in new_events
     ]

@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_oldWRE_events_from_db, load_results_for_all_athletes, check_database
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_results_for_all_athletes, check_database
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format, is_valid_time_format
@@ -8,7 +8,7 @@ from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
 from scraping import load_from_WRE
 from threading import Thread
-from background import process_and_store_data, process_latest_WRE_races
+from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races
 from pytz import timezone
 from browserless import browserless_selenium
 
@@ -467,7 +467,7 @@ def upload_wre_race():
 
 
 # Starts a background task look up the IOF WR site to look for latest races with AUS results - and if so add to database
-# Called by Crontap each day at 7am (Sydney) 
+# Called by cron-job.org each day at 7am (Sydney) 
 # returns a response in a few ms, but starts a background thread to perform the work
 @app.route("/race/latest_WRE")
 def upload_latest_wre_races():
@@ -483,7 +483,20 @@ def upload_latest_wre_races():
     print("Render response upload_latest_wre_races():", datetime.now(sydney_tz))
     return render_template('events_submitted.html', df_html=input)
 
-#commented out for now
+
+@app.route("/races/year_WRE")
+def year_WRE():
+    return render_template('year_WRE.html')    
+
+@app.route("/races/year_WRE_upload", methods=['POST'])
+def year_WRE_upload():
+    year = request.form
+    print(f"Starting year_WRE_upload(): {year} ", datetime.now(sydney_tz))
+    upload_year_WRE_races(year)
+    # Render the template using Jinja2
+    print("Render response year_WRE_upload():", datetime.now(sydney_tz))
+    return render_template('events_submitted.html', df_html=input)
+
 
 @app.route("/scrape")
 def scrape():

@@ -38,12 +38,12 @@ def setup_Chrome_driver():
 
 
 def load_from_WRE(input):
-    print(input)
+    print(input['event_id'])
     #print(type(input))
     
     driver = setup_Chrome_driver()
     
-    url = "https://ranking.orienteering.org/ResultsView?event=" + input + "&"
+    url = "https://ranking.orienteering.org/ResultsView?event=" + input['event_id'] + "&"
 
     print('Open browser for', url)
     page = ''
@@ -61,7 +61,7 @@ def load_from_WRE(input):
             continue
 
     # Wait for the page to fully load (you may need to adjust the sleep time based on the page)
-    time.sleep(2)
+    #time.sleep(2)
 
     # Get the full page source including data loaded by JavaScript
     full_page_source = driver.page_source
@@ -98,7 +98,7 @@ def load_from_WRE(input):
                     race_time = cells[3].get_text()
                     race_points = cells[4].get_text()
                     new_result = {
-                        'race_code': "wrm" + input,
+                        'race_code': "wrm" + input['event_id'],
                         'place': place,
                         'athlete_name': athlete_name,
                         'race_time': race_time,
@@ -109,14 +109,15 @@ def load_from_WRE(input):
 
             new_event = {
                 'date': event_date,
-                'short_desc': "wrm" + input,
+                'short_desc': "wrm" + input['event_id'],
                 'long_desc': event_name,
                 'class': "Men",
                 'short_file': "WRE",
                 'ip': event_ip,
                 'list': 'men',
                 'eventor_id': None,
-                'iof_id': "" + input
+                'iof_id': "" + input['event_id'],
+                'discipline': input['discipline']
             }
             new_events.append(new_event)
     else:
@@ -136,7 +137,7 @@ def load_from_WRE(input):
                     race_time = wcells[3].get_text()
                     race_points = wcells[4].get_text()
                     new_result = {
-                        'race_code': "wrw" + input,
+                        'race_code': "wrw" + input['event_id'],
                         'place': place,
                         'athlete_name': athlete_name,
                         'race_time': race_time,
@@ -146,14 +147,15 @@ def load_from_WRE(input):
         if result_w > 0:
             new_event = {
                 'date': event_date,
-                'short_desc': "wrw" + input,
+                'short_desc': "wrw" + input['event_id'],
                 'long_desc': event_name,
                 'class': "Women",
                 'short_file': "WRE",
                 'ip': event_ip,
                 'list': 'women',
                 'eventor_id': None,
-                'iof_id': input
+                'iof_id': input['event_id'],
+                'discipline': input['discipline']
             }
             new_events.append(new_event)
     else:
@@ -162,14 +164,14 @@ def load_from_WRE(input):
     # Close the WebDriver
     driver.quit()
     print('Close browser for', url)
-    time.sleep(1)
+    #time.sleep(1)
     
     return new_events, new_results
 
 
-def get_event_ids(current_date, latest_date_str):
+def get_event_ids(current_date, latest_date):
     # get event ids with results between last date and current date
-    print(f"Get IOF EventIDs between {latest_date_str} and {current_date}")
+    print(f"Get IOF EventIDs between {latest_date} and {current_date}")
 
     # Set up the Chrome driver
     #service = Service(ChromeDriverManager().install())
@@ -185,8 +187,6 @@ def get_event_ids(current_date, latest_date_str):
 
     new_events = []
 
-    # Convert the date strings to datetime objects
-    latest_date = datetime.strptime(latest_date_str, '%Y-%m-%d').date()
     #current_date = datetime.strptime(current_date_str, '%Y-%m-%d')
 
     # Get the year from the datetime object
@@ -271,9 +271,14 @@ def get_event_ids(current_date, latest_date_str):
                             # Use a regular expression to extract the event ID
                             match = re.search(r'event=(\d+)', href_text)
                             if match:
-                                event_id = match.group(1)
-                                print(event_id)
-                                new_events.append(event_id)
+                                event = {}
+                                event['event_id'] = match.group(1)
+                                print(event['event_id'])
+                                if option == 'F':
+                                    event['discipline'] = 'Middle/Long'
+                                elif option == 'FS':
+                                    event['discipline'] = 'Sprint'
+                                new_events.append(event)
                             else:
                                 print("Event ID not found")
 
@@ -291,17 +296,49 @@ def get_event_ids(current_date, latest_date_str):
 
 
 def load_latest_from_WRE():
-
     # get current date
     current_date = date.today()
     #print(f"Today's date is: {current_date}")
 
     # get latest event date from WREs in events table
-    latest_date = get_latest_WRE_date()
-    #print(f"Latest WRE date is: {latest_date}")
+    latest_date_str = get_latest_WRE_date()
+    
+    # Convert the date strings to datetime objects
+    latest_date = datetime.strptime(latest_date_str, '%Y-%m-%d').date()
 
     # get event ids with results between last date and current date
-    event_ids = get_event_ids(current_date, latest_date)
+    events_codes = get_event_ids(current_date, latest_date)
+    print(events_codes)
+
+    # for each event, retrieve the new_events and new_results by scraping the web page
+    new_events = []
+    new_results = []
+
+    for event_code in events_codes:
+        
+        
+        events, results = load_from_WRE(event_code)
+        for event in events:
+            new_events.append(event)
+        for result in results:
+            new_results.append(result)
+
+    return new_events, new_results
+
+
+
+
+
+def load_year_from_WRE(year):
+    print(year)
+    year_int = int(year['year'])
+
+    # Define the start and end dates for the given year
+    start_date = date(year_int, 1, 1)
+    end_date = date(year_int, 12, 31)
+
+    # get event ids with results between last date and current date
+    event_ids = get_event_ids(end_date, start_date)
     print(event_ids)
 
     # for each event, retrieve the new_events and new_results by scraping the web page
@@ -309,8 +346,6 @@ def load_latest_from_WRE():
     new_results = []
 
     for event_id in event_ids:
-        print(type(event_id))
-        #event_id_int = int(event_id)
         events, results = load_from_WRE(event_id)
         for event in events:
             new_events.append(event)
