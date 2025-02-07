@@ -1,11 +1,11 @@
 from selenium import webdriver
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import time
 import re
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from bs4 import BeautifulSoup
-from database import get_latest_WRE_date
+#from database import get_latest_WRE_date
 import os
 
 
@@ -25,7 +25,6 @@ def setup_Chrome_driver():
             options=chrome_options
         )
     else:
-        print('setting up Chromium driver')
         # original setting without Browserless.io
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--headless')
@@ -33,16 +32,17 @@ def setup_Chrome_driver():
 
         # Initialize the Chrome WebDriver
         driver = webdriver.Chrome(options=chrome_options)
+        
 
     return driver
 
 
 
-def load_from_WRE(input):
+def load_from_WRE(input, driver):
     print(input['event_id'])
     #print(type(input))
     
-    driver = setup_Chrome_driver()
+    #driver = setup_Chrome_driver()
     
     url = "https://ranking.orienteering.org/ResultsView?event=" + input['event_id'] + "&"
 
@@ -170,7 +170,7 @@ def load_from_WRE(input):
     return new_events, new_results
 
 
-def get_event_ids(current_date, latest_date):
+def get_event_ids(current_date, latest_date, driver):
     # get event ids with results between last date and current date
     print(f"Get IOF EventIDs between {latest_date} and {current_date}")
 
@@ -179,7 +179,7 @@ def get_event_ids(current_date, latest_date):
     #options = webdriver.ChromeOptions()
     #options.add_argument("--headless")
     #driver = webdriver.Chrome(service=service, options=options)
-    driver = setup_Chrome_driver()
+    #driver = setup_Chrome_driver()
 
     url = "https://ranking.orienteering.org/Calendar/"
 
@@ -305,13 +305,18 @@ def load_latest_from_WRE():
     #print(f"Today's date is: {current_date}")
 
     # get latest event date from WREs in events table
-    latest_date_str = get_latest_WRE_date()
+    #latest_date_str = get_latest_WRE_date()
     
     # Convert the date strings to datetime objects
-    latest_date = datetime.strptime(latest_date_str, '%Y-%m-%d').date()
+    #latest_date = datetime.strptime(latest_date_str, '%Y-%m-%d').date()
+
+    # set latest date to current date minus 14 days
+    latest_date = current_date - timedelta(days=14)
+
+    driver = setup_Chrome_driver()
 
     # get event ids with results between last date and current date
-    events_codes = get_event_ids(current_date, latest_date)
+    events_codes = get_event_ids(current_date, latest_date, driver)
     print(events_codes)
 
     # for each event, retrieve the new_events and new_results by scraping the web page
@@ -321,7 +326,7 @@ def load_latest_from_WRE():
     for event_code in events_codes:
         
         
-        events, results = load_from_WRE(event_code)
+        events, results = load_from_WRE(event_code, driver)
         for event in events:
             new_events.append(event)
         for result in results:
@@ -341,16 +346,20 @@ def load_year_from_WRE(year):
     start_date = date(year_int, 1, 1)
     end_date = date(year_int, 12, 31)
 
+    driver = setup_Chrome_driver()
+
     # get event ids with results between last date and current date
-    event_ids = get_event_ids(end_date, start_date)
+    event_ids = get_event_ids(end_date, start_date, driver)
     print(event_ids)
 
     # for each event, retrieve the new_events and new_results by scraping the web page
     new_events = []
     new_results = []
 
+
+
     for event_id in event_ids:
-        events, results = load_from_WRE(event_id)
+        events, results = load_from_WRE(event_id, driver)
         for event in events:
             new_events.append(event)
         for result in results:
