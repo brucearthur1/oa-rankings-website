@@ -14,8 +14,7 @@
     "crons": [
         {
         "path": "/api/cron",
-        "schedule": "38 16 * * *",
-        "script": "python3 cron.py"
+        "schedule": "38 16 * * *" 
         }
     ]
 }
