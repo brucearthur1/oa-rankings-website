@@ -1,14 +1,39 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from datetime import date, datetime
 import time
 import re
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 from database import get_latest_WRE_date
+import os
+
+
+def setup_Chrome_driver():
+    TOKEN = os.getenv('BROWSERLESS_TOKEN')
+    browserless_url = "https://chrome.browserless.io/webdriver"
+
+    # Step 1: Set up Browserless.io connection
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.set_capability('browserless:token', TOKEN)
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--headless")
+
+    driver = webdriver.Remote(
+        command_executor=browserless_url,
+        options=chrome_options
+    )
+
+    # original setting without Browserless.io
+    #chrome_options = Options()
+    #chrome_options.add_argument('--headless')
+    #chrome_options.add_argument('--disable-gpu')
+
+    # Initialize the Chrome WebDriver
+    #driver = webdriver.Chrome(options=chrome_options)
+
+
+    return driver
 
 
 
@@ -16,13 +41,7 @@ def load_from_WRE(input):
     print(input)
     #print(type(input))
     
-    # Set up Chrome options to run in headless mode
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--disable-gpu')
-
-    # Initialize the Chrome WebDriver
-    driver = webdriver.Chrome(options=chrome_options)
+    driver = setup_Chrome_driver()
     
     url = "https://ranking.orienteering.org/ResultsView?event=" + input + "&"
 
@@ -153,10 +172,11 @@ def get_event_ids(current_date, latest_date_str):
     print(f"Get IOF EventIDs between {latest_date_str} and {current_date}")
 
     # Set up the Chrome driver
-    service = Service(ChromeDriverManager().install())
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    driver = webdriver.Chrome(service=service, options=options)
+    #service = Service(ChromeDriverManager().install())
+    #options = webdriver.ChromeOptions()
+    #options.add_argument("--headless")
+    #driver = webdriver.Chrome(service=service, options=options)
+    driver = setup_Chrome_driver()
 
     url = "https://ranking.orienteering.org/Calendar/"
 

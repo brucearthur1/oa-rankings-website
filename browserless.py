@@ -1,3 +1,5 @@
+# test function for browserless.io
+
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
@@ -16,7 +18,6 @@ browserless_url = 'https://chrome.browserless.io/webdriver'
 
 def browserless_selenium():
     # Step 1: Set up Browserless.io connection
-    # Selenium 4
     chrome_options = webdriver.ChromeOptions()
     chrome_options.set_capability('browserless:token', TOKEN)
     chrome_options.add_argument("--no-sandbox")

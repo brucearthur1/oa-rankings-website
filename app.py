@@ -542,22 +542,11 @@ def upload_latest_wre_races():
     return render_template('events_submitted.html', df_html=input)
 
 
-
 @app.route("/scrape")
 def scrape():
-
+    # test function for browserless.io
     browserless_selenium()
 
-    #url = "https://ranking.orienteering.org"
-    #response = requests.get(url)
-    #if response.status_code == 200:
-    #    soup = BeautifulSoup(response.content, 'html.parser')
-    #    # Example: Extract all headings
-    #    headings = soup.find_all('p')
-    #    headings_text = [heading.text for heading in headings]
-    #    return "<br>".join(headings_text)
-    #else:
-    #    return f"Failed to retrieve the webpage. Status code: {response.status_code}"
     return "Scraping"
 
 
