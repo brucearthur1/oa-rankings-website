@@ -10,5 +10,13 @@
             "src": "/(.*)",
             "dest": "/app.py"
         }
+    ],
+    "crons": [
+        {
+        "path": "/api/cron",
+        "schedule": "* * * * *",
+        "script": "python3 cron.py"
+        }
     ]
+      
 }
