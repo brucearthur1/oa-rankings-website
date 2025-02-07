@@ -163,7 +163,7 @@ def load_from_WRE(input, driver):
         print('panel2 not found')
 
     # Close the WebDriver
-    driver.quit()
+    #driver.quit()
     print('Close browser for', url)
     #time.sleep(1)
     
@@ -294,7 +294,7 @@ def get_event_ids(current_date, latest_date, driver):
                 print(f"Table of events not found: {option}")
 
     # Close the browser
-    driver.quit()
+    #driver.quit()
 
     return new_events
 
@@ -332,6 +332,9 @@ def load_latest_from_WRE():
         for result in results:
             new_results.append(result)
 
+    # Close the WebDriver
+    driver.quit()
+
     return new_events, new_results
 
 
@@ -364,5 +367,8 @@ def load_year_from_WRE(year):
             new_events.append(event)
         for result in results:
             new_results.append(result)
+
+    # Close the WebDriver
+    driver.quit()
 
     return new_events, new_results
