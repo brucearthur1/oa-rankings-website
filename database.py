@@ -2,6 +2,40 @@ import pandas as pd
 from database_connection import connection
 from datetime import datetime, timedelta
 
+def str_to_date(date_str):
+    return datetime.strptime(date_str, '%Y-%m-%d')
+
+# calculate the average points for an athlete over the last 365 days
+def calc_average(full_name, event_date_dt):
+    start_date_dt = event_date_dt - timedelta(days=364)
+    start_date = start_date_dt.strftime('%Y-%m-%d')
+    event_date = event_date_dt.strftime('%Y-%m-%d')
+
+    query = """        
+        SELECT athletes.eligible, avg(results.race_points/events.ip) as avg_points
+        FROM results
+        INNER JOIN events ON results.race_code = events.short_desc
+        INNER JOIN athletes ON results.full_name = athletes.full_name
+        WHERE athletes.full_name = %s
+            and events.date between %s and %s
+            and results.race_points > 10
+        GROUP BY athletes.eligible
+        """
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(query, (full_name, start_date, event_date))
+        data = cursor.fetchone()
+
+    if data:
+        eligible = data['eligible']
+        average = data['avg_points']
+    else:
+        eligible = None
+        average = None
+
+    return eligible, average 
+
+
 def check_database():
     """
     Checks if the database contains any records in the 'clubs' table.
@@ -112,6 +146,16 @@ def update_to_athlete_db(id, update):
                        ) 
         connection.commit()
 
+
+def load_event_date(race_code):
+    query = "SELECT date, ip from events WHERE short_desc = %s"
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(query, race_code)
+        event = cursor.fetchone()
+    return event
+
+
 def load_event_from_db(short_file):
     query1 = "SELECT * FROM events WHERE short_desc = %s"
     query2 = "SELECT results.*, athletes.id as athlete_id, athletes.eligible, clubs.* FROM results LEFT JOIN athletes ON results.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE results.race_code = %s ORDER BY place"
@@ -149,6 +193,12 @@ def load_events_from_db():
         return events, race_codes
 
 
+def load_race_tmp(race_code):
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * from race_tmp where race_code = %s ORDER BY place",race_code)
+        result = cursor.fetchall()
+        return result
 
 
 def load_rankings_from_db():
@@ -256,7 +306,7 @@ def store_events_and_results(new_events, new_results):
 
 
 
-def store_events_from_excel(data_to_insert):
+def store_events_from_excel(pre_data_to_insert):
     with connection.cursor() as cursor:
         # Insert data 
         insert_query = """ 
@@ -272,10 +322,23 @@ def store_events_from_excel(data_to_insert):
         ) 
         VALUES ( %s, %s, %s, %s, %s, %s, %s, %s) 
         """ 
-        print(data_to_insert)
-        cursor.executemany(insert_query, data_to_insert) 
+        # remove any WREs
+        data_to_insert = [row for row in pre_data_to_insert if row[4] != 'WRE']
+        # Convert boys to Junior Men and girls to Junior Women
+        modified_data_to_insert = []
+        for row in data_to_insert:
+            row_list = list(row)  # Convert tuple to list
+            if row_list[6].lower() == 'boys':
+                row_list[6] = 'Junior Men'
+            elif row_list[6].lower() == 'girls':
+                row_list[6] = 'Junior Women'
+            modified_data_to_insert.append(tuple(row_list))  # Convert list back to tuple
+        
+        print(modified_data_to_insert)
+
+        cursor.executemany(insert_query, modified_data_to_insert) 
         connection.commit() 
-        print("Data inserted successfully!")
+        print("Data inserted successfully! Remember to review Discipline using mySQL Workbench.")
 
 
 
@@ -316,13 +379,15 @@ def store_events_from_WRE(data_to_insert):
 
 def store_race_from_excel(sheetname, data_to_insert):
     with connection.cursor() as cursor:
+        # Set race_points to 0 if it is None
+        data_to_insert = [(place, full_name, race_time, 0 if race_points is None else race_points) for place, full_name, race_time, race_points in data_to_insert]
+
         # Insert data 
         insert_query = """ 
         INSERT INTO results (race_code, place, full_name, race_time, race_points) 
         VALUES (%s, %s, %s, %s, %s) 
         """ 
         cursor.executemany(insert_query, [(sheetname, place, full_name, race_time, race_points) for place, full_name, race_time, race_points in data_to_insert])
-        
 
         # Fetch the event date
         select_query = "SELECT date FROM events WHERE short_file = %s"
@@ -338,12 +403,30 @@ def store_race_from_excel(sheetname, data_to_insert):
                 """
 
             cursor.execute(update_query, (event_date['date'], event_date['date'], item[1]))
-
         connection.commit()
-
         print("Data inserted successfully!")
 
 
+def store_race_tmp_from_excel(sheetname, data_to_insert):
+    with connection.cursor() as cursor:
+        
+        # Insert data
+        insert_query = """ 
+        INSERT INTO race_tmp (race_code, place, full_name, race_time, race_points) 
+        VALUES (%s, %s, %s, %s, %s) 
+        """
+        
+        # Check for existing records and insert only if not a duplicate
+        for place, full_name, race_time, race_points in data_to_insert:
+            select_query = "SELECT * FROM race_tmp WHERE race_code = %s AND full_name = %s"
+            cursor.execute(select_query, (sheetname, full_name))
+            existing_record = cursor.fetchone()
+            
+            if not existing_record:
+                cursor.execute(insert_query, (sheetname, place, full_name, race_time, race_points))
+        
+        connection.commit()
+        print("Data inserted successfully!")
 
 def store_results_from_WRE(data_to_insert):
     """

@@ -2,6 +2,8 @@ import pandas as pd
 import openpyxl
 import xlrd
 from database import get_sheets_from_event
+from datetime import datetime, timezone
+from pytz import timezone
 
 def load_from_xls(form_data):
     # Define the file path and sheet name 
@@ -12,11 +14,18 @@ def load_from_xls(form_data):
     # Read the data into a DataFrame 
     df = pd.read_excel(file_path, sheet_name=sheet_name, engine='xlrd') 
     
-    # Replace NaN values with None using fillna for the specific 'Eventor ID' column 
-    df = df.where(pd.notnull(df), None)
+    # Read the data into a DataFrame 
+    df = pd.read_excel(file_path, sheet_name=sheet_name, engine='xlrd') 
+    
+    # Replace NaN values with pd.NA using applymap and a lambda function    
+    df = df.applymap(lambda x: pd.NA if pd.isna(x) else x)
+    
     # Replace NaN values with None using applymap and a lambda function 
-    parsed_df = df.map(lambda x: None if pd.isna(x) else x) 
+    parsed_df = df.where(pd.notnull(df), None)
 
+    sydney_tz = timezone('Australia/Sydney')
+    print(f'Finished loading data from Excel file: time={datetime.now(sydney_tz)}')
+    print(parsed_df)
     return parsed_df
 
 
@@ -37,7 +46,7 @@ def load_from_xlsx(form_data):
 
 def load_multiple_from_xlsx(form_data):
     # Define the file path and sheet name 
-    file_path = "S:\\RANKINGS\\source\\2024\\" + form_data['path_file'] 
+    file_path = form_data['path_file'] 
     list = form_data['list']
     sheets = get_sheets_from_event(list)
     parsed_df_list = []

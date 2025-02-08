@@ -1,16 +1,16 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, store_events_from_WRE, store_results_from_WRE, load_results_for_all_athletes, check_database
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format, is_valid_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
-from scraping import load_from_WRE
 from threading import Thread
 from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races
 from pytz import timezone
 from browserless import browserless_selenium
+from rankings import calculate_race_rankings
 
 
 
@@ -116,9 +116,9 @@ def add_ineligible_athlete():
     full_name = request.args.get('full_name')
     list = request.args.get('list')
     if list:
-        if list.lower() in ('men','boys'):
+        if list.lower() in ('men','junior men'):
             gender = 'M'
-        elif list.lower() in ('women','girls'):
+        elif list.lower() in ('women','junior women'):
             gender = 'F'
         else:
             gender = None
@@ -341,17 +341,30 @@ def events_read_xls():
 def imported_events():
     input = request.form
     df = load_from_xls(input)
+    print(f"DataFrame shape: {df.shape}")
+    if int(input['start']) < 2:
+        input['start'] = '2'
     # Slice the DataFrame to start from row start to finish and columns (index 0 to 9) 
     partial_df = df.iloc[int(input['start'])-2:int(input['finish'])-1, 0:10] 
+    print(f"Partial DataFrame shape: {partial_df.shape}")
+
+    # Drop the 6th and 7th columns (index 5 and 6)
+    partial_df = partial_df.drop(partial_df.columns[[5, 6]], axis=1)
+    print(f"Partial DataFrame shape after dropping columns: {partial_df.shape}")
+
     # Drop rows if all rows are empty in the sliced DataFrame 
     parsed_df = partial_df.dropna(how='all')
+    print(f"Parsed DataFrame shape after dropna: {parsed_df.shape}")
 
     # Format the date column to DD/MM/YYYY 
     parsed_df['Date'] = parsed_df['Date'].dt.strftime('%Y-%m-%d')
+    print(f"Parsed DataFrame after date formatting:\n{parsed_df}")
 
     # Convert the DataFrame to a list of tuples for insertion into MySQL 
     data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
-    #store this in the DB
+    print(f"Data to insert (first 5 rows): {data_to_insert[:5]}")
+    print(f"Total rows to insert: {len(data_to_insert)}")    #store this in the DB
+
     store_events_from_excel(data_to_insert)
 
     df_html = parsed_df.to_html()
@@ -368,6 +381,33 @@ def race_read_WRE():
 @app.route('/race/read_xls')
 def race_read_xls():
     return render_template('race_read_xls.html')
+
+# admin function to allow the user to enter the Excel file and race_code to import race times only
+@app.route('/race_times/read_xls')
+def race_times_read_xls():
+    return render_template('race_times_read_xls.html')
+
+
+# admin function to process race times only and insert in race_tmp table
+@app.route('/race_times/new', methods=['post'])
+def race_times_new():
+    input = request.form
+    df = load_from_xlsx(input)
+    # Slice the DataFrame to start from row 2 (index 1) and columns C to E (index 2 to 4) 
+    partial_df = df.iloc[1:91, 1:5] 
+    # Drop rows that are empty column 2 in the sliced DataFrame 
+    parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
+    # Convert the DataFrame to a list of tuples for insertion into MySQL 
+    data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
+    #store this in the DB
+    store_race_tmp_from_excel(input['sheet'], data_to_insert)
+
+    calculate_race_rankings(input['sheet'])
+
+    df_html = parsed_df.to_html()
+    #display an acknowledgement 
+    return render_template('race_submitted.html', df_html=df_html)
+
 
 # admin function to allow the user to enter the Excel file to import all races from the file
 @app.route('/races/read_xls')
@@ -455,7 +495,9 @@ def health_check():
 # returns a response in a few ms, but starts a background thread to perform the work
 @app.route("/race/new_WRE", methods=['POST'])
 def upload_wre_race():
-    input = request.form
+    input = {}
+    input['event_id'] = request.form.get('event_id')
+    input['discipline'] = request.form.get('discipline')
     print("Starting upload_WRE_race_task():", datetime.now(sydney_tz))
     # Start the background task
     thread = Thread(target=process_and_store_data, args=(input,))

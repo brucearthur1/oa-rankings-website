@@ -1,10 +1,13 @@
 from datetime import datetime
 from scraping import load_from_WRE, load_latest_from_WRE, load_year_from_WRE
 from database import store_events_and_results
+from scraping import setup_Chrome_driver
 
 def process_and_store_data(input):
     print("process_and_store_data started:", datetime.now())
-    new_events, new_results = load_from_WRE(input['IOF_event_id'])
+    driver = setup_Chrome_driver()
+    new_events, new_results = load_from_WRE(input, driver)
+    driver.quit()
     print("Finished scraping from WRE site:", datetime.now())
     store_events_and_results(new_events, new_results)
 

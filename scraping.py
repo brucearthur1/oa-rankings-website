@@ -259,8 +259,14 @@ def get_event_ids(current_date, latest_date, driver):
                         completed = False
                         # Check the src attribute
                         if img_tag and img_tag.get('src') == "../Content/Check.png":
+
                             # if the WRE is in Australia, don't import this WRE
-                            event_country = row.find_all('td')[1].get_text()
+                            td_element = row.find_all('td')[1]
+                            # Find the <span> element with class 'flag-hint'
+                            flag_hint_span = td_element.find('span', class_='flag-hint')
+                            # Extract the text 'AUS' from the flag-hint span
+                            event_country = flag_hint_span.get_text(strip=True)
+
                             if event_country != 'AUS':
                                 print(event_date)
                                 print(event_name)
@@ -352,8 +358,8 @@ def load_year_from_WRE(year):
     driver = setup_Chrome_driver()
 
     # get event ids with results between last date and current date
-    event_ids = get_event_ids(end_date, start_date, driver)
-    print(event_ids)
+    event_codes = get_event_ids(end_date, start_date, driver)
+    print(event_codes)
 
     # for each event, retrieve the new_events and new_results by scraping the web page
     new_events = []
@@ -361,8 +367,8 @@ def load_year_from_WRE(year):
 
 
 
-    for event_id in event_ids:
-        events, results = load_from_WRE(event_id, driver)
+    for event_code in event_codes:
+        events, results = load_from_WRE(event_code, driver)
         for event in events:
             new_events.append(event)
         for result in results:

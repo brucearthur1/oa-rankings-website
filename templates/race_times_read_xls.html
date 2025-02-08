@@ -9,16 +9,18 @@
         <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
 
     
-        <h4>Upload new race from IOF World Ranking</h4>
-        <form action="/race/new_WRE" method="post">
+        <h4>Upload race times only from Excel</h4>
+        <form action="/race_times/new" method="post">
             <div class="mb-2">
-            <label>Enter IOF Event ID</label><br>
-            <input type="text" name="event_id" placeholder='xxxx'>
+            <label>Full path of Excel file</label><br>
+            <input type="text" name="path_file" placeholder='/path/file.xls'>
             </div>
+
             <div class="mb-2">
-            <label>Enter Discipline</label><br>
-            <input type="text" name="discipline" placeholder='Sprint, Middle/Long'>
+            <label>Worksheet</label><br>
+            <input type="text" name="sheet" placeholder='24cam21e'>
             </div>
+
             <input type="submit">
 
         </form>
