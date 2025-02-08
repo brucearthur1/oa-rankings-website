@@ -5,6 +5,23 @@ from datetime import datetime, timedelta
 def str_to_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d')
 
+def convert_place(place):
+    cleaned_place = place.strip().replace('\xa0', '')
+    if cleaned_place:
+        return int(cleaned_place)
+    return None
+
+def parse_race_time(race_time_str):
+    if race_time_str == 'NC':
+        minutes = 0
+        seconds = 0
+    else:
+        minutes, seconds = map(int, race_time_str.split(':'))
+    race_time = timedelta(minutes=minutes, seconds=seconds)
+    return race_time
+
+
+
 # calculate the average points for an athlete over the last 365 days
 def calc_average(full_name, event_date_dt):
     start_date_dt = event_date_dt - timedelta(days=364)
@@ -95,6 +112,22 @@ def insert_athlete_db(update):
         cursor.execute(query, (update['eventor_id'], update['full_name'], update['given'], update['family'], update['gender'],update['yob'], update['nationality_code'], update['club_id'], update['eligible'])
                        ) 
         connection.commit()
+
+
+def insert_new_results(race_times):
+    new_result_data = [
+        (
+            result['race_code'],
+            result['place'],
+            result['full_name'],
+            result['race_time'],
+            result['rp']
+        )
+        for result in race_times
+    ]
+    print(new_result_data)
+    store_new_results(new_result_data)
+
 
 
 
@@ -275,21 +308,6 @@ def store_events_and_results(new_events, new_results):
     store_events_from_WRE(new_event_data)
     print("Finished storing new events:", datetime.now())
 
-    def convert_place(place):
-        cleaned_place = place.strip().replace('\xa0', '')
-        if cleaned_place:
-            return int(cleaned_place)
-        return None
-
-    def parse_race_time(race_time_str):
-        if race_time_str == 'NC':
-            minutes = 0
-            seconds = 0
-        else:
-            minutes, seconds = map(int, race_time_str.split(':'))
-        race_time = timedelta(minutes=minutes, seconds=seconds)
-        return race_time
-
     new_result_data = [
         (
             result['race_code'],
@@ -428,6 +446,7 @@ def store_race_tmp_from_excel(sheetname, data_to_insert):
         connection.commit()
         print("Data inserted successfully!")
 
+
 def store_results_from_WRE(data_to_insert):
     """
     Stores results from a World Ranking Event (WRE) into the database.
@@ -442,7 +461,7 @@ def store_results_from_WRE(data_to_insert):
     Returns:
         None
     """
-    print("store_results_from_WRE starting:", datetime.now())
+    print("store_results starting:", datetime.now())
     prev_event = ''
     with connection.cursor() as cursor:
         for result in data_to_insert:
@@ -525,4 +544,86 @@ def store_results_from_WRE(data_to_insert):
 
         connection.commit()
 
-    print("store_results_from_WRE finished!")
+    print("store_results finished!")
+
+
+def store_new_results(data_to_insert):
+    """
+    Stores new results not validated as Australian.
+    This differs from store_results_from_WRE in that it does not check if the athlete is eligible.
+    So, we can not add the athlete to the athletes table until we know more information about the athlete's nationality.
+    
+    This function processes a list of results, checks if each result already exists in the database,
+    and inserts new results if they do not exist. It also checks if the athlete associated with each
+    result exists in the database, and inserts new athletes if they do not exist. Additionally, it
+    updates the last event date for each athlete.
+    Args:
+        data_to_insert (list of tuples): A list of tuples where each tuple contains the following
+                                         information about a result:
+                                         (race_code, place, full_name, race_time, race_points).
+    Returns:
+        None
+    """
+    print("store_results starting:", datetime.now())
+    prev_event = ''
+    with connection.cursor() as cursor:
+        for result in data_to_insert:
+
+            select_query = "SELECT * FROM `results` WHERE `race_code` = %s and full_name = %s" 
+            cursor.execute(select_query, (result[0], result[2]))
+            #connection.commit() 
+            print("existing result check, time:", datetime.now())
+
+            exists = cursor.fetchone() 
+            if exists:
+                print(f"Result '{result[0]}{result[2]}' already exists in the database.") 
+            else:
+                # Insert results data 
+                insert_query = """ 
+                INSERT INTO results (race_code, place, full_name, race_time, race_points) 
+                VALUES (%s, %s, %s, %s, %s) 
+                """ 
+                cursor.execute(insert_query, result)
+                #connection.commit() 
+                print(f"WRE '{result[0]}{result[2]}' resutls inserted")
+                print("insert result time:", datetime.now())
+
+                # check if athlete exists.  If not, add them to the athletes table 
+                # Check if the athlete exists 
+                select_query = "SELECT * FROM `athletes` WHERE `full_name` = %s" 
+                cursor.execute(select_query, result[2]) 
+                #connection.commit()
+                print("check athlete exists time:", datetime.now())
+               
+                athlete_exists = cursor.fetchone() 
+                if athlete_exists:
+                    print(f"Athlete '{result[2]}' already exists in the database.") 
+
+                    if result[0] != prev_event:
+                        # Fetch the event date
+                        select_query = "SELECT date FROM events WHERE short_desc = %s"
+                        cursor.execute(select_query, result[0])
+                        #connection.commit()
+
+                        print("fetch event date result time:", datetime.now())
+                        event_date = cursor.fetchone()
+                    prev_event = result[0]
+                    if event_date:
+                        update_query = """
+                            UPDATE athletes
+                            SET last_event_date = %s
+                            WHERE IFNULL(last_event_date, '0000-01-01') < %s
+                            AND full_name = %s
+                            """
+
+                        cursor.execute(update_query, (event_date['date'], event_date['date'], result[2]))
+                        #connection.commit() 
+                        print(f"Athlete '{result[2]}' last update date has been modified to '{event_date['date']}'.")
+                        print("update athlete time:", datetime.now())
+
+                    else:
+                        print(f"event '{result[0]}' not in database")
+
+        connection.commit()
+
+    print("store_results finished!")
