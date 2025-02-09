@@ -197,6 +197,18 @@ def load_athletes_from_results():
         return results
 
 
+def load_unmatched_athletes():
+    query = "SELECT results.*, events.list FROM results INNER JOIN events ON results.race_code = events.short_desc LEFT JOIN athletes ON results.full_name = athletes.full_name WHERE athletes.full_name is NULL ORDER BY results.full_name;"
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        data = cursor.fetchall()
+        unmatched_athletes = []
+        for row in data:
+            unmatched_athletes.append(row)
+    return unmatched_athletes
+
+
 def update_to_athlete_db(id, update):
     with connection.cursor() as cursor:
         # Define the query with a placeholder 

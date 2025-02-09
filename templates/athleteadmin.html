@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 20px;
+      }
+      h4 {
+        margin-bottom: 1rem;
+        color: #007bff;
+        text-align: center;
+      }
+      .table {
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .table th, .table td {
+        border-top: none;
+        border-bottom: 1px solid #dee2e6;
+        padding: 10px;
+      }
+      .table th {
+        background-color: #f1f1f1;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+      }
+      .text-nowrap {
+        white-space: nowrap;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
+
+        <h4 class="mb-2"><span style='color:#007bff'>Athlete Administration</span></h4>
+        
+
+        <div class="table-responsive">
+          <table class="table table-hover table-striped table-sm">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for athlete in athletes %}
+              <tr>
+                <td>{{ athlete['full_name'] }}</td>
+                <td>
+                  {% if athlete['eligible'] == 'N' %}
+                      *
+                  {% else %}
+                      <a href="/athlete/add?full_name={{athlete['full_name'] | urlencode }}&list={{athlete['list'] | urlencode }}" type="button" class="btn btn-outline-warning">Add</a>
+                      <a href="/athlete/ineligible?full_name={{ athlete['full_name'] | urlencode }}&list={{ athlete['list'] | urlencode }}" type="button" class="btn btn-outline-warning">*</a>
+                  {% endif %} 
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+    </div>
+    {% include "footer.html" %}
+  </body>
+</html>

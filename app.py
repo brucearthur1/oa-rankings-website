@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format, is_valid_time_format
@@ -111,12 +111,42 @@ def about_page():
 def admin_page():
     return render_template('admin.html')
 
+@app.route("/admin/athletes")
+def admin_athletes():
+    unmatched_athletes  = load_unmatched_athletes()
+    return render_template('athleteadmin.html', athletes=unmatched_athletes)
+
 
 @app.route("/athlete/add")
 def add_athlete():
-    ########### continue this if we need to add an athlete manually
-    athletes = load_athletes_from_db()
-    return render_template('athletes.html', athletes=athletes)
+    full_name = request.args.get('full_name')
+    list = request.args.get('list')
+    if list:
+        if list.lower() in ('men','junior men'):
+            gender = 'M'
+        elif list.lower() in ('women','junior women'):
+            gender = 'F'
+        else:
+            gender = None
+    else:
+        gender = None
+    # Split the full_name string into parts 
+    name_parts = full_name.split(' ') 
+    # Extract given_name and family_name 
+    given_name = name_parts[0] 
+    family_name = ' '.join(name_parts[1:])  # Join remaining parts in case of multiple surnames 
+    update = {}
+    update['eventor_id'] = None
+    update['full_name'] = full_name
+    update['given'] = given_name
+    update['family'] = family_name
+    update['gender'] = gender
+    update['yob'] = None
+    update['nationality_code'] = 'AUS'
+    update['club_id'] = None
+    update['eligible'] = 'N'
+    insert_athlete_db(update=update)
+    return render_template('update_submitted.html', update=update)
 
 # Admin function to mark athlete as ineligible (not Australian)
 @app.route("/athlete/ineligible")
@@ -294,14 +324,6 @@ def read_athletes_from_xml():
     #display an acknowledgement 
     return render_template('athletes_submitted.html', athlete_list=athlete_list)
 
-# Admin function under construction
-@app.route('/athletes/unmatched')
-def unmatched_athletes():
-    ###
-    ### under construction
-    ###
-    results = load_athletes_from_results()
-    return render_template('unmatched_athletes.html',results=results)
 
 # admin function to import clubs from Eventor xml list
 @app.route('/clubs/read_xml')
