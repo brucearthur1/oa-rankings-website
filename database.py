@@ -75,6 +75,14 @@ def check_database():
         return False
 
 
+def delete_from_race_tmp(short_desc):
+    with connection.cursor() as cursor:
+        query = "DELETE FROM race_tmp WHERE race_code = %s"
+        cursor.execute(query, (short_desc,))
+        connection.commit()
+        print("race_tmp data deleted successfully!")
+
+
 def get_sheets_from_event(list):
     connection.autocommit(True)
     with connection.cursor() as cursor:

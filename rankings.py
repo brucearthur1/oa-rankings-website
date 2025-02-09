@@ -1,4 +1,4 @@
-from database import load_race_tmp, load_event_date, calc_average, insert_new_results, insert_event_statistics, update_event_ip
+from database import load_race_tmp, load_event_date, calc_average, insert_new_results, insert_event_statistics, update_event_ip, delete_from_race_tmp
 from datetime import datetime
 from pytz import timezone
 
@@ -20,7 +20,7 @@ def calculate_race_rankings(race_code):
     print(race_times)
 
     mt, st, mp, sp = None, None, None, None
-    
+
     event = load_event_date(race_code)
     # enhancement factor is the importance of the race
     # enhancement factor is usually 1.0 for Australian events, except Australian Championships (1.05)
@@ -210,6 +210,8 @@ def calculate_race_rankings(race_code):
         print(f"IP was adjusted for the winner's points to be in the correct range. IP: {ip}")
         update_event_ip(race_code, ip)
 
+    # clean up race_tmp table
+    delete_from_race_tmp(event['short_desc'])
 
     print(f"Finished calculating rankings at: {datetime.now(sydney_tz)}")
 
