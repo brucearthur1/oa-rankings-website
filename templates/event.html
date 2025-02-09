@@ -96,7 +96,6 @@
         </div>
         <div>
             <p>Event date: {{ event['date'] | _jinja2_filter_datetime }}</p>
-            <p>Race importance factor, IP: {{ event['ip'] | float }}</p>
             {% if event['iof_id'] is not none %}
               <a href="https://ranking.orienteering.org/ResultsView?event={{ event['iof_id'] }}&" target="_blank">IOF Ranking Event {{ event['iof_id'] }} </a>
             {% endif %}
@@ -105,7 +104,17 @@
             {% endif %}
             {% if results | selectattr('eligible', 'equalto', 'N') | list %} 
               <p class="mt-3 fs-6">* ineligible</p> 
-            {% endif %}        
+            {% endif %}   
+            <div class="stats mt-3">
+              <h5>Statistics</h5>
+              {% if stats is not none %}
+                <div class="stats">
+                  <p>Rankings calculated at: {{ stats['calculated'] }}</p>
+                  <p>mean MT: {{ stats['mt'] }} and the standard deviation ST: {{ stats['st'] }} of the race times RT of all non-outlier ranked athletes. </p>
+                </div>
+              {% endif %}
+              <p>Race weighting factor, IP: {{ event['ip'] | float }}</p>
+            </div>
         </div>
     </div>
     {% include "footer.html" %}

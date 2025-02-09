@@ -1,4 +1,4 @@
-from database import load_race_tmp, load_event_date, calc_average, insert_new_results
+from database import load_race_tmp, load_event_date, calc_average, insert_new_results, insert_event_statistics, update_event_ip
 from datetime import datetime
 from pytz import timezone
 
@@ -20,6 +20,8 @@ def calculate_race_rankings(race_code):
     print(race_times)
 
     event = load_event_date(race_code)
+    # enhancement factor is the importance of the race
+    # enhancement factor is usually 1.0 for Australian events, except Australian Championships (1.05)
     enhancement_factor = float(event['ip'])  # Convert to float
 
     # get eligibility and averages
@@ -131,13 +133,17 @@ def calculate_race_rankings(race_code):
     # The Winner scores a minimum of 800 and a maximum of 1375 
     # o If the Winner’s unweighted calculated score is between 800 and 1375, IP = 1 x enhancement factor 
     # o If the Winner’s unweighted calculated score is less than 800, IP = 800/Winner’s unweighted calculated score x Enhancement Factor o If the Winner’s unweighted calculated score is greater than 1375, IP = 1375/Winner’s unweighted calculated score x Enhancement Factor    
+    # ip = total weighting factor appied to the event (including enhancement factor x any adjustments for the winner's points to be in the correct range)
+    ip_change = False
     if winners_unweighted_calculated_score is not None:
         if 800 <= winners_unweighted_calculated_score <= 1375:
             ip = 1 * enhancement_factor
         elif winners_unweighted_calculated_score < 800:
             ip = 800 / winners_unweighted_calculated_score * enhancement_factor
+            ip_change = True
         else:
             ip = 1375 / winners_unweighted_calculated_score * enhancement_factor
+            ip_change = True
         print(f"Winner's unweighted calculated score: {winners_unweighted_calculated_score}, IP: {ip}")
     else:
         print("No valid prelim_rp found for any competitor.")
@@ -189,6 +195,18 @@ def calculate_race_rankings(race_code):
 
     # save rankings to database
     insert_new_results(race_times)
+
+    calculated = datetime.now(sydney_tz)
+    rule = "Australian Rankings"
+    my_min = 800
+    my_max = 1375
+    event_stats = [ calculated, mt, st, mp, sp, rule, my_min, my_max, rr_count, enhancement_factor]
+    # save event_stats to database
+    insert_event_statistics(event['id'], event_stats)
+    if ip_change:
+        print(f"IP was adjusted for the winner's points to be in the correct range. IP: {ip}")
+        update_event_ip(race_code, ip)
+
 
     print(f"Finished calculating rankings at: {datetime.now(sydney_tz)}")
 
