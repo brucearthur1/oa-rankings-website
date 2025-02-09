@@ -96,6 +96,7 @@
         </div>
         <div>
             <p>Event date: {{ event['date'] | _jinja2_filter_datetime }}</p>
+            <p>The points here are calculated based on the rules in force on the day of the event. Points used in the rankings list may be recalibrated to maintain alignment with IOF World Ranking scores.</p>
             {% if event['iof_id'] is not none %}
               <a href="https://ranking.orienteering.org/ResultsView?event={{ event['iof_id'] }}&" target="_blank">IOF Ranking Event {{ event['iof_id'] }} </a>
             {% endif %}
@@ -103,14 +104,17 @@
               <a href="https://eventor.orienteering.asn.au/Events/ResultList?eventId={{ event['eventor_id'] }}" target="_blank">Eventor</a>
             {% endif %}
             {% if results | selectattr('eligible', 'equalto', 'N') | list %} 
-              <p class="mt-3 fs-6">* ineligible</p> 
+              <p class="mt-3 fs-6">* ineligible: Nationality must be Australia</p> 
             {% endif %}   
             <div class="stats mt-3">
               <h5>Statistics</h5>
               {% if stats is not none %}
                 <div class="stats">
                   <p>Rankings calculated at: {{ stats['calculated'] }}</p>
-                  <p>mean MT: {{ stats['mt'] }} and the standard deviation ST: {{ stats['st'] }} of the race times RT of all non-outlier ranked athletes. </p>
+                  <p>Rankings based on: {{ stats['rule'] }} methodology.  The Winner scores a minimum of {{ stats['min'] }} and a maximum of {{ stats['max'] }}. Enhancement factor, EF = {{ stats['enhancement_factor'] }}</p>
+                  <p>Mean MP: {{ stats['mp'] | int }} and the standard deviation SP: {{ stats['sp'] | int  }} of the race times of all non-outlier ranked athletes </p>
+                  <p>Mean MT: {{ stats['mt'] | int | _jinja2_filter_seconds_to_time }} and the standard deviation ST: {{ stats['st'] | int | _jinja2_filter_seconds_to_time }} of the race times of all non-outlier ranked athletes </p>
+                  <p>Number of Australian competitors with a valid average and race time within 50% of the winner RR: {{ stats['ranked'] }}</p>
                 </div>
               {% endif %}
               <p>Race weighting factor, IP: {{ event['ip'] | float }}</p>

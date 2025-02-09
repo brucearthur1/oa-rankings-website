@@ -23,6 +23,14 @@ sydney_tz = timezone('Australia/Sydney')
 def _jinja2_filter_datetime(date, fmt=None): 
     return date.strftime(fmt) if fmt else date.strftime('%d/%m/%Y')
 
+# Define the custom filter
+def _jinja2_filter_seconds_to_time(seconds):
+    """Convert seconds to HH:MM:SS format."""
+    return str(timedelta(seconds=seconds))
+
+# Register the custom filter with Jinja2
+app.jinja_env.filters['_jinja2_filter_seconds_to_time'] = _jinja2_filter_seconds_to_time
+
 app.jinja_env.filters['_jinja2_filter_datetime'] = _jinja2_filter_datetime
 
 app.jinja_env.filters['is_valid_time_format'] = is_valid_time_format

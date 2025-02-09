@@ -19,6 +19,8 @@ def calculate_race_rankings(race_code):
     print(type(race_times))
     print(race_times)
 
+    mt, st, mp, sp = None, None, None, None
+    
     event = load_event_date(race_code)
     # enhancement factor is the importance of the race
     # enhancement factor is usually 1.0 for Australian events, except Australian Championships (1.05)
@@ -62,19 +64,20 @@ def calculate_race_rankings(race_code):
     rr_count = len(ranked_runners)
     print(f"Ranked Runners (RR): {rr_count}")
 
-    # MP is the mean of competitor['average'] for ranked runners
-    mp = sum(competitor['average'] for competitor in ranked_runners) / rr_count
-    print(f"MP: {mp}")
-    # SP is the standard deviation of competitor['average'] for ranked runners
-    sp = (sum((competitor['average'] - mp) ** 2 for competitor in ranked_runners) / rr_count) ** 0.5
-    print(f"SP: {sp}")
+    if ranked_runners:
+        # MP is the mean of competitor['average'] for ranked runners
+        mp = sum(competitor['average'] for competitor in ranked_runners) / rr_count
+        print(f"MP: {mp}")
+        # SP is the standard deviation of competitor['average'] for ranked runners
+        sp = (sum((competitor['average'] - mp) ** 2 for competitor in ranked_runners) / rr_count) ** 0.5
+        print(f"SP: {sp}")
 
-    # MT is the mean of competitor['race_time'] for ranked runners, noting that race_time is in HH:MM:SS format
-    mt = sum(time_to_seconds(competitor['race_time']) for competitor in ranked_runners) / rr_count
-    print(f"MT (seconds): {mt}")
-    # ST is the standard deviation of competitor['race_time'] for ranked runners
-    st = (sum((time_to_seconds(competitor['race_time']) - mt) ** 2 for competitor in ranked_runners) / rr_count) ** 0.5
-    print(f"ST (seconds): {st}")
+        # MT is the mean of competitor['race_time'] for ranked runners, noting that race_time is in HH:MM:SS format
+        mt = sum(time_to_seconds(competitor['race_time']) for competitor in ranked_runners) / rr_count
+        print(f"MT (seconds): {mt}")
+        # ST is the standard deviation of competitor['race_time'] for ranked runners
+        st = (sum((time_to_seconds(competitor['race_time']) - mt) ** 2 for competitor in ranked_runners) / rr_count) ** 0.5
+        print(f"ST (seconds): {st}")
 
     # Determine the unweighted calculated score for the winner using the appropriate formula
 
