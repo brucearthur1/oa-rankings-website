@@ -48,6 +48,11 @@
         color: grey;
         font-size: small;
       }
+      .badge {
+        font-weight: bold;
+        font-size: 1.5em;
+        font-family: 'Georgia', serif;
+      }
     </style>
     <script>
       var currentList = '{{ segmented_stats.keys() | list | first }}';
@@ -56,6 +61,8 @@
       function switchView(listName, discipline) {
         currentList = listName;
         currentDiscipline = discipline;
+        document.getElementById('currentDiscipline').value = discipline;
+        document.getElementById('currentList').value = listName;
         updateView();
       }
 
@@ -90,6 +97,47 @@
         if (targetDisciplineButton) {
           targetDisciplineButton.classList.add('active');
         }
+
+        updateCompletedRaces();
+      }
+
+      function updateCompletedRaces() {
+        var filteredResults = [];
+        if (currentDiscipline === 'all') {
+          filteredResults = {{ results | tojson }}.filter(result => result.list === currentList && (result.discipline === 'sprint' || result.discipline === 'middle/long'));
+        } else {
+          filteredResults = {{ results | tojson }}.filter(result => result.list === currentList && result.discipline === currentDiscipline);
+        }
+        var completedRaces = filteredResults.length;
+        document.getElementById('completedRaces').innerText = completedRaces + " races in this category";
+
+        if (completedRaces >= 500) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '500';
+          document.getElementById('completedRacesBadge').style.color = 'blue';
+        } else if (completedRaces >= 250) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '250';
+          document.getElementById('completedRacesBadge').style.color = 'green';
+        } else if (completedRaces >= 100) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '100';
+          document.getElementById('completedRacesBadge').style.color = 'black';
+        } else if (completedRaces >= 50) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '50';
+          document.getElementById('completedRacesBadge').style.color = 'red';
+        } else if (completedRaces >= 25) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '25';
+          document.getElementById('completedRacesBadge').style.color = 'purple';
+        } else if (completedRaces >= 10) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '10';
+          document.getElementById('completedRacesBadge').style.color = 'grey';
+        } else {
+          document.getElementById('completedRacesBadge').style.display = 'none';
+        }
       }
 
       document.addEventListener("DOMContentLoaded", function() {
@@ -102,13 +150,38 @@
     <div class="container" id="container">
       <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
       
-      <h4>{{ athlete.full_name }}</h4>
+      <div class="container">
+        <div class="row align-items-end">
+        <h4 class="col col-7">
+          {{ athlete.full_name }}
+        </h4>
+        <h4 class="col text-end col-3 mx-0" style="font-size: small; color: grey;">
+          <input type="hidden" id="currentDiscipline" value="all">
+          <input type="hidden" id="currentList" value="{{ segmented_stats.keys() | list | first }}">
+          <span id="completedRaces">
+        {% set currentDiscipline = request.args.get('currentDiscipline', 'all') %}
+        {% set currentList = request.args.get('currentList', segmented_stats.keys() | list | first) %}
+        {{ currentDiscipline }}
+        {% if currentDiscipline == 'all' %}
+          {% set filtered_results = results | selectattr('discipline', 'in', ['sprint', 'middle/long']) | selectattr('list', 'equalto', currentList) | list %}
+        {% else %}
+          {% set filtered_results = results | selectattr('discipline', 'equalto', currentDiscipline) | selectattr('list', 'equalto', currentList) | list %}
+        {% endif %}
+        {% set completed_races = filtered_results | length %}
+        {{ completed_races }} ranking races
+          </span>
+        </h4>
+        <h4 class="col text-end col-1 py-0">
+          <span id="completedRacesBadge" class="badge" style="display: {% if completed_races >= 10 %}inline{% else %}none{% endif %};">{{ '25' if completed_races >= 25 else '10' }}</span>
+        </h4>
+      </div>
+      </div>
 
       <div class="m-2 p-2">
         <table class="table">
           <thead>
             <tr>
-              <th>Category</th>
+              <th>Class</th>
               <th>Year of birth</th>
               <th>State</th>
               <th>Club</th>
@@ -163,6 +236,14 @@
 
       {% for list_name, discipline_stats in segmented_stats.items() %}
         {% for discipline, stats in discipline_stats.items() %}
+          {% if discipline == 'all' %}
+            {% set filtered_results = results | selectattr('list', 'equalto', list_name) | selectattr('discipline', 'in', ['sprint', 'middle/long']) | list %}
+          {% else %}
+            {% set filtered_results = results | selectattr('list', 'equalto', list_name) | selectattr('discipline', 'equalto', discipline) | list %}
+          {% endif %}
+          {% set row_count = filtered_results | length %}
+          {% set oldest_date = filtered_results | map(attribute='date') | min %}
+          {% set oldest_year = oldest_date.year %}
           <div id="{{ list_name }}-{{ discipline }}" class="race-list {% if list_name == default_list and discipline == 'all' %}default-list{% endif %}" style="display: none;">
             <div class="m-2 p-2">
               <table class="table">
@@ -189,7 +270,7 @@
               </table>
             </div>
 
-            <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in ranking races - <span class="text-capitalize">{{ list_name }}</span> - {{ discipline | capitalize }}</span></h5>
+            <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in {{ row_count }} ranking races since {{ oldest_year }} - <span class="text-capitalize">{{ list_name }}</span> - {{ discipline | capitalize }}</span></h5>
             <div class="table-responsive">
               <table id="resultsTable_{{ list_name }}_{{ discipline }}" class="table table-hover table-striped">
                 <thead>
@@ -204,7 +285,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for result in results if result['list'] == list_name and (result['discipline'] == discipline or discipline == 'all') %}
+                  {% for result in filtered_results %}
                     <tr class="{% if result in stats.top_5_recent_results %}table-success{% endif %}">
                       <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
                       <td>{{ result['long_desc'] }}</td>
@@ -225,6 +306,14 @@
       {% endfor %}
 
       {% for discipline in ['all', 'sprint', 'middle/long'] %}
+        {% if discipline == 'all' %}
+          {% set filtered_results = results | selectattr('discipline', 'in', ['sprint', 'middle/long']) | list %}
+        {% else %}
+          {% set filtered_results = results | selectattr('discipline', 'equalto', discipline) | list %}
+        {% endif %}
+        {% set row_count = filtered_results | length %}
+        {% set oldest_date = filtered_results | map(attribute='date') | min %}
+        {% set oldest_year = oldest_date.year %}
         <div id="resultsTable-{{ discipline }}" class="race-list" style="display: none;">
           <div class="m-2 p-2">
             <table class="table">
@@ -242,7 +331,7 @@
             </table>
           </div>
 
-          <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in ranking races - {{ discipline | capitalize }}</span></h5>
+          <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in {{ row_count }} ranking races since {{ oldest_year }} - {{ discipline | capitalize }}</span></h5>
           <div class="table-responsive">
             <table id="resultsTable_{{ discipline }}" class="table table-hover table-striped">
               <thead>
@@ -256,7 +345,7 @@
                 </tr>
               </thead>
               <tbody>
-                {% for result in results if result['discipline'] == discipline or discipline == 'all' %}
+                {% for result in filtered_results %}
                   <tr>
                     <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
                     <td>{{ result['long_desc'] }}</td>
