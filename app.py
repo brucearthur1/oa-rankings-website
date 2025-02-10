@@ -10,7 +10,7 @@ from threading import Thread
 from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races
 from pytz import timezone
 from browserless import browserless_selenium
-from rankings import calculate_race_rankings
+from rankings import calculate_race_rankings, recalibrate_year
 
 
 
@@ -116,6 +116,15 @@ def admin_athletes():
     unmatched_athletes  = load_unmatched_athletes()
     return render_template('athleteadmin.html', athletes=unmatched_athletes)
 
+@app.route("/admin/recalibrate")
+def admin_recalibrate():
+    return render_template('year_recalibrate.html')
+
+@app.route("/admin/recalibrate_year")
+def admin_recalibrate_year():
+    input = request.args.get('year')
+    update = recalibrate_year(input)
+    return render_template('update_submitted.html', update=update)    
 
 @app.route("/athlete/add")
 def add_athlete():

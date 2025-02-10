@@ -1,4 +1,4 @@
-from database import load_race_tmp, load_event_date, calc_average, insert_new_results, insert_event_statistics, update_event_ip, delete_from_race_tmp
+from database import load_race_tmp, load_event_date, calc_average, insert_new_results, insert_event_statistics, update_event_ip, delete_from_race_tmp, load_wre_scores, load_aus_scores
 from datetime import datetime
 from pytz import timezone
 
@@ -216,3 +216,28 @@ def calculate_race_rankings(race_code):
     print(f"Finished calculating rankings at: {datetime.now(sydney_tz)}")
 
     return
+
+
+def recalibrate_year(year):
+    
+    print(f"Starting to recalibrate { year } at: {datetime.now(sydney_tz)}")
+
+    for list in ['men','women','junior men','junior women']:
+        # recalibrate each list
+        print(list)
+        # get athlete_list, average, SD for athletes with WRE points in list in year
+        wre_athlete_list, wre_mp, wre_sp = load_wre_scores(list=list, year=year)
+        print(f"athlete_list: {wre_athlete_list}")
+        print(f"wre_mp: {wre_mp}")
+        print(f"wre_sp: {wre_sp}")
+
+        # get athlete_list, average, SD for all athletes with AUS points in list in year
+        aus_mp, aus_sp = load_aus_scores(list=list, year=year)
+        print(f"aus_mp: {aus_mp}")
+        print(f"aus_sp: {aus_sp}")
+
+
+    data = {}
+    data['full_name'] = "recalibration done"
+    print(f"Finished recalibrating {{ year }} at: {datetime.now(sydney_tz)}")
+    return data

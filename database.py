@@ -209,6 +209,81 @@ def load_unmatched_athletes():
     return unmatched_athletes
 
 
+def load_aus_scores(list, year):
+    stats_query = """
+        SELECT 
+        avg(race_points) as mp,
+        stddev(race_points) as sp
+        FROM results 
+        INNER JOIN events ON results.race_code = events.short_desc 
+        WHERE events.short_file <> 'WRE' 
+        AND YEAR(events.date) = %s 
+        AND LOWER(events.list) = %s
+        and race_points > 10
+        and full_name in
+        (
+		SELECT DISTINCT results.full_name 
+        FROM results 
+        INNER JOIN events ON results.race_code = events.short_desc 
+        WHERE events.short_file = 'WRE' 
+        AND YEAR(events.date) = %s 
+        AND LOWER(events.list) = %s
+        and race_points > 10
+        )
+        """
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(stats_query, (year, list, year, list))
+        data = cursor.fetchone()
+
+    mp = data['mp']
+    sp = data['sp']
+
+    return mp, sp
+
+
+
+def load_wre_scores(list, year):
+    query = """
+        SELECT DISTINCT results.full_name 
+        FROM results 
+        INNER JOIN events ON results.race_code = events.short_desc 
+        WHERE events.short_file = 'WRE' 
+        AND YEAR(events.date) = %s 
+        AND LOWER(events.list) = %s
+        and race_points > 10
+    """
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(query, (year, list))
+        data = cursor.fetchall()
+
+    athlete_list = data if data else []
+
+    stats_query = """
+        SELECT 
+        avg(race_points) as mp,
+        stddev(race_points) as sp
+        FROM results 
+        INNER JOIN events ON results.race_code = events.short_desc 
+        WHERE events.short_file = 'WRE' 
+        and year(events.date) = %s
+        and lower(events.list) = %s
+        and race_points > 10
+    """
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(stats_query, (year, list))
+        data = cursor.fetchone()
+
+    mp = data['mp']
+    sp = data['sp']
+
+    return athlete_list, mp, sp
+
+
+
+
 def update_to_athlete_db(id, update):
     with connection.cursor() as cursor:
         # Define the query with a placeholder 
