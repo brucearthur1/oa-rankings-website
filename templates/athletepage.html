@@ -171,9 +171,9 @@
         {{ completed_races }} ranking races
           </span>
         </h4>
-        <h4 class="col text-end col-1 py-0">
-          <span id="completedRacesBadge" class="badge" style="display: {% if completed_races >= 10 %}inline{% else %}none{% endif %};">{{ '25' if completed_races >= 25 else '10' }}</span>
-        </h4>
+        <span class="col text-end col-1 py-0 pb-1">
+            <span id="completedRacesBadge" class="badge text-align-top" style="display: {% if completed_races >= 10 %}inline{% else %}none{% endif %};" title="milestone completed"></span>
+        </span>
       </div>
       </div>
 
