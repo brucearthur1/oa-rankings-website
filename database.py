@@ -209,7 +209,7 @@ def load_unmatched_athletes():
     return unmatched_athletes
 
 
-def load_aus_scores(list, year):
+def load_aus_scores(mylist, year):
     stats_query = """
         SELECT 
         avg(race_points) as mp,
@@ -222,18 +222,27 @@ def load_aus_scores(list, year):
         and race_points > 10
         and full_name in
         (
-		SELECT DISTINCT results.full_name 
-        FROM results 
-        INNER JOIN events ON results.race_code = events.short_desc 
-        WHERE events.short_file = 'WRE' 
-        AND YEAR(events.date) = %s 
-        AND LOWER(events.list) = %s
-        and race_points > 10
+            SELECT DISTINCT results.full_name
+            FROM results 
+            INNER JOIN events ON results.race_code = events.short_desc 
+            INNER JOIN athletes ON athletes.full_name = results.full_name
+            WHERE events.short_file = 'WRE' 
+            AND YEAR(events.date) = %s
+            and race_points > 10
+            and (    
+                (lower(gender) = 'm' AND lower(%s) = 'men')
+                    OR
+                (lower(gender) = 'm' AND lower(%s) = 'junior men' and athletes.yob > cast(%s as unsigned integer) - 21 )
+                    OR
+                (lower(gender) = 'f' AND lower(%s) = 'women')
+                    OR
+                (lower(gender) = 'f' AND lower(%s) = 'junior women' and athletes.yob > cast(%s as unsigned integer) - 21 )
+            )
         )
         """
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute(stats_query, (year, list, year, list))
+        cursor.execute(stats_query, (year, mylist, year, mylist, mylist, year, mylist, mylist, year))
         data = cursor.fetchone()
 
     mp = data['mp']
@@ -243,19 +252,28 @@ def load_aus_scores(list, year):
 
 
 
-def load_wre_scores(list, year):
+def load_wre_scores(mylist, year):
     query = """
-        SELECT DISTINCT results.full_name 
+        SELECT DISTINCT results.full_name
         FROM results 
         INNER JOIN events ON results.race_code = events.short_desc 
+        INNER JOIN athletes ON athletes.full_name = results.full_name
         WHERE events.short_file = 'WRE' 
-        AND YEAR(events.date) = %s 
-        AND LOWER(events.list) = %s
+        AND YEAR(events.date) = %s
         and race_points > 10
+        and (    
+            (lower(gender) = 'm' AND lower(%s) = 'men')
+                OR
+            (lower(gender) = 'm' AND lower(%s) = 'junior men' and athletes.yob > cast(%s as unsigned integer) - 21 )
+                OR
+            (lower(gender) = 'f' AND lower(%s) = 'women')
+                OR
+            (lower(gender) = 'f' AND lower(%s) = 'junior women' and athletes.yob > cast(%s as unsigned integer) - 21 )
+        )
     """
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute(query, (year, list))
+        cursor.execute(query, (year, mylist,  mylist, year, mylist,  mylist, year))
         data = cursor.fetchall()
 
     athlete_list = data if data else []
@@ -266,14 +284,23 @@ def load_wre_scores(list, year):
         stddev(race_points) as sp
         FROM results 
         INNER JOIN events ON results.race_code = events.short_desc 
+        INNER JOIN athletes ON athletes.full_name = results.full_name
         WHERE events.short_file = 'WRE' 
-        and year(events.date) = %s
-        and lower(events.list) = %s
+        AND YEAR(events.date) = %s
         and race_points > 10
+        and (    
+            (lower(gender) = 'm' AND lower(%s) = 'men')
+                OR
+            (lower(gender) = 'm' AND lower(%s) = 'junior men' and athletes.yob > cast(%s as unsigned integer) - 21 )
+                OR
+            (lower(gender) = 'f' AND lower(%s) = 'women')
+                OR
+            (lower(gender) = 'f' AND lower(%s) = 'junior women' and athletes.yob > cast(%s as unsigned integer) - 21 )
+        )
     """
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute(stats_query, (year, list))
+        cursor.execute(stats_query, (year, mylist, mylist, year, mylist, mylist, year ))
         data = cursor.fetchone()
 
     mp = data['mp']

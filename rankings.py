@@ -226,13 +226,13 @@ def recalibrate_year(year):
         # recalibrate each list
         print(list)
         # get athlete_list, average, SD for athletes with WRE points in list in year
-        wre_athlete_list, wre_mp, wre_sp = load_wre_scores(list=list, year=year)
+        wre_athlete_list, wre_mp, wre_sp = load_wre_scores(mylist=list, year=year)
         print(f"athlete_list: {wre_athlete_list}")
         print(f"wre_mp: {wre_mp}")
         print(f"wre_sp: {wre_sp}")
 
         # get athlete_list, average, SD for all athletes with AUS points in list in year
-        aus_mp, aus_sp = load_aus_scores(list=list, year=year)
+        aus_mp, aus_sp = load_aus_scores(mylist=list, year=year)
         print(f"aus_mp: {aus_mp}")
         print(f"aus_sp: {aus_sp}")
 
