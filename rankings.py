@@ -1,4 +1,4 @@
-from database import load_race_tmp, load_event_date, calc_average, insert_new_results, insert_event_statistics, update_event_ip, delete_from_race_tmp, load_wre_scores, load_aus_scores
+from database import load_race_tmp, load_event_date, calc_average, insert_new_results, insert_event_statistics, update_event_ip, delete_from_race_tmp, load_wre_scores, load_aus_scores, recalibrate_aus_scores
 from datetime import datetime
 from pytz import timezone
 
@@ -235,6 +235,19 @@ def recalibrate_year(year):
         aus_mp, aus_sp = load_aus_scores(mylist=list, year=year)
         print(f"aus_mp: {aus_mp}")
         print(f"aus_sp: {aus_sp}")
+
+        if wre_mp and wre_sp and aus_mp and aus_sp:
+            # apply recalibration to AUS results for this list and year
+            # new score = (original - aus_mp)/aus_sp * wre_sp + wre_mp
+            recalibrate_aus_scores(mylist=list, year=year, wre_mp=wre_mp, wre_sp=wre_sp, aus_mp=aus_mp, aus_sp=aus_sp)
+        else:
+            print("not enough data to recalibrate")
+
+        # re-eheck the new aus_mp and aus_sp
+        # get athlete_list, average, SD for all athletes with AUS points in list in year
+        aus_mp, aus_sp = load_aus_scores(mylist=list, year=year)
+        print(f"calibrated aus_mp: {aus_mp}")
+        print(f"calibrated aus_sp: {aus_sp}")
 
 
     data = {}

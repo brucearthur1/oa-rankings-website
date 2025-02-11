@@ -419,6 +419,37 @@ def load_results_for_all_athletes():
         return results
 
 
+def recalibrate_aus_scores(mylist, year, wre_mp, wre_sp, aus_mp, aus_sp): 
+    with connection.cursor() as cursor:
+        # update data 
+        update_query = """
+            WITH temp AS (
+                SELECT 
+                    results.id AS myid,
+                    results.full_name,
+                    results.race_points,
+                    -- update the avg_a, stddev_a, stddev_wr, avg_wr  
+                    -- (results.race_points - int(aus_mp)) / aus_sp * wre_sp + wre_mp AS new_points
+                    (results.race_points - cast(%s as float)) / cast(%s as float) * cast(%s as float) + cast(%s as float) AS new_points
+                FROM results
+                INNER JOIN events
+                    ON results.race_code = events.short_desc
+                WHERE 
+                    race_points > 10 
+                    AND short_file <> 'WRE'
+                    AND lower(list) = %s
+                    AND YEAR(events.date) = %s
+            )
+            UPDATE results
+            INNER JOIN temp ON results.id = temp.myid
+            SET results.race_points = temp.new_points
+        """
+        cursor.execute(update_query, (aus_mp, aus_sp, wre_sp, wre_mp, mylist, year )) 
+        connection.commit() 
+        print("Data updated successfully!")
+
+
+
 
 def store_athletes_in_db(data_to_insert):
     with connection.cursor() as cursor:
