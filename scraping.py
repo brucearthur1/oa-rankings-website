@@ -348,7 +348,6 @@ def load_latest_from_WRE():
 
 
 def load_year_from_WRE(year):
-    print(year)
     year_int = int(year['year'])
 
     # Define the start and end dates for the given year

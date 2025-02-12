@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes
-from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx
+from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format, is_valid_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
@@ -11,6 +11,7 @@ from background import process_and_store_data, process_latest_WRE_races, upload_
 from pytz import timezone
 from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate_year
+from admin import import_year
 
 
 
@@ -115,6 +116,25 @@ def admin_page():
 def admin_athletes():
     unmatched_athletes  = load_unmatched_athletes()
     return render_template('athleteadmin.html', athletes=unmatched_athletes)
+
+@app.route("/admin/import_years")
+def admin_import_years():
+    return render_template('import_years.html')
+
+@app.route("/admin/import_years_go")
+def admin_import_years_go():
+    start_year = request.args.get('start')
+    end_year = request.args.get('finish')
+    if start_year and end_year:
+        for year in range(int(start_year), int(end_year) + 1):
+            print(year)
+            print(type(year))
+
+            import_year(year)
+
+
+    return render_template('admin.html')
+
 
 @app.route("/admin/recalibrate")
 def admin_recalibrate():
@@ -381,34 +401,10 @@ def events_read_xls():
 @app.route("/events/import", methods=['post'])
 def imported_events():
     input = request.form
-    df = load_from_xls(input)
-    print(f"DataFrame shape: {df.shape}")
-    if int(input['start']) < 2:
-        input['start'] = '2'
-    # Slice the DataFrame to start from row start to finish and columns (index 0 to 9) 
-    partial_df = df.iloc[int(input['start'])-2:int(input['finish'])-1, 0:10] 
-    print(f"Partial DataFrame shape: {partial_df.shape}")
 
-    # Drop the 6th and 7th columns (index 5 and 6)
-    partial_df = partial_df.drop(partial_df.columns[[5, 6]], axis=1)
-    print(f"Partial DataFrame shape after dropping columns: {partial_df.shape}")
+    # call import_events_from_excel
+    df_html = import_events_from_excel(input)
 
-    # Drop rows if all rows are empty in the sliced DataFrame 
-    parsed_df = partial_df.dropna(how='all')
-    print(f"Parsed DataFrame shape after dropna: {parsed_df.shape}")
-
-    # Format the date column to DD/MM/YYYY 
-    parsed_df['Date'] = parsed_df['Date'].dt.strftime('%Y-%m-%d')
-    print(f"Parsed DataFrame after date formatting:\n{parsed_df}")
-
-    # Convert the DataFrame to a list of tuples for insertion into MySQL 
-    data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
-    print(f"Data to insert (first 5 rows): {data_to_insert[:5]}")
-    print(f"Total rows to insert: {len(data_to_insert)}")    #store this in the DB
-
-    store_events_from_excel(data_to_insert)
-
-    df_html = parsed_df.to_html()
     #display an acknowledgement 
     return render_template('events_submitted.html', df_html=df_html)
 
@@ -501,16 +497,8 @@ def upload_race(event_code):
 def uploaded_races():
     input = request.form
     
-    df_list = load_multiple_from_xlsx(input)
-    # Slice the DataFrame to start from row 2 (index 1) and columns C to E (index 2 to 4) 
-    for df in df_list:
-        partial_df = df[1].iloc[1:91, 1:5] 
-        # Drop rows that are empty column 2 in the sliced DataFrame 
-        parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
-        # Convert the DataFrame to a list of tuples for insertion into MySQL 
-        data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
-        #store this in the DB
-        store_race_from_excel(df[0]['short_file'], data_to_insert)
+    df_list = add_multiple_races_for_list_year(input)
+
         
     #display an acknowledgement 
     return render_template('races_submitted.html', df_list=df_list )

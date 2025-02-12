@@ -22,6 +22,14 @@ def calculate_race_rankings(race_code):
     mt, st, mp, sp = None, None, None, None
 
     event = load_event_date(race_code)
+    
+    #########################################################################################################################################################
+    ##### TO DO
+    #########################################################################################################################################################
+    # Need to recalibrate rankings for this list in the 12 months prior to the event date
+    #########################################################################################################################################################
+
+    
     # enhancement factor is the importance of the race
     # enhancement factor is usually 1.0 for Australian events, except Australian Championships (1.05)
     enhancement_factor = float(event['ip'])  # Convert to float
@@ -252,5 +260,5 @@ def recalibrate_year(year):
 
     data = {}
     data['full_name'] = "recalibration done"
-    print(f"Finished recalibrating {{ year }} at: {datetime.now(sydney_tz)}")
+    print(f"Finished recalibrating { year } at: {datetime.now(sydney_tz)}")
     return data

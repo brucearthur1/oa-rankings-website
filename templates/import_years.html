@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
+
+    
+        <h4>Import years of events and results from WRE and AUS, and recalibrate each</h4>
+        <form action="/admin/import_years_go">
+            <div class="mb-2">
+                <label>from year</label><br>
+                <input type="text" name="start" placeholder='xxxx'>
+            </div>
+    
+            <div class="mb-2">
+                <label>to year</label><br>
+                <input type="text" name="finish" placeholder='xxxx'>
+            </div>
+        
+            <input type="submit">
+
+        </form>
+    </div>
+    {% include "footer.html" %}
+  </body>
+</html>

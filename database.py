@@ -75,6 +75,55 @@ def check_database():
         return False
 
 
+def confirm_discipline(year):
+    with connection.cursor() as cursor:
+        query = """
+            WITH winning_times AS (
+            SELECT
+                race_code
+                ,CASE 
+                    WHEN CHAR_LENGTH(winning_time) = 8 
+                    THEN winning_time 
+                    ELSE SUBSTR(winning_time, 12, 8) 
+                END as winning_time
+            from
+            (
+            SELECT 
+                race_code, 
+                MIN(race_time) AS winning_time
+            FROM results
+            WHERE 
+                race_time <> '00:00:00'
+            GROUP BY race_code
+            HAVING winning_time <> '00:00:00'
+            ) temp
+            ),
+            winning_times_compared AS (
+            SELECT
+                race_code,
+                winning_time,
+                CASE
+                WHEN TIME_TO_SEC(TIMEDIFF('1970-01-01 00:23:00', '1970-01-01 ' || winning_time)) > 0 THEN 1
+                ELSE 0
+                END AS is_sprint
+            FROM winning_times
+            )
+            UPDATE events
+            SET discipline = 'Sprint'
+            WHERE short_desc IN (
+            SELECT race_code 
+            FROM winning_times_compared 
+            WHERE is_sprint = 1
+            )
+            and year(date) = %s
+        """
+        cursor.execute(query, (year))
+        connection.commit()
+        print(f"Disciplines updated for { year }")
+    
+
+
+
 def delete_from_race_tmp(short_desc):
     with connection.cursor() as cursor:
         query = "DELETE FROM race_tmp WHERE race_code = %s"
@@ -83,11 +132,17 @@ def delete_from_race_tmp(short_desc):
         print("race_tmp data deleted successfully!")
 
 
-def get_sheets_from_event(list):
+def get_sheets_from_event(list, year):
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        query = "SELECT events.short_file FROM events LEFT JOIN results ON events.short_file = results.race_code WHERE list = %s AND results.id IS NULL"         
-        cursor.execute(query, list)
+        query = """
+            SELECT events.short_file 
+            FROM events LEFT JOIN results ON events.short_file = results.race_code 
+            WHERE list = %s
+            AND year(date) = %s
+            AND results.id IS NULL
+        """
+        cursor.execute(query, (list, year))
         result = cursor.fetchall()
         sheets = []
         for row in result:
@@ -508,7 +563,7 @@ def store_events_and_results(new_events, new_results):
 
 def store_events_from_excel(pre_data_to_insert):
     with connection.cursor() as cursor:
-        # Insert data 
+        # Define the insert query
         insert_query = """ 
         INSERT INTO events (
         date, 
@@ -522,8 +577,13 @@ def store_events_from_excel(pre_data_to_insert):
         ) 
         VALUES ( %s, %s, %s, %s, %s, %s, %s, %s) 
         """ 
-        # remove any WREs
+
+        # Define the select query to check if the row exists
+        select_query = "SELECT * FROM events WHERE short_desc = %s AND list = %s"
+
+        # Remove any WREs
         data_to_insert = [row for row in pre_data_to_insert if row[4] != 'WRE']
+
         # Convert boys to Junior Men and girls to Junior Women
         modified_data_to_insert = []
         for row in data_to_insert:
@@ -533,11 +593,20 @@ def store_events_from_excel(pre_data_to_insert):
             elif row_list[6].lower() == 'girls':
                 row_list[6] = 'Junior Women'
             modified_data_to_insert.append(tuple(row_list))  # Convert list back to tuple
-        
+
         print(modified_data_to_insert)
 
-        cursor.executemany(insert_query, modified_data_to_insert) 
-        connection.commit() 
+        # Insert data one row at a time
+        for row in modified_data_to_insert:
+            cursor.execute(select_query, (row[1], row[6]))
+            exists = cursor.fetchone()
+            if not exists:
+                cursor.execute(insert_query, row)
+                print(f"Inserted row: {row}")
+            else:
+                print(f"Row already exists: {row}")
+
+        connection.commit()
         print("Data inserted successfully! Remember to review Discipline using mySQL Workbench.")
 
 
@@ -578,23 +647,35 @@ def store_events_from_WRE(data_to_insert):
 
 
 def store_race_from_excel(sheetname, data_to_insert):
+    print(f"Storing race from excel worksheet { sheetname }")
+    print(data_to_insert)
     with connection.cursor() as cursor:
         # Set race_points to 0 if it is None
         data_to_insert = [(place, full_name, race_time, 0 if race_points is None else race_points) for place, full_name, race_time, race_points in data_to_insert]
 
-        # Insert data into results
-        insert_query = """ 
+        # Define the select query to check if the row exists
+        select_query = "SELECT * FROM results WHERE race_code = %s AND full_name = %s"
+
+        # Define the insert queries
+        insert_query_results = """ 
         INSERT INTO results (race_code, place, full_name, race_time, race_points) 
         VALUES (%s, %s, %s, %s, %s) 
-        """ 
-        cursor.executemany(insert_query, [(sheetname, place, full_name, race_time, race_points) for place, full_name, race_time, race_points in data_to_insert])
-
-        # Insert data into results_static
-        insert_query = """ 
+        """
+        insert_query_results_static = """ 
         INSERT INTO results_static (race_code, place, full_name, race_time, race_points) 
         VALUES (%s, %s, %s, %s, %s) 
-        """ 
-        cursor.executemany(insert_query, [(sheetname, place, full_name, race_time, race_points) for place, full_name, race_time, race_points in data_to_insert])
+        """
+
+        # Insert data one row at a time if it does not already exist
+        for place, full_name, race_time, race_points in data_to_insert:
+            cursor.execute(select_query, (sheetname, full_name))
+            exists = cursor.fetchone()
+            if not exists:
+                cursor.execute(insert_query_results, (sheetname, place, full_name, race_time, race_points))
+                cursor.execute(insert_query_results_static, (sheetname, place, full_name, race_time, race_points))
+                print(f"Inserted row: {(sheetname, place, full_name, race_time, race_points)}")
+            else:
+                print(f"Row already exists: {(sheetname, place, full_name, race_time, race_points)}")
 
         # Fetch the event date
         select_query = "SELECT date FROM events WHERE short_file = %s"
@@ -616,22 +697,47 @@ def store_race_from_excel(sheetname, data_to_insert):
 
 def store_race_tmp_from_excel(sheetname, data_to_insert):
     with connection.cursor() as cursor:
-        
-        # Insert data
-        insert_query = """ 
-        INSERT INTO race_tmp (race_code, place, full_name, race_time, race_points) 
+        # Set race_points to 0 if it is None
+        data_to_insert = [(place, full_name, race_time, 0 if race_points is None else race_points) for place, full_name, race_time, race_points in data_to_insert]
+
+        # Define the select query to check if the row exists
+        select_query = "SELECT * FROM results WHERE race_code = %s AND full_name = %s"
+
+        # Define the insert queries
+        insert_query_results = """ 
+        INSERT INTO results (race_code, place, full_name, race_time, race_points) 
         VALUES (%s, %s, %s, %s, %s) 
         """
-        
-        # Check for existing records and insert only if not a duplicate
+        insert_query_results_static = """ 
+        INSERT INTO results_static (race_code, place, full_name, race_time, race_points) 
+        VALUES (%s, %s, %s, %s, %s) 
+        """
+
+        # Insert data one row at a time if it does not already exist
         for place, full_name, race_time, race_points in data_to_insert:
-            select_query = "SELECT * FROM race_tmp WHERE race_code = %s AND full_name = %s"
             cursor.execute(select_query, (sheetname, full_name))
-            existing_record = cursor.fetchone()
-            
-            if not existing_record:
-                cursor.execute(insert_query, (sheetname, place, full_name, race_time, race_points))
-        
+            exists = cursor.fetchone()
+            if not exists:
+                cursor.execute(insert_query_results, (sheetname, place, full_name, race_time, race_points))
+                cursor.execute(insert_query_results_static, (sheetname, place, full_name, race_time, race_points))
+                print(f"Inserted row: {(sheetname, place, full_name, race_time, race_points)}")
+            else:
+                print(f"Row already exists: {(sheetname, place, full_name, race_time, race_points)}")
+
+        # Fetch the event date
+        select_query_event_date = "SELECT date FROM events WHERE short_file = %s"
+        cursor.execute(select_query_event_date, (sheetname,))
+        event_date = cursor.fetchone()
+
+        for item in data_to_insert:
+            update_query = """
+                UPDATE athletes
+                SET last_event_date = %s
+                WHERE IFNULL(last_event_date, '0000-01-01') < %s
+                AND full_name = %s
+                """
+            cursor.execute(update_query, (event_date['date'], event_date['date'], item[1]))
+
         connection.commit()
         print("Data inserted successfully!")
 
