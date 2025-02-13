@@ -313,54 +313,56 @@
         {% endif %}
         {% set row_count = filtered_results | length %}
         {% set oldest_date = filtered_results | map(attribute='date') | min %}
-        {% set oldest_year = oldest_date.year %}
-        <div id="resultsTable-{{ discipline }}" class="race-list" style="display: none;">
-          <div class="m-2 p-2">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th class="text-end">Ranking races</th>
-                  <th class="text-end">Top 5 total</th>
-                  <th class="text-end">Average points</th>
-                  <th class="text-end">Ranking</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Placeholder for results listing without segmented_stats -->
-              </tbody>
-            </table>
-          </div>
-
-          <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in {{ row_count }} ranking races since {{ oldest_year }} - {{ discipline | capitalize }}</span></h5>
-          <div class="table-responsive">
-            <table id="resultsTable_{{ discipline }}" class="table table-hover table-striped">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Event</th>
-                  <th class="text-end">Place</th>
-                  <th class="text-end">Time</th>
-                  <th class="text-end race-points">Points</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for result in filtered_results %}
+        {% if oldest_date %}
+          {% set oldest_year = oldest_date.year %}
+          <div id="resultsTable-{{ discipline }}" class="race-list" style="display: none;">
+            <div class="m-2 p-2">
+              <table class="table">
+                <thead>
                   <tr>
-                    <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
-                    <td>{{ result['long_desc'] }}</td>
-                    <td class="text-end">{{ result['place'] }}</td>
-                    <td class="text-end">{{ result['race_time'] }}</td>
-                    <td class="text-end race-points">{{ result['race_points'] | int }}</td>
-                    <td>
-                      <a href="/event/{{result['short_desc']}}" type="button" class="btn btn-outline-primary">Details</a>
-                    </td>
+                    <th class="text-end">Ranking races</th>
+                    <th class="text-end">Top 5 total</th>
+                    <th class="text-end">Average points</th>
+                    <th class="text-end">Ranking</th>
                   </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <!-- Placeholder for results listing without segmented_stats -->
+                </tbody>
+              </table>
+            </div>
+
+            <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in {{ row_count }} ranking races since {{ oldest_year }} - {{ discipline | capitalize }}</span></h5>
+            <div class="table-responsive">
+              <table id="resultsTable_{{ discipline }}" class="table table-hover table-striped">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Event</th>
+                    <th class="text-end">Place</th>
+                    <th class="text-end">Time</th>
+                    <th class="text-end race-points">Points</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for result in filtered_results %}
+                    <tr>
+                      <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
+                      <td>{{ result['long_desc'] }}</td>
+                      <td class="text-end">{{ result['place'] }}</td>
+                      <td class="text-end">{{ result['race_time'] }}</td>
+                      <td class="text-end race-points">{{ result['race_points'] | int }}</td>
+                      <td>
+                        <a href="/event/{{result['short_desc']}}" type="button" class="btn btn-outline-primary">Details</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        {% endif %}
       {% endfor %}
 
     </div>

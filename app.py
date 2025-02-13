@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes
-from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year
+from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year, parse_result_from_df
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format, is_valid_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
@@ -430,18 +430,16 @@ def race_times_read_xls():
 def race_times_new():
     input = request.form
     df = load_from_xlsx(input)
-    # Slice the DataFrame to start from row 2 (index 1) and columns C to E (index 2 to 4) 
-    partial_df = df.iloc[1:91, 1:5] 
-    # Drop rows that are empty column 2 in the sliced DataFrame 
-    parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
-    # Convert the DataFrame to a list of tuples for insertion into MySQL 
-    data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
+
+    # remove unwanted rows and convert to tuple to insert
+    data_to_insert = parse_result_from_df(df)
+
     #store this in the DB
     store_race_tmp_from_excel(input['sheet'], data_to_insert)
 
     calculate_race_rankings(input['sheet'])
 
-    df_html = parsed_df.to_html()
+    df_html = df.to_html()
     #display an acknowledgement 
     return render_template('race_submitted.html', df_html=df_html)
 
@@ -456,17 +454,15 @@ def races_read_xls():
 @app.route("/race/new", methods=['post'])
 def uploaded_race():
     input = request.form
+    print(input)
     df = load_from_xlsx(input)
-    # Slice the DataFrame to start from row 2 (index 1) and columns C to E (index 2 to 4) 
-    partial_df = df.iloc[1:91, 1:5] 
-    # Drop rows that are empty column 2 in the sliced DataFrame 
-    parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
-    # Convert the DataFrame to a list of tuples for insertion into MySQL 
-    data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
+    print(df)
+
+    data_to_insert = parse_result_from_df(df)
     #store this in the DB
     store_race_from_excel(input['sheet'], data_to_insert)
 
-    df_html = parsed_df.to_html()
+    df_html = df.to_html()
     #display an acknowledgement 
     return render_template('race_submitted.html', df_html=df_html)
 
@@ -479,16 +475,13 @@ def upload_race(event_code):
     input['path_file'] = "s:/Rankings/source/2024/" + ranking_list + ".xls"
     input['sheet'] = event_code
     df = load_from_xlsx(input)
-    # Slice the DataFrame to start from row 2 (index 1) and columns C to E (index 2 to 4) 
-    partial_df = df.iloc[1:91, 1:5] 
-    # Drop rows that are empty column 2 in the sliced DataFrame 
-    parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
-    # Convert the DataFrame to a list of tuples for insertion into MySQL 
-    data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
+
+    data_to_insert = parse_result_from_df(df)
+
     #store this in the DB
     store_race_from_excel(input['sheet'], data_to_insert)
 
-    df_html = parsed_df.to_html()
+    df_html = df.to_html()
     #display an acknowledgement 
     return render_template('race_submitted.html', df_html=df_html)
 

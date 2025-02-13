@@ -5,18 +5,42 @@ import xlrd
 from database import get_sheets_from_event, store_events_from_excel, store_race_from_excel
 from datetime import datetime, timezone
 from pytz import timezone
+import pandas as pd
+
+def parse_result_from_df(df):
+    # Assuming your DataFrame is named df
+    partial_df = df.iloc[1:91, 1:5]
+
+    # Additional check to prevent stats from being loaded as results. This can happen if rows have been deleted from the excel worksheet
+    partial_df = partial_df.dropna(subset=[partial_df.columns[0]])
+    parsed_rows = []
+
+    for i in range(len(partial_df)):
+        current_row = partial_df.iloc[i]
+        if i > 0:
+            previous_row = partial_df.iloc[i - 1]
+            if current_row[partial_df.columns[0]] != previous_row[partial_df.columns[0]] + 1:
+                break
+        parsed_rows.append(current_row)
+
+    # Convert the list of parsed rows to a DataFrame
+    parsed_df = pd.DataFrame(parsed_rows, columns=partial_df.columns)
+    # Drop rows that are empty in column 2 in the sliced DataFrame
+    parsed_df = parsed_df.dropna(subset=[parsed_df.columns[2]])
+    # Convert the DataFrame to a list of tuples for insertion into MySQL
+    data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
+    # Print the parsed DataFrame to verify the results
+    print(parsed_df)
+
+    return data_to_insert
 
 
 
 def add_multiple_races_for_list_year(input):
     df_list = load_multiple_from_xlsx(input)
-    # Slice the DataFrame to start from row 2 (index 1) and columns C to E (index 2 to 4) 
+    # Slice the DataFrame to start from row 2 (index 1) and columns B to E (index 1 to 4) 
     for df in df_list:
-        partial_df = df[1].iloc[1:91, 1:5] 
-        # Drop rows that are empty column 2 in the sliced DataFrame 
-        parsed_df = partial_df.dropna(subset=[partial_df.columns[2]])
-        # Convert the DataFrame to a list of tuples for insertion into MySQL 
-        data_to_insert = [tuple(row) for row in parsed_df.to_numpy()]
+        data_to_insert = parse_result_from_df(df[1])
         #store this in the DB
         store_race_from_excel(df[0]['short_file'], data_to_insert)
     return df_list
