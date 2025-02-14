@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year, parse_result_from_df
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format, is_valid_time_format
@@ -173,7 +173,14 @@ def add_athlete():
     update['yob'] = None
     update['nationality_code'] = 'AUS'
     update['club_id'] = None
-    update['eligible'] = 'N'
+    update['eligible'] = 'Y'
+    
+    latest_event_date = load_latest_event_date(full_name)
+    if latest_event_date:
+        update['last_event_date'] = latest_event_date
+    else:
+        update['last_event_date'] = None
+
     insert_athlete_db(update=update)
     return render_template('update_submitted.html', update=update)
 
@@ -227,11 +234,12 @@ def list_athletes():
 @app.route("/athlete/<id>")
 def show_athlete(id):
     athlete = load_athlete_from_db(id)
+    print(athlete)
     if not athlete:
         return "Not found", 404
     
     results = load_results_by_athlete(full_name=athlete['full_name'])
-    
+    print(results)
     # Convert data types and format race time
     for result in results:
         if result['race_time']:

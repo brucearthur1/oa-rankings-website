@@ -170,9 +170,9 @@ def get_latest_WRE_date():
 def insert_athlete_db(update):
     with connection.cursor() as cursor:
         # Define the query with a placeholder 
-        query = "INSERT INTO athletes (eventor_id, full_name, given, family, gender, yob, nationality_code, club_id, eligible) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        query = "INSERT INTO athletes (eventor_id, full_name, given, family, gender, yob, nationality_code, club_id, eligible, last_event_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         #Execute the query with the parameter 
-        cursor.execute(query, (update['eventor_id'], update['full_name'], update['given'], update['family'], update['gender'],update['yob'], update['nationality_code'], update['club_id'], update['eligible'])
+        cursor.execute(query, (update['eventor_id'], update['full_name'], update['given'], update['family'], update['gender'],update['yob'], update['nationality_code'], update['club_id'], update['eligible'], update['last_event_date'])
                        ) 
         connection.commit()
 
@@ -250,6 +250,25 @@ def load_athletes_from_results():
             results.append(row)
 
         return results
+
+
+def load_latest_event_date(full_name):
+    query = """
+        select 
+            max(events.date) as event_date
+        from
+            results
+        inner join 
+            events on results.race_code = events.short_desc
+        where
+            results.full_name = %s
+        """
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(query, full_name)
+        data = cursor.fetchone()
+    return data['event_date']
+
 
 
 def load_unmatched_athletes():
