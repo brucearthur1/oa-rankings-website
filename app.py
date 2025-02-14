@@ -234,12 +234,10 @@ def list_athletes():
 @app.route("/athlete/<id>")
 def show_athlete(id):
     athlete = load_athlete_from_db(id)
-    print(athlete)
     if not athlete:
         return "Not found", 404
     
     results = load_results_by_athlete(full_name=athlete['full_name'])
-    print(results)
     # Convert data types and format race time
     for result in results:
         if result['race_time']:
@@ -286,6 +284,14 @@ def show_athlete(id):
                 'total_top_5_recent': total_top_5_recent,
                 'average_recent_points': average_recent_points,
                 'count_recent_results': count_recent_results
+            }
+    if segmented_stats == {}:
+        for result in results:
+            segmented_stats[result['list']][result['discipline']] = {
+                'top_5_recent_results': [],
+                'total_top_5_recent': 0,
+                'average_recent_points': 0,
+                'count_recent_results': 0
             }
 
     # Load results for all athletes to calculate ranking

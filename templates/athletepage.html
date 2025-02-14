@@ -55,7 +55,7 @@
       }
     </style>
     <script>
-      var currentList = '{{ segmented_stats.keys() | list | first }}';
+      var currentList = '{{ segmented_stats.keys() | list | first if segmented_stats else "default_list" }}';
       var currentDiscipline = 'all';
 
       function switchView(listName, discipline) {
@@ -109,6 +109,13 @@
           filteredResults = {{ results | tojson }}.filter(result => result.list === currentList && result.discipline === currentDiscipline);
         }
         var completedRaces = filteredResults.length;
+
+        // Debug statements
+        console.log("Current List: ", currentList);
+        console.log("Current Discipline: ", currentDiscipline);
+        console.log("Filtered Results: ", filteredResults);
+        console.log("Completed Races: ", completedRaces);
+
         document.getElementById('completedRaces').innerText = completedRaces + " races in this category";
 
         if (completedRaces >= 500) {
@@ -157,10 +164,10 @@
         </h4>
         <h4 class="col text-end col-4 mx-0" style="font-size: small; color: grey;">
           <input type="hidden" id="currentDiscipline" value="all">
-          <input type="hidden" id="currentList" value="{{ segmented_stats.keys() | list | first }}">
+          <input type="hidden" id="currentList" value="{{ segmented_stats.keys() | list | first if segmented_stats else 'default_list' }}">
           <span id="completedRaces">
         {% set currentDiscipline = request.args.get('currentDiscipline', 'all') %}
-        {% set currentList = request.args.get('currentList', segmented_stats.keys() | list | first) %}
+        {% set currentList = request.args.get('currentList', segmented_stats.keys() | list | first if segmented_stats else 'default_list') %}
         {{ currentDiscipline }}
         {% if currentDiscipline == 'all' %}
           {% set filtered_results = results | selectattr('discipline', 'in', ['sprint', 'middle/long']) | selectattr('list', 'equalto', currentList) | list %}
@@ -168,7 +175,7 @@
           {% set filtered_results = results | selectattr('discipline', 'equalto', currentDiscipline) | selectattr('list', 'equalto', currentList) | list %}
         {% endif %}
         {% set completed_races = filtered_results | length %}
-        {{ completed_races }} ranking races
+        {{ completed_races }} races in this category
           </span>
         </h4>
         <span class="col text-end col-1 py-0 pb-1">
@@ -220,7 +227,7 @@
           </div>
           <div class="col-md-9 text-end">
             <div class="btn-group" role="group" aria-label="Race List">
-              {% set default_list = segmented_stats.keys() | list | first %}
+              {% set default_list = segmented_stats.keys() | list | first if segmented_stats else 'default_list' %}
               {% for btn_list_name in segmented_stats.keys() %}
                 <button type="button" class="btn btn-outline-primary text-capitalize" id="btn-{{ btn_list_name }}-any" onclick="switchView('{{ btn_list_name }}', currentDiscipline)">{{ btn_list_name }}</button>
               {% endfor %}
