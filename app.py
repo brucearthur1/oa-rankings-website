@@ -264,34 +264,33 @@ def show_athlete(id):
     segmented_results = defaultdict(lambda: defaultdict(list))
     for result in results:
         if result['date'] and result['date'] >= twelve_months_ago:
-            segmented_results[result['list']][result['discipline']].append(result)
-            segmented_results[result['list']]['all'].append(result)
+            result['ranking period'] = True
+        else:
+            result['ranking period'] = False
+        segmented_results[result['list']][result['discipline']].append(result)
+        segmented_results[result['list']]['all'].append(result)
     
     # Calculate statistics for each segment (list and discipline)
     segmented_stats = defaultdict(lambda: defaultdict(dict))
     for list_name, discipline_results in segmented_results.items():
         for discipline, recent_results in discipline_results.items():
-            sorted_recent_results = sorted(recent_results, key=lambda x: x['race_points'], reverse=True)
+            sorted_recent_results = sorted(
+                [result for result in recent_results if result['ranking period']],
+                key=lambda x: x['race_points'],
+                reverse=True
+            )
             top_5_recent_results = sorted_recent_results[:5]
             total_top_5_recent = sum(result['race_points'] for result in top_5_recent_results)
             # Filter out results with race_points <= 0
-            positive_results = [result for result in recent_results if result['race_points'] > 0]
+            positive_results = [result for result in sorted_recent_results if result['race_points'] > 0]
             average_recent_points = sum(result['race_points'] for result in positive_results) / len(positive_results) if positive_results else 0
-            count_recent_results = len(recent_results)
+            count_recent_results = len(sorted_recent_results)
             
             segmented_stats[list_name][discipline] = {
                 'top_5_recent_results': top_5_recent_results,
                 'total_top_5_recent': total_top_5_recent,
                 'average_recent_points': average_recent_points,
                 'count_recent_results': count_recent_results
-            }
-    if segmented_stats == {}:
-        for result in results:
-            segmented_stats[result['list']][result['discipline']] = {
-                'top_5_recent_results': [],
-                'total_top_5_recent': 0,
-                'average_recent_points': 0,
-                'count_recent_results': 0
             }
 
     # Load results for all athletes to calculate ranking
@@ -330,7 +329,9 @@ def show_athlete(id):
     athlete_ranking = defaultdict(lambda: defaultdict(str))
     for list_name, discipline_stats in segmented_stats.items():
         for discipline in discipline_stats.keys():
-            if list_name in ["junior men", "junior women"] and current_year - athlete['yob'] >= 21:
+            if list_name in ["junior men", "junior women"] and athlete['yob'] is None:
+                athlete_ranking[list_name][discipline] = "age not known"
+            elif list_name in ["junior men", "junior women"] and current_year - athlete['yob'] >= 21:
                 athlete_ranking[list_name][discipline] = "no longer eligible"
             else:
                 sorted_rankings = sorted(
