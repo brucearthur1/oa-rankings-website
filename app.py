@@ -213,6 +213,7 @@ def add_ineligible_athlete():
     update['nationality_code'] = None
     update['club_id'] = None
     update['eligible'] = 'N'
+    update['last_event_date'] = None
     insert_athlete_db(update=update)
     return render_template('update_submitted.html', update=update)
     
