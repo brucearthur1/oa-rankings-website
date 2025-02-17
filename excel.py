@@ -19,7 +19,12 @@ def parse_result_from_df(df):
         current_row = partial_df.iloc[i]
         if i > 0:
             previous_row = partial_df.iloc[i - 1]
-            if current_row[partial_df.columns[0]] != previous_row[partial_df.columns[0]] + 1:
+            try:
+                int(previous_row[partial_df.columns[0]])
+                int(current_row[partial_df.columns[0]])
+            except ValueError:
+                break
+            if int(current_row[partial_df.columns[0]]) != int(previous_row[partial_df.columns[0]]) + 1:
                 break
         parsed_rows.append(current_row)
 
@@ -37,11 +42,15 @@ def parse_result_from_df(df):
 
 
 def add_multiple_races_for_list_year(input):
+    print(f"starting add_mulitple_races_for_list_year: {input}")
     df_list = load_multiple_from_xlsx(input)
     # Slice the DataFrame to start from row 2 (index 1) and columns B to E (index 1 to 4) 
+    print(f"DataFrame shape: {len(df_list)}")
     for df in df_list:
+        print(f"read excel {df[1]}")
         data_to_insert = parse_result_from_df(df[1])
         #store this in the DB
+        print(f"store in db {df[1]}")
         store_race_from_excel(df[0]['short_file'], data_to_insert)
     return df_list
     
@@ -119,18 +128,21 @@ def load_from_xlsx(form_data):
 
 
 def load_multiple_from_xlsx(form_data):
+    print(f"load_multiple_from_xlsx: {form_data}")
     # Define the file path and sheet name 
     file_path = form_data['path_file'] 
     list = form_data['list']
     
     year = os.path.basename(os.path.dirname(file_path))
-    print(year)  
+    print(f"year: {year}")
 
     sheets = get_sheets_from_event(list, year)
+    print(f"sheets: {sheets}")
     parsed_df_list = []
     for sheet_name in sheets:
         # Read the data into a DataFrame 
         if sheet_name['short_file'] != 'WRE':
+            print(f"sheet_name: {sheet_name}")
             df = pd.read_excel(file_path, sheet_name=sheet_name['short_file'], engine='openpyxl') 
             # Replace NaN values with None 
             parsed_df_row = df.where(pd.notnull(df), None)

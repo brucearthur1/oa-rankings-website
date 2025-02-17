@@ -463,6 +463,7 @@ def race_times_new():
 # admin function to allow the user to enter the Excel file to import all races from the file
 @app.route('/races/read_xls')
 def races_read_xls():
+    print("starting races_read_xls")
     return render_template('races_read_xls.html')
 
 
@@ -487,8 +488,14 @@ def uploaded_race():
 def upload_race(event_code):
     ranking_list = request.args.get('list')
     print(ranking_list)
+    my_year = int(event_code[:2])
+    if my_year < 90:
+        my_year += 2000
+    else:
+        my_year += 1900
+    str_year = str(my_year)
     input = {}
-    input['path_file'] = "s:/Rankings/source/2024/" + ranking_list + ".xls"
+    input['path_file'] = "s:/Rankings/source/" + str_year + "/" + ranking_list + ".xls"
     input['sheet'] = event_code
     df = load_from_xlsx(input)
 
@@ -504,8 +511,9 @@ def upload_race(event_code):
 # Admin function to read the input file, load multiple races from Excel, and store race data
 @app.route("/races/new", methods=['post'])
 def uploaded_races():
+    print("starting uploaded_races")
     input = request.form
-    
+    print(input)
     df_list = add_multiple_races_for_list_year(input)
 
         

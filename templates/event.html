@@ -85,7 +85,7 @@
                   {% elif result['athlete_id'] %} 
                       <a href="/athlete/{{result['athlete_id']}}" type="button" class="btn btn-outline-primary">Details</a>
                   {% else %}
-                      <a href="/athlete/add?full_name={{result['full_name']}}" type="button" class="btn btn-outline-warning">Add</a>
+                      <a href="/athlete/add?full_name={{ result['full_name'] | urlencode }}&list={{ event['list'] | urlencode }}" type="button" class="btn btn-outline-warning">Add</a>
                       <a href="/athlete/ineligible?full_name={{ result['full_name'] | urlencode }}&list={{ event['list'] | urlencode }}" type="button" class="btn btn-outline-warning">*</a>
                   {% endif %} 
                 </td>

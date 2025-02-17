@@ -82,8 +82,8 @@ def confirm_discipline(year):
             SELECT
                 race_code
                 ,CASE 
-                    WHEN CHAR_LENGTH(winning_time) = 8 
-                    THEN winning_time 
+                    WHEN CHAR_LENGTH(winning_time) = 8 THEN winning_time 
+                    WHEN CHAR_LENGTH(winning_time) = 7 THEN winning_time 
                     ELSE SUBSTR(winning_time, 12, 8) 
                 END as winning_time
             from
