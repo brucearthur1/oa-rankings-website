@@ -84,6 +84,7 @@ def confirm_discipline(year):
                 ,CASE 
                     WHEN CHAR_LENGTH(winning_time) = 8 THEN winning_time 
                     WHEN CHAR_LENGTH(winning_time) = 7 THEN winning_time 
+                    WHEN CHAR_LENGTH(winning_time) = 15 THEN substr(winning_time,1,8) 
                     ELSE SUBSTR(winning_time, 12, 8) 
                 END as winning_time
             from
@@ -117,6 +118,7 @@ def confirm_discipline(year):
             )
             and year(date) = %s
         """
+        print(query)
         cursor.execute(query, (year))
         connection.commit()
         print(f"Disciplines updated for { year }")

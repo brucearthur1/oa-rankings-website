@@ -143,7 +143,11 @@ def load_multiple_from_xlsx(form_data):
         # Read the data into a DataFrame 
         if sheet_name['short_file'] != 'WRE':
             print(f"sheet_name: {sheet_name}")
-            df = pd.read_excel(file_path, sheet_name=sheet_name['short_file'], engine='openpyxl') 
+            try:
+                df = pd.read_excel(file_path, sheet_name=sheet_name['short_file'], engine='openpyxl')
+            except Exception as e:
+                print(f"Failed to read with openpyxl, trying xlrd. Error: {e}")
+                df = pd.read_excel(file_path, sheet_name=sheet_name['short_file'], engine='xlrd')
             # Replace NaN values with None 
             parsed_df_row = df.where(pd.notnull(df), None)
             row = [sheet_name, parsed_df_row]

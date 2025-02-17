@@ -3,6 +3,12 @@
   <head>
     {% include 'head.html' %}
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+    <!-- jQuery -->
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <!-- DataTables JS -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
     <style>
       body {
         font-family: 'Roboto', sans-serif;
@@ -38,6 +44,10 @@
       .table-hover tbody tr:hover {
         background-color: #f5f5f5;
       }
+      #eventTable tbody tr td { 
+        border-top: none !important;
+        border-bottom: none !important; 
+      }
       .text-nowrap {
         white-space: nowrap;
       }
@@ -60,7 +70,7 @@
         <p>{{event['class']}}</p>
 
         <div class="table-responsive">
-          <table class="table table-hover table-striped table-sm">
+          <table id="eventTable" class="table table-hover table-striped table-responsive">
             <thead>
               <tr>
                 <th>Place</th>
@@ -73,7 +83,11 @@
             </thead>
             <tbody>
               {% for result in results %}
+              {% if result['eligible'] == 'Y' and result['athlete_id'] %}
+              <tr data-href="/athlete/{{result['athlete_id']}}">
+              {% else %}
               <tr>
+              {% endif %}
                 <td>{% if result['race_time'] | is_valid_time_format and result['place'] != 999 %}{{ result['place'] }}{% endif %}</td>
                 <td>{{ result['full_name'] }}</td>
                 <td>{{ result['short_name'] }}</td>
@@ -122,5 +136,29 @@
         </div>
     </div>
     {% include "footer.html" %}
+    <script>
+      $(document).ready(function () {
+        // Custom sorting function to handle None values
+        $.fn.dataTable.ext.type.order['place-pre'] = function (d) {
+          return d === '' ? Infinity : parseInt(d);
+        };
+
+        $('#eventTable').DataTable({
+          "order": [[ 0, "asc" ]], // Order by the first column (place) in ascending order
+          "pageLength": -1, // Show all entries
+          "columnDefs": [
+            { "type": "place", "targets": 0 } // Apply custom sorting to the first column
+          ]
+        });
+
+        // Add click event listener to each row
+        $('#eventTable tbody').on('click', 'tr', function () {
+          var href = $(this).data('href');
+          if (href && href !== '#') {
+            window.location.href = href;
+          }
+        });
+      });
+    </script>
   </body>
 </html>
