@@ -149,6 +149,16 @@
 
       document.addEventListener("DOMContentLoaded", function() {
         updateView();
+
+        // Add click event listener to each row
+        document.querySelectorAll('tr').forEach(function(row) {
+          row.addEventListener('click', function() {
+            var href = this.getAttribute('data-href');
+            if (href && href !== '#') {
+              window.location.href = href;
+            }
+          });
+        });
       });
     </script>
   </head>
@@ -293,7 +303,7 @@
                 </thead>
                 <tbody>
                   {% for result in filtered_results %}
-                    <tr class="{% if result in stats.top_5_recent_results %}table-success{% endif %}">
+                    <tr class="{% if result in stats.top_5_recent_results %}table-success{% endif %}" data-href="/event/{{result['short_desc']}}">
                       <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
                       <td>{{ result['long_desc'] }}</td>
                       <td>{{ result['class'] }}</td>
@@ -354,7 +364,7 @@
                 </thead>
                 <tbody>
                   {% for result in filtered_results %}
-                    <tr>
+                    <tr data-href="/event/{{result['short_desc']}}">
                       <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
                       <td>{{ result['long_desc'] }}</td>
                       <td class="text-end">{{ result['place'] }}</td>
