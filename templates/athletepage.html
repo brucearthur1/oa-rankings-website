@@ -331,7 +331,6 @@
                     <th class="text-end">Place</th>
                     <th class="text-end">Time</th>
                     <th class="text-end race-points">Points</th>
-                    <th>Details</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -343,9 +342,6 @@
                       <td class="text-end">{% if result['race_time'] | is_valid_time_format %}{{ result['place'] }}{% endif %}</td>
                       <td class="text-end">{% if result['race_time'] == '00:00:00' %}{% else %}{{ result['race_time'] }}{% endif %}</td>
                       <td class="text-end race-points">{{ result['race_points'] | int }}</td>
-                      <td> 
-                        <a href="/event/{{result['short_desc']}}" type="button" class="btn btn-outline-primary">Details</a>
-                      </td>
                     </tr>
                   {% endfor %}
                 </tbody>

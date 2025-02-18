@@ -1,6 +1,8 @@
 import pandas as pd
 from database_connection import connection
 from datetime import datetime, timedelta
+import logging
+
 
 def str_to_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d')
@@ -415,24 +417,38 @@ def load_event_stats(short_desc):
     return stats
 
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
 def load_event_from_db(short_file):
-    # Indiviudal event page with event summary and results, so use results_static as point in time calculation prior to any recalibration
+    # Individual event page with event summary and results, so use results_static as point in time calculation prior to any recalibration
     query1 = "SELECT * FROM events WHERE short_desc = %s"
     query2 = "SELECT results_static.*, athletes.id as athlete_id, athletes.eligible, clubs.* FROM results_static LEFT JOIN athletes ON results_static.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE results_static.race_code = %s ORDER BY place"
-    connection.autocommit(True)
-    with connection.cursor() as cursor:
-        cursor.execute(query1, short_file)
-        event = cursor.fetchone()
-        
-        # Load race codes data 
-        cursor.execute(query2, short_file)
-        data = cursor.fetchall()
-        results = []
-        for row in data:
-            results.append(row)
+    
+    if not short_file:
+        raise ValueError("The short_file parameter is None or empty.")
+    
+    try:
+        connection.autocommit(True)
+        with connection.cursor() as cursor:
+            logging.debug(f"Executing query1: {query1} with parameter: {short_file}")
+            cursor.execute(query1, (short_file,))
+            event = cursor.fetchone()
+            
+            if not event:
+                raise ValueError(f"No event found for short_desc: {short_file}")
+            
+            logging.debug(f"Executing query2: {query2} with parameter: {short_file}")
+            cursor.execute(query2, (short_file,))
+            data = cursor.fetchall()
+            results = []
+            for row in data:
+                results.append(row)
 
-        return event, results
-
+            return event, results
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        raise
 
 
 def load_events_from_db():

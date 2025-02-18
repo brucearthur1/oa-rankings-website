@@ -390,10 +390,13 @@ def events_page():
 # Indiviudal event page with event summary and results
 @app.route("/event/<short_file>")
 def show_event(short_file):
-    event, results = load_event_from_db(short_file)
-    if not event:
-        return "Not found", 404
-    
+    try:
+        event, results = load_event_from_db(short_file)
+        print(event)
+        print(results)
+    except Exception as e:
+        print(f"Failed to load event: {e}")
+
     # Convert race_time to datetime objects 
     for result in results: 
         if result['race_time']:
