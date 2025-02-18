@@ -154,22 +154,34 @@
       $.fn.dataTable.ext.type.order['date-dd-mm-yyyy-pre'] = function (date) {
         return moment(date, 'DD/MM/YYYY').unix();
       };
-      
+
       document.addEventListener("DOMContentLoaded", function() {
         updateView();
 
         // Initialize DataTables for all results tables
         $('table[id^="resultsTable_"]').DataTable({
         //  "ordering": false, // Disable default sorting
-          "pageLength": -1 // Show all entries
-          ,"columnDefs": [
+          "pageLength": -1, // Show all entries
+          "columnDefs": [
             {
               "targets": 0,
               "type": "date-dd-mm-yyyy"
+            },
+            {
+              "targets": 3,
+              "orderDataType": "dom-text-numeric"
             }
-          ]
-          ,"order": [[0, 'asc']]
+          ],
+          "order": [[0, 'desc']]
         });
+
+        // Custom sorting plugin for column 3 to sort numbers before non-numeric or blanks
+        $.fn.dataTable.ext.order['dom-text-numeric'] = function(settings, col) {
+          return this.api().column(col, {order: 'index'}).nodes().map(function(td, i) {
+            var val = $(td).text();
+            return $.isNumeric(val) ? parseFloat(val) : Number.MAX_VALUE;
+          });
+        };
 
         // Add click event listener to each row
         document.querySelectorAll('tr').forEach(function(row) {
