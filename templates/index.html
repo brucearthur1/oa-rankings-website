@@ -56,6 +56,9 @@
         bottom: 0;
         width: 100%;
       }
+      .athlete-row:hover {
+        cursor: pointer; /* Change cursor to hand pointer */
+      }
     </style>
     <script>
       function filterAthletes(listName, discipline) {
@@ -82,7 +85,7 @@
         athletes.forEach(function(athlete) {
           if ((athlete['list'].toLowerCase() === lowerListName || lowerListName === "all") && 
               (lowerListName !== 'junior men' && lowerListName !== 'junior women' || currentYear - athlete['yob'] < 21)) {
-            var row = `<div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-list="${athlete['list']}" data-discipline="${athlete['discipline']}" data-yob="${athlete['yob']}">
+            var row = `<div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-href="/athlete/${athlete['athlete_id']}" data-list="${athlete['list']}" data-discipline="${athlete['discipline']}" data-yob="${athlete['yob']}">
                 <div class="container">
                   <div class="row 'align-items': 'flex-start' 'line-height': '48px'">
                     <div class="col-2">
@@ -95,10 +98,6 @@
                     </div>
                     <div class="col-3 sum-top-5-points">
                       ${parseInt(athlete['sum_top_5_points'])}
-                    </div>
-                    <div class="col-3">
-                      <a href="/athlete/${athlete['athlete_id']}" type="button" class="btn btn-outline-primary btn-sm" style="--bs-btn-line-height: 16px;">
-                      Details</a>
                     </div>
                   </div>
                 </div>
@@ -121,6 +120,16 @@
           } else {
             button.classList.remove('active');
           }
+        });
+
+        // Add click event listener to each row
+        document.querySelectorAll('.athlete-row').forEach(function(row) {
+          row.addEventListener('click', function() {
+            var href = this.getAttribute('data-href');
+            if (href) {
+              window.location.href = href;
+            }
+          });
         });
       }
 
