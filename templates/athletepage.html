@@ -3,7 +3,17 @@
   <head>
     {% include 'head.html' %}
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <style>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+    <!-- jQuery -->
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <!-- DataTables JS -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <!-- moment.js -->
+    <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <!-- DataTables DateTime plug-in -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/plug-ins/1.11.5/sorting/datetime-moment.js"></script>
+   <style>
       body {
         font-family: 'Roboto', sans-serif;
         background-color: #f9f9f9;
@@ -110,13 +120,7 @@
         }
         var completedRaces = filteredResults.length;
 
-        // Debug statements
-        console.log("Current List: ", currentList);
-        console.log("Current Discipline: ", currentDiscipline);
-        console.log("Filtered Results: ", filteredResults);
-        console.log("Completed Races: ", completedRaces);
-
-        document.getElementById('completedRaces').innerText = completedRaces + " races in this category";
+         document.getElementById('completedRaces').innerText = completedRaces + " races in this category";
 
         if (completedRaces >= 500) {
           document.getElementById('completedRacesBadge').style.display = 'inline';
@@ -147,8 +151,25 @@
         }
       }
 
+      $.fn.dataTable.ext.type.order['date-dd-mm-yyyy-pre'] = function (date) {
+        return moment(date, 'DD/MM/YYYY').unix();
+      };
+      
       document.addEventListener("DOMContentLoaded", function() {
         updateView();
+
+        // Initialize DataTables for all results tables
+        $('table[id^="resultsTable_"]').DataTable({
+        //  "ordering": false, // Disable default sorting
+          "pageLength": -1 // Show all entries
+          ,"columnDefs": [
+            {
+              "targets": 0,
+              "type": "date-dd-mm-yyyy"
+            }
+          ]
+          ,"order": [[0, 'asc']]
+        });
 
         // Add click event listener to each row
         document.querySelectorAll('tr').forEach(function(row) {
