@@ -47,6 +47,9 @@
         border-top: none !important;
         border-bottom: none !important; 
       }
+      #athletesTable tbody tr:hover {
+        cursor: pointer; /* Change cursor to hand icon */
+      }
       .footer {
         padding: 20px 0;
         text-align: center;
@@ -72,20 +75,16 @@
               <th>Club</th>
               <th>State</th>
               <th>Latest Ranking Event</th>
-              <th>Details</th>
               <th style="display:none;">SortName</th>
             </tr>
           </thead>
           <tbody>
             {% for athlete in athletes %}
-            <tr>
+            <tr data-href="/athlete/{{athlete['id']}}">
               <td>{{ athlete['full_name'] }}</td>
               <td>{{ athlete['club_name'] }}</td>
               <td>{{ athlete['state'] }}</td>
               <td>{{ athlete['last_event_date'] }}</td>
-              <td> 
-                <a href="/athlete/{{athlete['id']}}" type="button" class="btn btn-outline-primary">Details</a>
-              </td>
               <td style="display:none;">
                 {% set names = athlete['full_name'].split(' ') %}
                 {{ names[-1] }}{{ ' ' }}{{ names[0] }}
@@ -102,10 +101,10 @@
     <script> 
       $(document).ready(function() {
         $('#athletesTable').DataTable({
-          "order": [[3, "desc"], [5, 'asc']],
+          "order": [[3, "desc"], [4, 'asc']],
           "pageLength": 100, // Set default number of entries to display to 100
           "columnDefs": [
-            { "targets": [5], "visible": false, "searchable": false },
+            { "targets": [4], "visible": false, "searchable": false },
             {
               "targets": 3,
               "type": "date",
@@ -115,6 +114,14 @@
             }
           ]
         }); 
+
+        // Add click event listener to each row
+        $('#athletesTable tbody').on('click', 'tr', function() {
+          var href = $(this).data('href');
+          if (href) {
+            window.location.href = href;
+          }
+        });
       }); 
     </script>
   </body>

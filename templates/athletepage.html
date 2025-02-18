@@ -63,6 +63,32 @@
         font-size: 1.5em;
         font-family: 'Georgia', serif;
       }
+
+      table[id^="resultsTable_"] tbody tr:hover {
+        cursor: pointer; /* Change cursor to hand icon */
+      }
+
+      .table-responsive {
+          overflow-x: auto !important;
+      }
+
+      @media (max-width: 650px) {
+        .table-responsive {
+          font-size: 12px;
+          overflow-x: auto !important;
+        }
+      }
+      @media (max-width: 550px) {
+        .table th:nth-child(3), .table td:nth-child(3) {
+          display: none;
+        }
+      }
+      @media (max-width: 500px) {
+        .table th:nth-child(5), .table td:nth-child(5) {
+          display: none;
+        }
+      }
+
     </style>
     <script>
       var currentList = '{{ segmented_stats.keys() | list | first if segmented_stats else "default_list" }}';
