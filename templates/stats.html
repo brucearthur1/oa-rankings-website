@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 20px;
+      }
+      h4 {
+        margin-bottom: 1rem;
+        color: #007bff;
+        text-align: center;
+      }
+      .table {
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .table th, .table td {
+        border-top: none;
+        border-bottom: 1px solid #dee2e6;
+        padding: 3px !important; /* Set the padding for table cells with !important */
+      }
+      .table th {
+        background-color: #f1f1f1;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+      }
+      #eventTable tbody tr td { 
+        border-top: none !important;
+        border-bottom: none !important; 
+      }
+      #eventTable tbody tr:hover {
+        cursor: pointer; /* Change cursor to hand icon */
+      }
+      .text-nowrap {
+        white-space: nowrap;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+      @media (max-width: 500px) {
+        #eventTable {
+          font-size: 12px;
+        }
+      }
+      @media (max-width: 450px) {
+        #eventTable {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 400px) {
+        #eventTable {
+          font-size: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
+
+        <h4 class="mb-2"><span style='color:#007bff'>Statistics</span></h4>
+        
+
+        <div class="table-responsive">
+          <table id="eventTable" class="table table-hover table-striped table-responsive">
+            <thead>
+                <tr>
+                    <th>Athlete</th>
+                    <th class="text-right">Ranking Races</th>
+                    <th class="text-right">Total Points</th>
+                    <th class="text-right">Avg Points</th>
+                    <th class="text-right">Highest Score</th>
+                    <th class="text-right">Best Place</th>
+                    <th class="text-right">Race Wins</th>
+                    <th>since Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for athlete in athletes %}
+                {% if athlete['athlete_id'] %}
+                <tr data-href="/athlete/{{athlete['athlete_id']}}">
+                {% else %}
+                <tr>
+                {% endif %}
+                      <td>{{ athlete['full_name'] }}</td>
+                    <td class="text-right">{{ athlete['race_count'] }}</td>
+                    <td class="text-right">{{ athlete['total_points'] | int | number_format }}</td>
+                    <td class="text-right">{{ athlete['avg_points'] | int | number_format }}</td>
+                    <td class="text-right">{{ athlete['max_points'] | int | number_format }}</td>
+                    <td class="text-right">{{ athlete['best_place'] }}</td>
+                    <td class="text-right">{{ athlete['race_wins'] }}</td>
+                    <td>{{ athlete['since_date'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        
+          </table>
+        </div>
+    </div>
+    {% include "footer.html" %}
+    <script>
+      $(document).ready(function () {
+
+        $('#eventTable').DataTable({
+          "order": [[ 1, "desc" ]], // Order by the first column (place) in ascending order
+          "pageLength": 100, // Show all entries
+        });
+
+        // Add click event listener to each row
+        $('#eventTable tbody').on('click', 'tr', function () {
+          var href = $(this).data('href');
+          if (href && href !== '#') {
+            window.location.href = href;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+
+
+
+

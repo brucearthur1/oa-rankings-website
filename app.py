@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year, parse_result_from_df
 from datetime import datetime, timedelta, timezone
 from formatting import convert_to_time_format, is_valid_time_format
@@ -29,12 +29,18 @@ def _jinja2_filter_seconds_to_time(seconds):
     """Convert seconds to HH:MM:SS format."""
     return str(timedelta(seconds=seconds))
 
+# Custom filter to format numbers
+def number_format(value):
+    return "{:,}".format(value)
+
 # Register the custom filter with Jinja2
 app.jinja_env.filters['_jinja2_filter_seconds_to_time'] = _jinja2_filter_seconds_to_time
 
 app.jinja_env.filters['_jinja2_filter_datetime'] = _jinja2_filter_datetime
 
 app.jinja_env.filters['is_valid_time_format'] = is_valid_time_format
+
+app.jinja_env.filters['number_format'] = number_format
 
 
 #home page for Rankings
@@ -522,6 +528,14 @@ def uploaded_races():
         
     #display an acknowledgement 
     return render_template('races_submitted.html', df_list=df_list )
+
+
+@app.route("/stats")
+def stats_page():
+    athletes = load_races_by_athlete()
+    print(athletes)
+    return render_template('stats.html', athletes=athletes)
+
 
 
 # icon for browser header

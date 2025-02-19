@@ -477,6 +477,37 @@ def load_race_tmp(race_code):
         return result
 
 
+def load_races_by_athlete():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = """
+            select 
+                results.full_name
+                ,athletes.id as athlete_id
+                ,count(results.id) as race_count
+                ,sum(race_points) as total_points
+                ,avg(case when race_points > 0 then race_points end) as avg_points
+                ,max(cast(race_points as unsigned)) as max_points
+                ,min(place) as best_place
+                ,count(case when place = 1 then 1 end) as race_wins
+                ,min(events.date) as since_date
+            from results
+            left join athletes on results.full_name = athletes.full_name
+            left join events on results.race_code = events.short_desc
+            where 
+                athletes.eligible <> 'N'
+            group by
+                results.full_name
+                ,athletes.id
+            order by
+                2 desc
+            """
+        cursor.execute(query)
+        result = cursor.fetchall()
+        return result
+                      
+                       
+
 def load_rankings_from_db():
     connection.autocommit(True)
     with connection.cursor() as cursor:
