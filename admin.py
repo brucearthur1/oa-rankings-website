@@ -2,7 +2,7 @@ from datetime import datetime
 from excel import import_events_from_excel, add_multiple_races_for_list_year
 from pytz import timezone
 from database import confirm_discipline
-from rankings import recalibrate_year
+from rankings import recalibrate
 from background import upload_year_WRE_races
 
 sydney_tz = timezone('Australia/Sydney')
@@ -52,7 +52,8 @@ def import_year(year):
     confirm_discipline(year)
 
     # recalibrate AUS events for the year
-    recalibrate_year(year)
+    last_day_of_year = datetime(year, 12, 31).date()
+    recalibrate(last_day_of_year, 1)
 
 
     print(f"finished import_year {year} at: {datetime.now(sydney_tz)}")

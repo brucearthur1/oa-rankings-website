@@ -10,7 +10,7 @@ from threading import Thread
 from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races
 from pytz import timezone
 from browserless import browserless_selenium
-from rankings import calculate_race_rankings, recalibrate_year
+from rankings import calculate_race_rankings, recalibrate
 from admin import import_year
 
 
@@ -149,7 +149,8 @@ def admin_recalibrate():
 @app.route("/admin/recalibrate_year")
 def admin_recalibrate_year():
     input = request.args.get('year')
-    update = recalibrate_year(input)
+    last_day_of_year = datetime(int(input), 12, 31).date()
+    update = recalibrate(last_day_of_year, 1)
     return render_template('update_submitted.html', update=update)    
 
 @app.route("/athlete/add")

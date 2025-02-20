@@ -1,5 +1,5 @@
-from database import load_race_tmp, load_event_date, calc_average, insert_new_results, insert_event_statistics, update_event_ip, delete_from_race_tmp, load_wre_scores, load_aus_scores, recalibrate_aus_scores
-from datetime import datetime
+from database import load_race_tmp, load_event_date, calc_average, insert_new_results, insert_event_statistics, update_event_ip, delete_from_race_tmp, load_wre_scores, load_aus_scores, recalibrate_aus_scores, load_aus_scores_aus
+from datetime import datetime, timedelta
 from pytz import timezone
 
 sydney_tz = timezone('Australia/Sydney')
@@ -16,7 +16,6 @@ def calculate_race_rankings(race_code):
     # load race times from race_tmp table
     race_times = load_race_tmp(race_code)
     print(f"Ready to calculate rankings at: {datetime.now(sydney_tz)}")
-    print(type(race_times))
     print(race_times)
 
     mt, st, mp, sp = None, None, None, None
@@ -28,7 +27,7 @@ def calculate_race_rankings(race_code):
     #########################################################################################################################################################
     # Need to recalibrate rankings for this list in the 12 months prior to the event date
     #########################################################################################################################################################
-
+    recalibrate(event['date'], 1)
     
     # enhancement factor is the importance of the race
     # enhancement factor is usually 1.0 for Australian events, except Australian Championships (1.05)
@@ -226,39 +225,81 @@ def calculate_race_rankings(race_code):
     return
 
 
-def recalibrate_year(year):
+def recalibrate(end_date, years=1):
     
-    print(f"Starting to recalibrate { year } at: {datetime.now(sydney_tz)}")
+    if end_date >= datetime.strptime('01/01/2018', '%d/%m/%Y').date():
+        print(f"Starting to recalibrate {years} year(s) to {end_date} at: {datetime.now(sydney_tz)}")
 
-    for list in ['men','women','junior men','junior women']:
-        # recalibrate each list
-        print(list)
-        # get athlete_list, average, SD for athletes with WRE points in list in year
-        wre_athlete_list, wre_mp, wre_sp = load_wre_scores(mylist=list, year=year)
-        print(f"athlete_list: {wre_athlete_list}")
-        print(f"wre_mp: {wre_mp}")
-        print(f"wre_sp: {wre_sp}")
+        for list in ['men','women','junior men','junior women']:
+            # recalibrate each list
+            print(list)
+            # get athlete_list, average, SD for athletes with WRE points in list in years to end_date
+            wre_athlete_list, wre_mp, wre_sp = load_wre_scores(mylist=list, start_date=end_date - timedelta(days=365*years), end_date=end_date)
+            print(f"athlete_list: {wre_athlete_list}")
+            print(f"wre_mp: {wre_mp}")
+            print(f"wre_sp: {wre_sp}")
 
-        # get athlete_list, average, SD for all athletes with AUS points in list in year
-        aus_mp, aus_sp = load_aus_scores(mylist=list, year=year)
-        print(f"aus_mp: {aus_mp}")
-        print(f"aus_sp: {aus_sp}")
-
-        if wre_mp and wre_sp and aus_mp and aus_sp:
-            # apply recalibration to AUS results for this list and year
-            # new score = (original - aus_mp)/aus_sp * wre_sp + wre_mp
-            recalibrate_aus_scores(mylist=list, year=year, wre_mp=wre_mp, wre_sp=wre_sp, aus_mp=aus_mp, aus_sp=aus_sp)
-        else:
-            print("not enough data to recalibrate")
-
-        # re-eheck the new aus_mp and aus_sp
-        # get athlete_list, average, SD for all athletes with AUS points in list in year
-        aus_mp, aus_sp = load_aus_scores(mylist=list, year=year)
-        print(f"calibrated aus_mp: {aus_mp}")
-        print(f"calibrated aus_sp: {aus_sp}")
+            # get athlete_list, average, SD for all athletes with AUS points in list in years to end_date
+            aus_mp, aus_sp = load_aus_scores(mylist=list, start_date=end_date - timedelta(days=365*years), end_date=end_date)
+            print(f"aus_mp: {aus_mp}")
+            print(f"aus_sp: {aus_sp}")
 
 
-    data = {}
-    data['full_name'] = "recalibration done"
-    print(f"Finished recalibrating { year } at: {datetime.now(sydney_tz)}")
+            if wre_mp and wre_sp and aus_mp and aus_sp:
+                # apply recalibration to AUS results for this list and year
+                # new score = (original - aus_mp)/aus_sp * wre_sp + wre_mp
+                recalibrate_aus_scores(mylist=list, start_date_dt=end_date - timedelta(days=365*years), end_date_dt=end_date, wre_mp=wre_mp, wre_sp=wre_sp, aus_mp=aus_mp, aus_sp=aus_sp)
+            else:
+                print("not enough data to recalibrate")
+
+            # re-check the new aus_mp and aus_sp
+            # get athlete_list, average, SD for all athletes with AUS points in list in year
+            aus_mp, aus_sp = load_aus_scores(mylist=list, start_date=end_date - timedelta(days=365*years), end_date=end_date)
+            print(f"calibrated aus_mp: {aus_mp}")
+            print(f"calibrated aus_sp: {aus_sp}")
+
+        data = {}
+        data['full_name'] = "recalibration done"
+    else:
+        # end_date is in the past prior to 2018
+        print(f"End date {end_date} is in the past. Calibrate against avg and sd from 2018 & 2024.")
+
+        for list in ['men','women','junior men','junior women']:
+            # recalibrate each list
+            print(list)
+            # get average, SD for athletes with AUS points in AUS races list between 2018 & 2024
+            aus_mp_base, aus_sp_base = load_aus_scores_aus(mylist=list, start_date=datetime.strptime('01/01/2018', '%d/%m/%Y').date(), end_date=datetime.strptime('31/12/2024', '%d/%m/%Y').date())
+            print(f"aus_mp_base: {aus_mp_base}")
+            print(f"aus_sp_base: {aus_sp_base}")
+            if list in ['junior men','junior women']:
+                if aus_mp_base > 150:
+                    aus_mp_base = 150
+                    print(f"aus_mp_base capped at 150")
+            else:
+                if aus_sp_base > 200:
+                    aus_sp_base = 200
+                    print(f"aus_sp_base capped at 200") 
+            # get average, SD for all athletes with AUS points in AUS races in list in year to end_date
+            aus_mp, aus_sp = load_aus_scores_aus(mylist=list, start_date=end_date - timedelta(days=365*years), end_date=end_date)
+            print(f"aus_mp: {aus_mp}")
+            print(f"aus_sp: {aus_sp}")
+
+            if aus_mp_base and aus_sp_base and aus_mp and aus_sp:
+                # apply recalibration to AUS results for this list and year
+                # new score = (original - aus_mp)/aus_sp * wre_sp + wre_mp
+                recalibrate_aus_scores(mylist=list, start_date_dt=end_date - timedelta(days=365*years), end_date_dt=end_date, wre_mp=aus_mp_base, wre_sp=aus_sp_base, aus_mp=aus_mp, aus_sp=aus_sp)
+                #print("recalibrate_aus_scores not implemented")
+            else:
+                print("not enough data to recalibrate")
+
+            # re-check the new aus_mp and aus_sp
+            # get athlete_list, average, SD for all athletes with AUS points in list in year
+            aus_mp, aus_sp = load_aus_scores_aus(mylist=list, start_date=end_date - timedelta(days=365*years), end_date=end_date)
+            print(f"calibrated aus_mp: {aus_mp}")
+            print(f"calibrated aus_sp: {aus_sp}")
+
+        data = {}
+        data['full_name'] = "recalibration done"
+
+    print(f"Finished recalibrating {years} year(s) at: {datetime.now(sydney_tz)}")
     return data

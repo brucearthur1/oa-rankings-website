@@ -287,40 +287,33 @@ def load_unmatched_athletes():
     return unmatched_athletes
 
 
-def load_aus_scores(mylist, year):
-    stats_query = """
+
+
+def load_aus_scores(mylist, start_date, end_date):
+    aus_stats_query = """
         SELECT 
-        avg(race_points) as mp,
-        stddev(race_points) as sp
+            avg(race_points) as mp,
+            stddev(race_points) as sp
         FROM results 
         INNER JOIN events ON results.race_code = events.short_desc 
         WHERE events.short_file <> 'WRE' 
-        AND YEAR(events.date) = %s 
-        AND LOWER(events.list) = %s
-        and race_points > 10
+        AND events.date between %s and %s
+        AND race_points > 10
+        AND LOWER(%s) = events.list
         and full_name in
         (
             SELECT DISTINCT results.full_name
             FROM results 
             INNER JOIN events ON results.race_code = events.short_desc 
-            INNER JOIN athletes ON athletes.full_name = results.full_name
             WHERE events.short_file = 'WRE' 
-            AND YEAR(events.date) = %s
-            and race_points > 10
-            and (    
-                (lower(gender) = 'm' AND lower(%s) = 'men')
-                    OR
-                (lower(gender) = 'm' AND lower(%s) = 'junior men' and athletes.yob > cast(%s as unsigned integer) - 21 )
-                    OR
-                (lower(gender) = 'f' AND lower(%s) = 'women')
-                    OR
-                (lower(gender) = 'f' AND lower(%s) = 'junior women' and athletes.yob > cast(%s as unsigned integer) - 21 )
-            )
+            AND events.date between %s and %s
+            AND race_points > 10
+            AND LOWER(%s) = events.list
         )
         """
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute(stats_query, (year, mylist, year, mylist, mylist, year, mylist, mylist, year))
+        cursor.execute(aus_stats_query, (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), mylist, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), mylist))
         data = cursor.fetchone()
 
     mp = data['mp']
@@ -329,61 +322,70 @@ def load_aus_scores(mylist, year):
     return mp, sp
 
 
-
-def load_wre_scores(mylist, year):
-    query = """
-        SELECT DISTINCT results.full_name
-        FROM results 
-        INNER JOIN events ON results.race_code = events.short_desc 
-        INNER JOIN athletes ON athletes.full_name = results.full_name
-        WHERE events.short_file = 'WRE' 
-        AND YEAR(events.date) = %s
-        and race_points > 10
-        and (    
-            (lower(gender) = 'm' AND lower(%s) = 'men')
-                OR
-            (lower(gender) = 'm' AND lower(%s) = 'junior men' and athletes.yob > cast(%s as unsigned integer) - 21 )
-                OR
-            (lower(gender) = 'f' AND lower(%s) = 'women')
-                OR
-            (lower(gender) = 'f' AND lower(%s) = 'junior women' and athletes.yob > cast(%s as unsigned integer) - 21 )
-        )
-    """
-    connection.autocommit(True)
-    with connection.cursor() as cursor:
-        cursor.execute(query, (year, mylist,  mylist, year, mylist,  mylist, year))
-        data = cursor.fetchall()
-
-    athlete_list = data if data else []
-
-    stats_query = """
+def load_aus_scores_aus(mylist, start_date, end_date):
+    aus_stats_query = """
         SELECT 
-        avg(race_points) as mp,
-        stddev(race_points) as sp
+            avg(race_points) as mp,
+            stddev(race_points) as sp
         FROM results 
         INNER JOIN events ON results.race_code = events.short_desc 
-        INNER JOIN athletes ON athletes.full_name = results.full_name
-        WHERE events.short_file = 'WRE' 
-        AND YEAR(events.date) = %s
-        and race_points > 10
-        and (    
-            (lower(gender) = 'm' AND lower(%s) = 'men')
-                OR
-            (lower(gender) = 'm' AND lower(%s) = 'junior men' and athletes.yob > cast(%s as unsigned integer) - 21 )
-                OR
-            (lower(gender) = 'f' AND lower(%s) = 'women')
-                OR
-            (lower(gender) = 'f' AND lower(%s) = 'junior women' and athletes.yob > cast(%s as unsigned integer) - 21 )
-        )
-    """
+        WHERE events.short_file <> 'WRE' 
+        AND events.date between %s and %s
+        AND race_points > 10
+        AND LOWER(%s) = events.list
+        """
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute(stats_query, (year, mylist, mylist, year, mylist, mylist, year ))
+        cursor.execute(aus_stats_query, (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), mylist))
         data = cursor.fetchone()
 
     mp = data['mp']
     sp = data['sp']
 
+    return mp, sp
+
+
+def load_wre_scores(mylist, start_date, end_date):
+    # get wre athletes for the list in the date range
+    # parameters start_date and end_date are in date format
+    wre_athletes_query = """
+        SELECT DISTINCT results.full_name
+        FROM results 
+        INNER JOIN events ON results.race_code = events.short_desc 
+        WHERE events.short_file = 'WRE' 
+        AND events.date between %s and %s
+        AND race_points > 10
+        AND LOWER(%s) = events.list
+        """
+
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(wre_athletes_query, (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), mylist))
+        data = cursor.fetchall()
+    athlete_list = data if data else []
+
+    # get wre stats for the list in the date range
+    wre_stats_query = """
+        SELECT 
+            avg(race_points) as mp,
+            stddev(race_points) as sp
+        FROM results 
+        INNER JOIN events ON results.race_code = events.short_desc 
+        WHERE events.short_file = 'WRE' 
+        AND events.date between %s and %s
+        AND race_points > 10
+        AND LOWER(%s) = events.list
+        """
+
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(wre_stats_query, (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), mylist))
+        data = cursor.fetchone()
+
+    mp = data['mp']
+    sp = data['sp']
+
+    print(f"Overall Average Points (mp): {mp}, Overall Standard Deviation (sp): {sp}")
     return athlete_list, mp, sp
 
 
@@ -542,9 +544,15 @@ def load_results_for_all_athletes():
         return results
 
 
-def recalibrate_aus_scores(mylist, year, wre_mp, wre_sp, aus_mp, aus_sp): 
+def recalibrate_aus_scores(mylist, start_date_dt, end_date_dt, wre_mp, wre_sp, aus_mp, aus_sp): 
+    start_date = start_date_dt.strftime('%Y-%m-%d')
+    end_date = end_date_dt.strftime('%Y-%m-%d')
+    print(f"before base points: {wre_mp}, {wre_sp}")
+    print(f"before current year points: {aus_mp}, {aus_sp}")
+
+
     with connection.cursor() as cursor:
-        # update data 
+        # recalibrate ranking points. Make sure that new_points is no less than 10
         update_query = """
             WITH temp AS (
                 SELECT 
@@ -564,13 +572,13 @@ def recalibrate_aus_scores(mylist, year, wre_mp, wre_sp, aus_mp, aus_sp):
                     race_points > 10 
                     AND short_file <> 'WRE'
                     AND lower(list) = %s
-                    AND YEAR(events.date) = %s
+                    AND events.date between %s and %s
             )
             UPDATE results
             INNER JOIN temp ON results.id = temp.myid
             SET results.race_points = temp.new_points
         """
-        cursor.execute(update_query, (aus_mp, aus_sp, wre_sp, wre_mp, mylist, year )) 
+        cursor.execute(update_query, (aus_mp, aus_sp, wre_sp, wre_mp, mylist, start_date, end_date )) 
         connection.commit() 
         print("Data updated successfully!")
 
