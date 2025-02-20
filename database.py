@@ -553,7 +553,10 @@ def recalibrate_aus_scores(mylist, year, wre_mp, wre_sp, aus_mp, aus_sp):
                     results.race_points,
                     -- update the avg_a, stddev_a, stddev_wr, avg_wr  
                     -- (results.race_points - int(aus_mp)) / aus_sp * wre_sp + wre_mp AS new_points
-                    (results.race_points - cast(%s as float)) / cast(%s as float) * cast(%s as float) + cast(%s as float) AS new_points
+                    GREATEST(
+                        (results.race_points - CAST(%s AS FLOAT)) / CAST(%s AS FLOAT) * CAST(%s AS FLOAT) + CAST(%s AS FLOAT),
+                        10
+                    ) AS new_points
                 FROM results
                 INNER JOIN events
                     ON results.race_code = events.short_desc
