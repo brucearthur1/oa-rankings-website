@@ -1,6 +1,6 @@
 from datetime import datetime
 from scraping import load_from_WRE, load_latest_from_WRE, load_year_from_WRE
-from database import store_events_and_results, store_race_tmp_from_eventor, store_events_from_excel
+from database import store_events_and_results, store_race_tmp_from_eventor, store_events_from_excel, confirm_discipline
 from scraping import setup_Chrome_driver
 from eventor import load_race_from_eventor
 from rankings import calculate_race_rankings
@@ -84,6 +84,9 @@ def process_and_store_eventor_event(input):
         print(f"preparing to calculate")
         print(event)
         calculate_race_rankings(event['short_desc'])
+        my_year = datetime.strptime(event['date'], '%Y-%m-%d').year
+        # Remember to review Discipline  (discipline = 'Middle/Long' by default)
+        confirm_discipline(my_year)
 
 
     print("Finished process_and_store_eventor_event:", datetime.now())

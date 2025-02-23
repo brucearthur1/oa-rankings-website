@@ -26,11 +26,7 @@ def calculate_race_rankings(race_code):
         event = load_event_date(race_code)
         print(event)
         
-        #########################################################################################################################################################
-        ##### TO DO
-        #########################################################################################################################################################
-        # Need to recalibrate rankings for this list in the 12 months prior to the event date
-        #########################################################################################################################################################
+        #  recalibrate rankings for this list in the 12 months prior to the event date
         recalibrate(event['date'], 1)
         
         # enhancement factor is the importance of the race
