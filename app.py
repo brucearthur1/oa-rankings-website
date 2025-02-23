@@ -7,11 +7,12 @@ from formatting import convert_to_time_format, is_valid_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
 from threading import Thread
-from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races
+from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event
 from pytz import timezone
 from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate
 from admin import import_year
+from eventor import load_race_from_eventor
 
 
 
@@ -434,6 +435,11 @@ def imported_events():
     #display an acknowledgement 
     return render_template('events_submitted.html', df_html=df_html)
 
+# admin function to allow the user to enter the Excel file and race_code to import
+@app.route('/race/read_eventor')
+def race_read_eventor():
+    return render_template('race_read_eventor.html')
+
 
 # admin function to allow the user to enter the IOF event_id to import from WRE
 @app.route('/race/read_WRE')
@@ -492,6 +498,22 @@ def uploaded_race():
     df_html = df.to_html()
     #display an acknowledgement 
     return render_template('race_submitted.html', df_html=df_html)
+
+# Admin function to read a race times from eventor, calculate rankings and store
+############
+###### under construction
+###################################################################################
+@app.route("/race/new_eventor", methods=['post'])
+def race_new_eventor():
+    input = request.form
+    print(input)
+    process_and_store_eventor_event(input)
+
+    df_html = {}
+    #display an acknowledgement 
+    return render_template('race_submitted.html', df_html=df_html)
+
+
 
 # Admin function to read the input file, load race data from Excel, and store race data
 @app.route("/race/new/<event_code>")

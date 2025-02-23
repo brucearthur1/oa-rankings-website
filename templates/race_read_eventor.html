@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
+
+    
+        <h4>Upload new race from Eventor and calculate rankings</h4>
+        <form action="/race/new_eventor" method="post">
+            <div class="mb-2">
+            <label>Eventor race id</label><br>
+            <input type="text" name="eventor_race_id" placeholder='21375'>
+            </div>
+
+            <div class="mb-2">
+            <label>Class</label><br>
+            <input type="text" name="class" placeholder='M21E'>
+            </div>
+
+            <input type="submit">
+
+        </form>
+    </div>
+    {% include "footer.html" %}
+  </body>
+</html>
