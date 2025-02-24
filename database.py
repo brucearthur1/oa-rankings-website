@@ -129,12 +129,18 @@ def confirm_discipline(year):
             )
             and year(date) = %s
         """
-        print(query)
         cursor.execute(query, (year))
         connection.commit()
         print(f"Disciplines updated for { year }")
     
 
+
+def delete_from_event_stats(id):
+    with connection.cursor() as cursor:
+        query = "DELETE FROM event_stats WHERE id = %s"
+        cursor.execute(query, (id,))
+        connection.commit()
+        print("event_stats data deleted successfully!")
 
 
 def delete_from_race_tmp(short_desc):
@@ -143,6 +149,15 @@ def delete_from_race_tmp(short_desc):
         cursor.execute(query, (short_desc,))
         connection.commit()
         print("race_tmp data deleted successfully!")
+
+def delete_from_results(short_desc):
+    with connection.cursor() as cursor:
+        query1 = "DELETE FROM results WHERE race_code = %s"
+        query2 = "DELETE FROM results_static WHERE race_code = %s"
+        cursor.execute(query1, (short_desc,))
+        cursor.execute(query2, (short_desc,))
+        connection.commit()
+        print("results and results_static data deleted successfully!")
 
 
 def get_sheets_from_event(list, year):
@@ -852,7 +867,8 @@ def store_race_tmp_from_excel(sheetname, data_to_insert):
 
 
 
-def store_race_tmp_from_eventor(short_desc, data_to_insert):
+def store_race_tmp(short_desc, data_to_insert):
+    print(f"store_race_tmp starting for {short_desc}")
     with connection.cursor() as cursor:
         
         # Set race_points to 0 if it is None

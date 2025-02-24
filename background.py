@@ -1,9 +1,21 @@
 from datetime import datetime
 from scraping import load_from_WRE, load_latest_from_WRE, load_year_from_WRE
-from database import store_events_and_results, store_race_tmp_from_eventor, store_events_from_excel, confirm_discipline
+from database import store_events_and_results, store_race_tmp, store_events_from_excel, confirm_discipline
 from scraping import setup_Chrome_driver
 from eventor import load_race_from_eventor
 from rankings import calculate_race_rankings
+from oldsite import load_year_old_site
+
+
+def get_year_old_site(input):
+    print("get_year_old_site started:", datetime.now())
+    driver = setup_Chrome_driver()
+    new_events, new_results = load_year_old_site(input, driver)
+    driver.quit()
+    print("Finished scraping from old site:", datetime.now())
+    #store_events_and_results(new_events, new_results)
+
+
 
 def process_and_store_data(input):
     print("process_and_store_data started:", datetime.now())
@@ -80,7 +92,7 @@ def process_and_store_eventor_event(input):
     data_to_insert = [tuple(result.values()) for result in data_to_insert]
     print(f"data_to_insert: {data_to_insert}")
     short_desc = "au" + input['eventor_race_id'] + input['class']
-    store_race_tmp_from_eventor(short_desc, data_to_insert)
+    store_race_tmp(short_desc, data_to_insert)
 
 
     for event in new_events:

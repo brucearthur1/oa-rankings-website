@@ -7,7 +7,7 @@ from formatting import convert_to_time_format, is_valid_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
 from threading import Thread
-from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event
+from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event, get_year_old_site
 from pytz import timezone
 from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate
@@ -615,6 +615,20 @@ def upload_latest_wre_races():
     print("Render response upload_latest_wre_races():", datetime.now(sydney_tz))
     return render_template('events_submitted.html', df_html=input)
 
+
+@app.route("/races/read_old_site")
+def read_old_site():
+    return render_template('read_old_site.html')
+
+@app.route("/races/year_old_site",  methods=['POST'])
+def year_old_site():
+    year = request.form
+    print(f"Starting year_old_site(): {year} ", datetime.now(sydney_tz))
+    get_year_old_site(year)
+    # Render the template using Jinja2
+    print("Render response year_old_site():", datetime.now(sydney_tz))
+    return render_template('events_submitted.html', df_html=input)
+    
 
 @app.route("/races/year_WRE")
 def year_WRE():
