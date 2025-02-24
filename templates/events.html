@@ -85,7 +85,7 @@
               <th>Long Description</th>
               <th>Type</th>
               <th>Class</th>
-              <th>Details</th>
+              <!-- <th></th> -->
               </tr>
             </thead>
             <tbody>
@@ -95,7 +95,7 @@
               <td>{{ event.long_desc }}</td>
               <td>{{ event.discipline }}</td>
               <td>{{ event.class }}</td>
-              <td>
+              <!-- <td>
                 {% if event.short_file == 'WRE' %} 
                     {% if event.iof_id is not none %}
                     {% else %}
@@ -111,7 +111,7 @@
                   <a href="/race/new/{{ event.short_file }}?list={{ event.list }}" type="button" class="btn btn-outline-warning">Upload</a>
                   {% endif %}
                 {% endif %} 
-              </td>
+              </td> -->
               </tr>
               {% endfor %}
             </tbody>

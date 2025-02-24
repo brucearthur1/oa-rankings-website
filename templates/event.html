@@ -97,7 +97,7 @@
                 <th>Club</th>
                 <th class="text-end">Time</th>
                 <th class="text-end">Ranking Points</th>
-                <th>Details</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -117,8 +117,8 @@
                       *
                   {% elif result['athlete_id'] %} 
                   {% else %}
-                      <a href="/athlete/add?full_name={{ result['full_name'] | urlencode }}&list={{ event['list'] | urlencode }}" type="button" class="btn btn-outline-warning">Add</a>
-                      <a href="/athlete/ineligible?full_name={{ result['full_name'] | urlencode }}&list={{ event['list'] | urlencode }}" type="button" class="btn btn-outline-warning">*</a>
+                      <!-- <a href="/athlete/add?full_name={{ result['full_name'] | urlencode }}&list={{ event['list'] | urlencode }}" type="button" class="btn btn-outline-warning">Add</a>
+                      <a href="/athlete/ineligible?full_name={{ result['full_name'] | urlencode }}&list={{ event['list'] | urlencode }}" type="button" class="btn btn-outline-warning">*</a> -->
                   {% endif %} 
                 </td>
               </tr>

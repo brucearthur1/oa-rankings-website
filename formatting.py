@@ -17,8 +17,10 @@ def convert_to_time_format(time_str):
 
 def is_valid_time_format(time_str):
     try: 
-        datetime.strptime(time_str, "%H:%M:%S") 
-        return True 
+        if time_str is not None:
+            datetime.strptime(time_str, "%H:%M:%S")
+            return True
+        return False
     except ValueError:
         return False 
 

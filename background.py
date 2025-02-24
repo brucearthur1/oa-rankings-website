@@ -70,6 +70,9 @@ def process_and_store_eventor_event(input):
     data_to_insert = [{k: v for k, v in result.items() if k not in ['race_code', 'club']} for result in new_results]
     # convert MM:SS to 00:MM:SS
     for result in data_to_insert:
+        if isinstance(result['race_time'], str) and result['race_time'].startswith('-'):
+            result['race_time'] = "no time"
+            result['place'] = 0
         if isinstance(result['race_time'], str) and ':' in result['race_time']:
             parts = result['race_time'].split(':')
             if len(parts) == 2:
@@ -85,8 +88,10 @@ def process_and_store_eventor_event(input):
         print(event)
         calculate_race_rankings(event['short_desc'])
         my_year = datetime.strptime(event['date'], '%Y-%m-%d').year
-        # Remember to review Discipline  (discipline = 'Middle/Long' by default)
-        confirm_discipline(my_year)
+        if my_year:
+            print(my_year)
+            # Remember to review Discipline  (discipline = 'Middle/Long' by default)
+            confirm_discipline(int(my_year))
 
 
     print("Finished process_and_store_eventor_event:", datetime.now())

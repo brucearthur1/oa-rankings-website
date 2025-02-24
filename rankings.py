@@ -7,8 +7,11 @@ sydney_tz = timezone('Australia/Sydney')
 def time_to_seconds(time_str):
     """Convert a time string (HH:MM:SS) to total seconds. If the format is incorrect, return None."""
     try:
-        h, m, s = map(int, time_str.split(':'))
-        return h * 3600 + m * 60 + s
+        if time_str is None:
+            return None
+        else:
+            h, m, s = map(int, time_str.split(':'))
+            return h * 3600 + m * 60 + s
     except ValueError:
         return None
 

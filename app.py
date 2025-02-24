@@ -47,6 +47,7 @@ app.jinja_env.filters['number_format'] = number_format
 #home page for Rankings
 @app.route('/')
 def index():
+    print(f"starting index at: {datetime.now(sydney_tz)}")
     athletes = load_rankings_from_db()  # Your function to get athletes
     current_date = datetime.now(sydney_tz).date()
     twelve_months_ago = current_date - timedelta(days=365)
@@ -106,6 +107,7 @@ def index():
     unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
 
     formatted_date = current_date.strftime('%d %B %Y')
+    print(f"Ending index at: {datetime.now(sydney_tz)}")
     return render_template('index.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists, current_date=formatted_date)
 
 ##############
@@ -242,6 +244,7 @@ def list_athletes():
 # individual Athlete
 @app.route("/athlete/<id>")
 def show_athlete(id):
+    print(f"starting show_athlete at: {datetime.now(sydney_tz)}")
     athlete = load_athlete_from_db(id)
     if not athlete:
         return "Not found", 404
@@ -349,6 +352,7 @@ def show_athlete(id):
                 )
                 athlete_ranking[list_name][discipline] = next((rank + 1 for rank, (name, _) in enumerate(sorted_rankings) if name == athlete['full_name']), None)
 
+    print(f"ending show_athlete at: {datetime.now(sydney_tz)}")
     return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, athlete_ranking=athlete_ranking, datetime=datetime)
 ###################
 
@@ -556,7 +560,7 @@ def uploaded_races():
 @app.route("/stats")
 def stats_page():
     athletes = load_races_by_athlete()
-    print(athletes)
+    #print(athletes)
     return render_template('stats.html', athletes=athletes)
 
 
