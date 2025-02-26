@@ -272,42 +272,42 @@ def recalibrate(end_date, my_list, years=1):
     else:
         # end_date is in the past prior to 2020
         print(f"End date {end_date} is in the past. No further calibration needed.")
-        # print(f"Calibrate {my_list} against avg and sd from 2018 & 2024.")
+        print(f"Calibrate {my_list} against avg and sd from 2018 & 2024.")
 
-        # list = my_list
-        # if list:
-        #     # recalibrate each list
-        #     print(list)
-        #     # get average, SD for athletes with AUS points in AUS races list between 2018 & 2024
-        #     aus_mp_base, aus_sp_base = load_aus_scores_aus(mylist=list, start_date=datetime.strptime('01/01/2018', '%d/%m/%Y').date(), end_date=datetime.strptime('31/12/2024', '%d/%m/%Y').date())
-        #     print(f"aus_mp_base: {aus_mp_base}")
-        #     print(f"aus_sp_base: {aus_sp_base}")
-        #     if list in ['junior men','junior women']:
-        #         if aus_mp_base > 150:
-        #             aus_mp_base = 150
-        #             print(f"aus_mp_base capped at 150")
-        #     else:
-        #         if aus_sp_base > 200:
-        #             aus_sp_base = 200
-        #             print(f"aus_sp_base capped at 200") 
-        #     # get average, SD for all athletes with AUS points in AUS races in list in year to end_date
-        #     aus_mp, aus_sp = load_aus_scores_aus(mylist=list, start_date=end_date - timedelta(days=365*years), end_date=end_date)
-        #     print(f"aus_mp: {aus_mp}")
-        #     print(f"aus_sp: {aus_sp}")
+        list = my_list
+        if list:
+            # recalibrate each list
+            print(list)
+            # get average, SD for athletes with AUS points in AUS races list between 2018 & 2024
+            aus_mp_base, aus_sp_base = load_aus_scores_aus(mylist=list, start_date=datetime.strptime('01/01/2018', '%d/%m/%Y').date(), end_date=datetime.strptime('31/12/2024', '%d/%m/%Y').date())
+            print(f"aus_mp_base: {aus_mp_base}")
+            print(f"aus_sp_base: {aus_sp_base}")
+            if list in ['junior men','junior women']:
+                if aus_mp_base > 150:
+                    aus_mp_base = 150
+                    print(f"aus_mp_base capped at 150")
+            else:
+                if aus_sp_base > 200:
+                    aus_sp_base = 200
+                    print(f"aus_sp_base capped at 200") 
+            # get average, SD for all athletes with AUS points in AUS races in list in year to end_date
+            aus_mp, aus_sp = load_aus_scores_aus(mylist=list, start_date=end_date - timedelta(days=365*years), end_date=end_date)
+            print(f"aus_mp: {aus_mp}")
+            print(f"aus_sp: {aus_sp}")
 
-        #     if aus_mp_base and aus_sp_base and aus_mp and aus_sp:
-        #         # apply recalibration to AUS results for this list and year
-        #         # new score = (original - aus_mp)/aus_sp * wre_sp + wre_mp
-        #         recalibrate_aus_scores(mylist=list, start_date_dt=end_date - timedelta(days=365*years), end_date_dt=end_date, wre_mp=aus_mp_base, wre_sp=aus_sp_base, aus_mp=aus_mp, aus_sp=aus_sp)
-        #         #print("recalibrate_aus_scores not implemented")
-        #     else:
-        #         print("not enough data to recalibrate")
+            if aus_mp_base and aus_sp_base and aus_mp and aus_sp:
+                # apply recalibration to AUS results for this list and year
+                # new score = (original - aus_mp)/aus_sp * wre_sp + wre_mp
+                recalibrate_aus_scores(mylist=list, start_date_dt=end_date - timedelta(days=365*years), end_date_dt=end_date, wre_mp=aus_mp_base, wre_sp=aus_sp_base, aus_mp=aus_mp, aus_sp=aus_sp)
+                #print("recalibrate_aus_scores not implemented")
+            else:
+                print("not enough data to recalibrate")
 
-        #     # re-check the new aus_mp and aus_sp
-        #     # get athlete_list, average, SD for all athletes with AUS points in list in year
-        #     aus_mp, aus_sp = load_aus_scores_aus(mylist=list, start_date=end_date - timedelta(days=365*years), end_date=end_date)
-        #     print(f"calibrated aus_mp: {aus_mp}")
-        #     print(f"calibrated aus_sp: {aus_sp}")
+            # re-check the new aus_mp and aus_sp
+            # get athlete_list, average, SD for all athletes with AUS points in list in year
+            aus_mp, aus_sp = load_aus_scores_aus(mylist=list, start_date=end_date - timedelta(days=365*years), end_date=end_date)
+            print(f"calibrated aus_mp: {aus_mp}")
+            print(f"calibrated aus_sp: {aus_sp}")
 
         data = {}
         data['full_name'] = "recalibration done"

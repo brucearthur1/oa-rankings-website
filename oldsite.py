@@ -276,7 +276,9 @@ def scrape_results_oldsite(my_year, event_code, driver):
                         #print(f"Row data: {row_data}")
                         # You can further process the row_data as needed
                         if row_data[3] == '':
-                            row_data[3] = 0
+                            row_data[3] = '0'
+                        if row_data[2] == '':
+                            row_data[2] = 'DNF'
                         new_result = {
                             'race_code': event_code,
                             'place': row_data[0],
