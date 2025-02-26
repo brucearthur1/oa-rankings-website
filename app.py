@@ -153,7 +153,10 @@ def admin_recalibrate():
 def admin_recalibrate_year():
     input = request.args.get('year')
     last_day_of_year = datetime(int(input), 12, 31).date()
-    update = recalibrate(last_day_of_year, 1)
+    ranking_lists = ['men', 'women', 'junior men', 'junior women']
+    for item in ranking_lists:
+        update = recalibrate(last_day_of_year, item, 1)  
+    
     return render_template('update_submitted.html', update=update)    
 
 @app.route("/athlete/add")

@@ -53,7 +53,8 @@ def import_year(year):
 
     # recalibrate AUS events for the year
     last_day_of_year = datetime(year, 12, 31).date()
-    recalibrate(last_day_of_year, 1)
+    for item in ranking_lists:
+        recalibrate(last_day_of_year, item, 1)
 
 
     print(f"finished import_year {year} at: {datetime.now(sydney_tz)}")

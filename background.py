@@ -78,7 +78,7 @@ def process_and_store_eventor_event(input):
             result['place'] = int(result['place'])
         except (ValueError, TypeError):
             result['place'] = 0
-    print(f"store results in race_tmp { new_results }")
+    #print(f"store results in race_tmp { new_results }")
     data_to_insert = [{k: v for k, v in result.items() if k not in ['race_code', 'club']} for result in new_results]
     # convert MM:SS to 00:MM:SS
     for result in data_to_insert:
