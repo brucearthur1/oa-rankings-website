@@ -525,6 +525,7 @@ def load_races_by_athlete():
                 ,max(cast(race_points as unsigned)) as max_points
                 ,min(place) as best_place
                 ,count(case when place = 1 then 1 end) as race_wins
+                ,round(count(case when race_points = 0 then 1 end)/count(results.id)*100,1) as dnf_rate
                 ,min(events.date) as since_date
             from results
             left join athletes on results.full_name = athletes.full_name
@@ -535,7 +536,7 @@ def load_races_by_athlete():
                 results.full_name
                 ,athletes.id
             order by
-                2 desc
+                3 desc
             """
         cursor.execute(query)
         result = cursor.fetchall()

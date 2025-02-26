@@ -91,6 +91,7 @@
                     <th class="text-right">Highest Score</th>
                     <th class="text-right">Best Place</th>
                     <th class="text-right">Race Wins</th>
+                    <th class="text-right">DNF %</th>
                     <th class="text-right">Since Year</th>
                 </tr>
             </thead>
@@ -108,6 +109,7 @@
                     <td class="text-right">{{ athlete['max_points'] | int | number_format }}</td>
                     <td class="text-right">{{ athlete['best_place'] }}</td>
                     <td class="text-right">{{ athlete['race_wins'] }}</td>
+                    <td class="text-right">{{ athlete['dnf_rate'] }}</td>
                     <td class="text-right">{{ athlete['since_date']|strftime('%Y') }}</td>
                 </tr>
                 {% endfor %}
@@ -139,4 +141,4 @@
 
 
 
-
+
