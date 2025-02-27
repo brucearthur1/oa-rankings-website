@@ -559,7 +559,7 @@ def load_rankings_from_db():
 def load_results_by_athlete(full_name):
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM results LEFT JOIN events ON results.race_code = events.short_desc WHERE results.full_name = %s ORDER BY events.date DESC;", full_name)
+        cursor.execute("SELECT * FROM results INNER JOIN events ON results.race_code = events.short_desc WHERE results.full_name = %s ORDER BY events.date DESC;", full_name)
         result = cursor.fetchall()
         results = []
         for row in result:
@@ -570,7 +570,7 @@ def load_results_by_athlete(full_name):
 def load_results_for_all_athletes():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM results LEFT JOIN events ON results.race_code = events.short_desc LEFT JOIN athletes ON athletes.full_name = results.full_name WHERE athletes.eligible = 'Y' ORDER BY events.date DESC;")
+        cursor.execute("SELECT * FROM results INNER JOIN events ON results.race_code = events.short_desc LEFT JOIN athletes ON athletes.full_name = results.full_name WHERE athletes.eligible = 'Y' ORDER BY events.date DESC;")
         result = cursor.fetchall()
         results = []
         for row in result:
