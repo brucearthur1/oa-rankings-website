@@ -153,11 +153,11 @@ def delete_from_race_tmp(short_desc):
 def delete_from_results(short_desc):
     with connection.cursor() as cursor:
         query1 = "DELETE FROM results WHERE race_code = %s"
-        query2 = "DELETE FROM results_static WHERE race_code = %s"
+        # query2 = "DELETE FROM results_static WHERE race_code = %s"
         cursor.execute(query1, (short_desc,))
-        cursor.execute(query2, (short_desc,))
+        # cursor.execute(query2, (short_desc,))
         connection.commit()
-        print("results and results_static data deleted successfully!")
+        print("results data deleted successfully!")
 
 
 def get_sheets_from_event(list, year):
@@ -242,7 +242,8 @@ def insert_new_results(race_times):
             result['place'],
             result['full_name'],
             result['race_time'],
-            result['race_points']
+            result['race_points'],
+            result['race_points']  #additional column for race_points_static
         )
         for result in race_times
     ]
@@ -460,7 +461,15 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 def load_event_from_db(short_file):
     # Individual event page with event summary and results, so use results_static as point in time calculation prior to any recalibration
     query1 = "SELECT * FROM events WHERE short_desc = %s"
-    query2 = "SELECT results_static.*, athletes.id as athlete_id, athletes.eligible, clubs.* FROM results_static LEFT JOIN athletes ON results_static.full_name = athletes.full_name LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE results_static.race_code = %s ORDER BY place"
+    query2 = """
+        SELECT results.race_code, results.place, results.full_name, results.race_time, results.race_points_static as race_points,
+        athletes.id as athlete_id, athletes.eligible, clubs.* 
+        FROM results
+        LEFT JOIN athletes ON results.full_name = athletes.full_name 
+        LEFT JOIN clubs ON athletes.club_id = clubs.id 
+        WHERE results.race_code = %s 
+        ORDER BY place
+        """
     
     if not short_file:
         raise ValueError("The short_file parameter is None or empty.")
@@ -664,7 +673,8 @@ def store_events_and_results(new_events, new_results):
             convert_place(result['place']),
             result['athlete_name'],
             parse_race_time(result['race_time']),
-            result['race_points']
+            result['race_points'],
+            result['race_points']  #additional column for race_points_static
         )
         for result in new_results
     ]
@@ -781,21 +791,21 @@ def store_race_from_excel(sheetname, data_to_insert):
 
         # Define the insert queries
         insert_query_results = """ 
-        INSERT INTO results (race_code, place, full_name, race_time, race_points) 
-        VALUES (%s, %s, %s, %s, %s) 
+        INSERT INTO results (race_code, place, full_name, race_time, race_points, race_points_static) 
+        VALUES (%s, %s, %s, %s, %s, %s) 
         """
-        insert_query_results_static = """ 
-        INSERT INTO results_static (race_code, place, full_name, race_time, race_points) 
-        VALUES (%s, %s, %s, %s, %s) 
-        """
+        # insert_query_results_static = """ 
+        # INSERT INTO results_static (race_code, place, full_name, race_time, race_points) 
+        # VALUES (%s, %s, %s, %s, %s) 
+        # """
 
         # Insert data one row at a time if it does not already exist
         for place, full_name, race_time, race_points in data_to_insert:
             cursor.execute(select_query, (sheetname, full_name))
             exists = cursor.fetchone()
             if not exists:
-                cursor.execute(insert_query_results, (sheetname, place, full_name, race_time, race_points))
-                cursor.execute(insert_query_results_static, (sheetname, place, full_name, race_time, race_points))
+                cursor.execute(insert_query_results, (sheetname, place, full_name, race_time, race_points, race_points))
+                # cursor.execute(insert_query_results_static, (sheetname, place, full_name, race_time, race_points))
                 print(f"Inserted row: {(sheetname, place, full_name, race_time, race_points)}")
             else:
                 print(f"Row already exists: {(sheetname, place, full_name, race_time, race_points)}")
@@ -828,21 +838,21 @@ def store_race_tmp_from_excel(sheetname, data_to_insert):
 
         # Define the insert queries
         insert_query_results = """ 
-        INSERT INTO results (race_code, place, full_name, race_time, race_points) 
-        VALUES (%s, %s, %s, %s, %s) 
+        INSERT INTO results (race_code, place, full_name, race_time, race_points, race_points_static) 
+        VALUES (%s, %s, %s, %s, %s, %s) 
         """
-        insert_query_results_static = """ 
-        INSERT INTO results_static (race_code, place, full_name, race_time, race_points) 
-        VALUES (%s, %s, %s, %s, %s) 
-        """
+        # insert_query_results_static = """ 
+        # INSERT INTO results_static (race_code, place, full_name, race_time, race_points) 
+        # VALUES (%s, %s, %s, %s, %s) 
+        # """
 
         # Insert data one row at a time if it does not already exist
         for place, full_name, race_time, race_points in data_to_insert:
             cursor.execute(select_query, (sheetname, full_name))
             exists = cursor.fetchone()
             if not exists:
-                cursor.execute(insert_query_results, (sheetname, place, full_name, race_time, race_points))
-                cursor.execute(insert_query_results_static, (sheetname, place, full_name, race_time, race_points))
+                cursor.execute(insert_query_results, (sheetname, place, full_name, race_time, race_points, race_points))
+                # cursor.execute(insert_query_results_static, (sheetname, place, full_name, race_time, race_points))
                 #print(f"Inserted row: {(sheetname, place, full_name, race_time, race_points)}")
             else:
                 print(f"Row already exists: {(sheetname, place, full_name, race_time, race_points)}")
@@ -962,17 +972,18 @@ def store_new_results(data_to_insert):
                 else:
                     # Insert results data into results
                     insert_query = """ 
-                    INSERT INTO results (race_code, place, full_name, race_time, race_points) 
-                    VALUES (%s, %s, %s, %s, %s) 
+                    INSERT INTO results (race_code, place, full_name, race_time, race_points, race_points_static) 
+                    VALUES (%s, %s, %s, %s, %s, %s) 
                     """ 
                     cursor.execute(insert_query, result)
 
                     # Insert results data into results_static
-                    insert_query = """ 
-                    INSERT INTO results_static (race_code, place, full_name, race_time, race_points) 
-                    VALUES (%s, %s, %s, %s, %s) 
-                    """ 
-                    cursor.execute(insert_query, result)
+                    # insert_query = """ 
+                    # INSERT INTO results_static (race_code, place, full_name, race_time, race_points) 
+                    # VALUES (%s, %s, %s, %s, %s) 
+                    # """ 
+                    # cursor.execute(insert_query, result)
+
                     #connection.commit() 
                     #print(f"WRE '{result[0]}{result[2]}' resutls inserted")
                     #print("insert result time:", datetime.now())
