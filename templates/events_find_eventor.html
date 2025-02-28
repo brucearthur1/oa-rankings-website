@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG" >
+    
+        <h4>Finding possible ranking events in Eventor</h4>
+
+        <p>Events found in the {{ days_prior }} days to {{ end_date }}</p>
+
+        <div class="table-responsive">
+            <table id="eventTable" class="table table-hover table-striped table-responsive ">
+            <thead>
+                <tr>
+                <th style="font-size: x-small;">date</th>
+                <th style="font-size: x-small;">long_desc</th>
+                <th style="font-size: x-small;">short_desc</th>
+                <th style="font-size: x-small;">results_link</th>
+                <th style="font-size: x-small;">discipline</th>
+                <th style="font-size: x-small;">classification</th>
+                <th style="font-size: x-small;">format</th>
+                <th style="font-size: x-small;">distance</th>
+                </tr>
+            </thead>
+            {% for event in events %}
+            <tr>
+                <td style="font-size: x-small;"> {{ event['event_date'] }} </td>
+                <td style="font-size: x-small;"> {{ event['long_desc'] }} </td>
+                <td style="font-size: x-small;"> {{ event['short_desc'] }} </td>
+                <td style="font-size: x-small;"> {{ event['results_href'] }} </td>
+                <td style="font-size: x-small;"> {{ event['event_discipline'] }} </td>
+                <td style="font-size: x-small;"> {{ event['event_classification'] }} </td>
+                <td style="font-size: x-small;"> {{ event['event_format'] }} </td>
+                <td style="font-size: x-small;"> {{ event['event_distance'] }} </td>
+            </tr>
+            {% endfor %}    
+            </table>
+        </div>
+
+    </div>
+    {% include "footer.html" %}
+  </body>
+</html>

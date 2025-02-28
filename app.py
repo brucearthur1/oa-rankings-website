@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year, parse_result_from_df
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from formatting import convert_to_time_format, is_valid_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
@@ -12,7 +12,7 @@ from pytz import timezone
 from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate
 from admin import import_year
-from eventor import load_race_from_eventor
+from eventor import scrape_events_from_eventor
 
 
 
@@ -424,6 +424,20 @@ def show_event(short_file):
     stats = load_event_stats(event['short_desc'])
 
     return render_template('event.html',event=event,results=results,stats=stats)
+
+
+# admin function to allow the user to read events from Excel
+@app.route('/events/find_eventor')
+def events_find_eventor():
+
+    # get current date
+    end_date = date.today()
+    duration = 150
+
+    events = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
+
+    return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
+
 
 
 # admin function to allow the user to read events from Excel
