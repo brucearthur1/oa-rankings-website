@@ -2,7 +2,7 @@ from datetime import datetime
 from scraping import load_from_WRE, load_latest_from_WRE, load_year_from_WRE
 from database import store_events_and_results, store_race_tmp, store_events, confirm_discipline
 from scraping import setup_Chrome_driver
-from eventor import load_race_from_eventor
+from eventor import load_race_from_eventor_by_class
 from rankings import calculate_race_rankings
 from oldsite import load_year_old_site
 
@@ -43,10 +43,10 @@ def upload_year_WRE_races(year):
 
 
 
-def process_and_store_eventor_event(input):
-    print("process_and_store_eventor_event started:", datetime.now())
+def process_and_store_eventor_event_by_class(input):
+    print("process_and_store_eventor_event_by_class started:", datetime.now())
     driver = setup_Chrome_driver()
-    new_events, new_results = load_race_from_eventor(input, driver)
+    new_events, new_results = load_race_from_eventor_by_class(input, driver)
     driver.quit()
     print("Finished scraping race from Eventor site:", datetime.now())
 
@@ -106,4 +106,4 @@ def process_and_store_eventor_event(input):
             confirm_discipline(int(my_year))
 
 
-    print("Finished process_and_store_eventor_event:", datetime.now())
+    print("Finished process_and_store_eventor_event_by_class:", datetime.now())

@@ -71,7 +71,7 @@ def get_html_from_url(url, driver):
 
 
 
-def load_from_eventor(event_code, my_class, driver):
+def load_from_eventor_by_class(event_code, my_class, driver):
     print(f"starting load_from_eventor")
     new_results = []
     new_events = []
@@ -196,25 +196,22 @@ def load_from_eventor(event_code, my_class, driver):
 
 
 
-def load_race_from_eventor(input, driver):
-    print(f"starting load_race_from_eventor")
-
+def load_race_from_eventor_by_class(input, driver):
+    print(f"starting load_race_from_eventor_by_class")
     # for each event, retrieve the new_events and new_results by scraping the web page
     new_events = []
     new_results = []
-
     event_code = input['eventor_race_id']
     my_class = input['class']
     print(f"event_code: {event_code}")
     print(f"my_class: {my_class}")
 
-    events, results = load_from_eventor(event_code, my_class, driver)
+    events, results = load_from_eventor_by_class(event_code, my_class, driver)
     
     for event in events:
         new_events.append(event)
     for result in results:
         new_results.append(result)
-
 
     return new_events, new_results
 

@@ -7,7 +7,7 @@ from formatting import convert_to_time_format, is_valid_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
 from threading import Thread
-from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event, get_year_old_site
+from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event_by_class, get_year_old_site
 from pytz import timezone
 from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate
@@ -523,7 +523,7 @@ def uploaded_race():
 def race_new_eventor():
     input = request.form
     print(input)
-    process_and_store_eventor_event(input)
+    process_and_store_eventor_event_by_class(input)
 
     df_html = {}
     #display an acknowledgement 
@@ -581,7 +581,7 @@ def race_upload_from_eventor(short_desc):
             'class': request.args.get('class')
             }
 
-        process_and_store_eventor_event(input)
+        process_and_store_eventor_event_by_class(input)
 
     # get current date
     end_date = date.today()
