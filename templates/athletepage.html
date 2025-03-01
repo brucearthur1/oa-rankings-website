@@ -151,11 +151,35 @@
         if (completedRaces >= 500) {
           document.getElementById('completedRacesBadge').style.display = 'inline';
           document.getElementById('completedRacesBadge').innerText = '500';
-          document.getElementById('completedRacesBadge').style.color = 'blue';
+          document.getElementById('completedRacesBadge').style.color = 'goldenrod'; 
+        } else if (completedRaces >= 450) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '450';
+          document.getElementById('completedRacesBadge').style.color = 'darkslategrey';
+        } else if (completedRaces >= 400) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '400';
+          document.getElementById('completedRacesBadge').style.color = '#CD7F32'; // bronze
+        } else if (completedRaces >= 350) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '350';
+          document.getElementById('completedRacesBadge').style.color = 'hotpink'; 
+        } else if (completedRaces >= 300) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '300';
+          document.getElementById('completedRacesBadge').style.color = 'teal';
         } else if (completedRaces >= 250) {
           document.getElementById('completedRacesBadge').style.display = 'inline';
           document.getElementById('completedRacesBadge').innerText = '250';
           document.getElementById('completedRacesBadge').style.color = 'green';
+        } else if (completedRaces >= 200) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '200';
+          document.getElementById('completedRacesBadge').style.color = 'orange';
+        } else if (completedRaces >= 150) {
+          document.getElementById('completedRacesBadge').style.display = 'inline';
+          document.getElementById('completedRacesBadge').innerText = '150';
+          document.getElementById('completedRacesBadge').style.color = 'blue';
         } else if (completedRaces >= 100) {
           document.getElementById('completedRacesBadge').style.display = 'inline';
           document.getElementById('completedRacesBadge').innerText = '100';
@@ -171,7 +195,7 @@
         } else if (completedRaces >= 10) {
           document.getElementById('completedRacesBadge').style.display = 'inline';
           document.getElementById('completedRacesBadge').innerText = '10';
-          document.getElementById('completedRacesBadge').style.color = 'grey';
+          document.getElementById('completedRacesBadge').style.color = 'brown';
         } else {
           document.getElementById('completedRacesBadge').style.display = 'none';
         }
