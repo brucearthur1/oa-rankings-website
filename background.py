@@ -1,6 +1,6 @@
 from datetime import datetime
 from scraping import load_from_WRE, load_latest_from_WRE, load_year_from_WRE
-from database import store_events_and_results, store_race_tmp, store_events_from_excel, confirm_discipline
+from database import store_events_and_results, store_race_tmp, store_events, confirm_discipline
 from scraping import setup_Chrome_driver
 from eventor import load_race_from_eventor
 from rankings import calculate_race_rankings
@@ -68,7 +68,7 @@ def process_and_store_eventor_event(input):
         row = tuple(event.values())
         pre_data_to_insert.append(row)
 
-    store_events_from_excel(pre_data_to_insert)
+    store_events(pre_data_to_insert)
 
 
     #store results in race_tmp in the DB

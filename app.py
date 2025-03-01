@@ -425,19 +425,17 @@ def show_event(short_file):
 
     return render_template('event.html',event=event,results=results,stats=stats)
 
+    
+
 
 # admin function to allow the user to read events from Excel
 @app.route('/events/find_eventor')
 def events_find_eventor():
-
     # get current date
     end_date = date.today()
-    duration = 150
-
+    duration = 90
     events = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
-
     return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
-
 
 
 # admin function to allow the user to read events from Excel
@@ -521,9 +519,6 @@ def uploaded_race():
     return render_template('race_submitted.html', df_html=df_html)
 
 # Admin function to read a race times from eventor, calculate rankings and store
-############
-###### under construction
-###################################################################################
 @app.route("/race/new_eventor", methods=['post'])
 def race_new_eventor():
     input = request.form
@@ -572,6 +567,28 @@ def uploaded_races():
         
     #display an acknowledgement 
     return render_template('races_submitted.html', df_list=df_list )
+
+
+@app.route("/race/upload_eventor/<short_desc>")
+def race_upload_from_eventor(short_desc):
+    my_class = request.args.get('class')
+    print(f"{short_desc=}")
+    print(f"{my_class=}")
+
+    if my_class:
+        input = {
+            'eventor_race_id': short_desc,
+            'class': request.args.get('class')
+            }
+
+        process_and_store_eventor_event(input)
+
+    # get current date
+    end_date = date.today()
+    duration = 90
+    events = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
+    return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
+
 
 
 @app.route("/stats")

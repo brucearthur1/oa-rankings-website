@@ -10,7 +10,7 @@
     
         <h4>Finding possible ranking events in Eventor</h4>
 
-        <p>Events found in the {{ days_prior }} days to {{ end_date }}</p>
+        <p>Eventor events found in the {{ days_prior }} days to {{ end_date }}</p>
 
         <div class="table-responsive">
             <table id="eventTable" class="table table-hover table-striped table-responsive ">
@@ -20,10 +20,11 @@
                 <th style="font-size: x-small;">long_desc</th>
                 <th style="font-size: x-small;">short_desc</th>
                 <th style="font-size: x-small;">results_link</th>
-                <th style="font-size: x-small;">discipline</th>
                 <th style="font-size: x-small;">classification</th>
-                <th style="font-size: x-small;">format</th>
                 <th style="font-size: x-small;">distance</th>
+                <th style="font-size: x-small;">class</th>
+                <th style="font-size: x-small;">uploaded</th>
+                
                 </tr>
             </thead>
             {% for event in events %}
@@ -31,11 +32,21 @@
                 <td style="font-size: x-small;"> {{ event['event_date'] }} </td>
                 <td style="font-size: x-small;"> {{ event['long_desc'] }} </td>
                 <td style="font-size: x-small;"> {{ event['short_desc'] }} </td>
-                <td style="font-size: x-small;"> {{ event['results_href'] }} </td>
-                <td style="font-size: x-small;"> {{ event['event_discipline'] }} </td>
+                <td style="font-size: x-small;">
+                    <a href="https://eventor.orienteering.asn.au{{ event['results_href'] }}" target="_blank">Eventor: {{ event['results_href'] }}</a>
+                </td>
                 <td style="font-size: x-small;"> {{ event['event_classification'] }} </td>
-                <td style="font-size: x-small;"> {{ event['event_format'] }} </td>
                 <td style="font-size: x-small;"> {{ event['event_distance'] }} </td>
+                <td style="font-size: x-small;"> {{ event['event_class'] }} </td>
+                {% if event['event_exists'] %}
+                    <td style="font-size: x-small;">
+                        <a href="/event/au{{ event['short_desc']|lower }}{{ event['event_class']|lower }}" target="_blank">rankings page: au{{ event['short_desc']|lower }}{{ event['event_class']|lower }}</a>
+                    </td>
+                {% else %}
+                    <td>
+                        <a href="/race/upload_eventor/{{ event['short_desc'] }}?class={{ event['event_class'] }}" type="button" class="btn btn-outline-warning">upload</a>
+                    </td>
+                {% endif %}
             </tr>
             {% endfor %}    
             </table>

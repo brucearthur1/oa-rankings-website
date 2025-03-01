@@ -1,5 +1,6 @@
 from scraping import setup_Chrome_driver
 from datetime import date, datetime, timedelta
+from database import test_race_exist
 import time
 
 from bs4 import BeautifulSoup
@@ -9,7 +10,7 @@ def deduct_list_name_from_class_name(my_class):
     pre_my_list_name = ""
     if "18" in my_class or "20" in my_class or "senior" in my_class.lower():
         pre_my_list_name = "junior "
-    if my_class.startswith("W"):
+    if my_class.lower().startswith("w"):
         post_my_list_name = "women"
     else:
         post_my_list_name = "men"
@@ -19,16 +20,13 @@ def deduct_list_name_from_class_name(my_class):
 
 
 
-            # event = {
-            #     'event_date': event_date,
-            #     'long_desc': long_desc,
-            #     'short_desc': event_code,
-            #     'results_href': results_href,            
-            #     'event_discipline': event_discipline,
-            #     'event_classification': event_classification,
-            #     'event_format': event_format,
-            #     'event_distance': event_distance
-            # }
+def filter_classes(my_classes):
+    filtered_classes = []
+    for my_class in my_classes:
+        if any(keyword in my_class.lower() for keyword in ["men", "women", "elite", "21e", "20e", "21a", "20a", "18a", "sport", "sb", "sg"]) and \
+            all(substring not in my_class.lower() for substring in ["21as", "20as"]):
+            filtered_classes.append(my_class)
+    return filtered_classes
 
 
 def filter_event(event):
@@ -114,15 +112,15 @@ def load_from_eventor(event_code, my_class, driver):
                         event_date = datetime.strptime(event_date_str, '%A %d %B %Y').strftime('%d/%m/%Y')
                         new_event = {
                             'date': event_date,
-                            'short_desc': "au" + event_code + my_class,
+                            'short_desc': "au" + event_code.lower() + my_class.lower(),
                             'long_desc': event_name,
                             'class': my_class,
-                            'short_file': "au" + event_code + my_class,
+                            'short_file': "au" + event_code.lower() + my_class.lower(),
                             'ip': 1,
                             'list': my_list_name,
                             'eventor_id': event_code,
                             'iof_id': None,
-                            'discipline': 'Middle/Long'
+                            'discipline': 'Middle/Long'  #can get this from eventor
                         }
                         new_events.append(new_event)
 
@@ -134,7 +132,7 @@ def load_from_eventor(event_code, my_class, driver):
         else:
             print("Name not found")
 
-
+        print(f"{result_list=}")
         # get results for the specified class
         # Find the element with class "eventClassHeader" and <h3> text = my_class
         class_header = result_list.find('h3', text=my_class)
@@ -142,7 +140,19 @@ def load_from_eventor(event_code, my_class, driver):
             print(f"Found class header: {class_header.text}")
 
             # Find the table with class "resultList"
-            result_table = result_list.find('table', class_='resultList')
+            # Find the parent element
+            parent_element = class_header.find_parent('div')
+            if parent_element:
+                print("Parent element found:", parent_element)
+            else:
+                print("No parent element found.")
+            grand_parent_element = parent_element.find_parent('div')
+            if grand_parent_element:
+                print("Grand parent element found:", grand_parent_element)
+            else:
+                print("No grand parent element found.")
+
+            result_table = grand_parent_element.find_next_sibling('table', class_='resultList')
             if result_table:
                 print("Found resultList table")
                 # Extract the <tbody> from the table
@@ -218,11 +228,11 @@ def scrape_events_from_eventor(end_date, days_prior):
 
     driver = setup_Chrome_driver()
     new_events = []
+    races = []
 
     # scrape recent events from Eventor
     # get the event page
     events_url = f"https://eventor.orienteering.asn.au/Events?competitionTypes=level1%2Clevel2&classifications=National%2CChampionship%2CRegional&disciplines=Foot&startDate={ start_date }&endDate={ end_date }&map=false&mode=List&showMyEvents=false&cancelled=false&isExpanded=true"
-    print(f"{events_url=}")
     
     full_page_source = get_html_from_url(events_url, driver)
     
@@ -291,11 +301,53 @@ def scrape_events_from_eventor(end_date, days_prior):
             include_event = filter_event(event)
             if include_event:
                 new_events.append(event)
+
+        for event in new_events:
+            # search eventor for eligible classes
+
+            event_url = f"https://eventor.orienteering.asn.au{event['results_href']}"
+    
+            event_full_page_source = get_html_from_url(event_url, driver)
+    
+            # Now you can use BeautifulSoup to parse the HTML content
+            event_soup = BeautifulSoup(event_full_page_source, 'html.parser')
+
+            filters_tag = event_soup.find('p', class_='filters')
+            if filters_tag:
+                my_classes = []
+                class_links = filters_tag.find_all('a')
+                for link in class_links:
+                    my_classes.append(link.text.strip())
+                print(f"Classes found: {my_classes}")
+
+                event['classes'] = filter_classes(my_classes)
+
+                for race_class in event['classes']:
+                    
+                    # check to see if race has already been uploaded
+                    race_code = "au" + event['short_desc'].lower() + race_class.lower()
+                    race_exists = test_race_exist(race_code)
+                    
+                    new_race = {
+                        'event_date': event['event_date'],
+                        'long_desc': event['long_desc'],
+                        'short_desc': event['short_desc'],
+                        'results_href': event['results_href'],            
+                        'event_discipline': event['event_discipline'],
+                        'event_classification': event['event_classification'],
+                        'event_format': event['event_format'],
+                        'event_distance': event['event_distance'],
+                        'event_class': race_class,
+                        'event_exists': race_exists
+                    }
+                    if new_race:
+                        races.append(new_race)
+            else:
+                print("Classes <p> tag not found")
     else:
         print("eventList element not found")
-
 
     driver.quit()
     print("Finished scrape_events_from_eventor:", datetime.now())   
 
-    return new_events
+    return races
