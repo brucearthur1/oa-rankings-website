@@ -7,7 +7,7 @@ from formatting import convert_to_time_format, is_valid_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
 from threading import Thread
-from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event_by_class, get_year_old_site
+from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event_by_class, get_year_old_site, process_and_store_eventor_event_by_ids
 from pytz import timezone
 from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate
@@ -428,13 +428,14 @@ def show_event(short_file):
     
 
 
-# admin function to allow the user to read events from Excel
+# admin function to allow the user to read events from Eventor
 @app.route('/events/find_eventor')
 def events_find_eventor():
     # get current date
     end_date = date.today()
-    duration = 90
+    duration = 30
     events = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
+    print(f"{events=}")
     return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
 
 
@@ -571,23 +572,26 @@ def uploaded_races():
 
 @app.route("/race/upload_eventor/<short_desc>")
 def race_upload_from_eventor(short_desc):
-    my_class = request.args.get('class')
-    print(f"{short_desc=}")
-    print(f"{my_class=}")
+    #my_class = request.args.get('class')
+    eventId = short_desc
+    eventClassId = request.args.get('eventClassId')
+    eventRaceId = request.args.get('eventRaceId')
 
-    if my_class:
-        input = {
-            'eventor_race_id': short_desc,
-            'class': request.args.get('class')
-            }
+    # if my_class:
+    #     input = {
+    #         'eventor_race_id': short_desc,
+    #         'class': request.args.get('class')
+    #         }
 
-        process_and_store_eventor_event_by_class(input)
+        #process_and_store_eventor_event_by_class(input)
+    process_and_store_eventor_event_by_ids(eventId, eventClassId, eventRaceId)
 
     # get current date
     end_date = date.today()
-    duration = 90
-    events = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
-    return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
+    duration = 30
+    # reload admin page with updated list of events
+    races = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
+    return render_template('events_find_eventor.html', events=races, end_date=end_date, days_prior=duration)
 
 
 

@@ -33,18 +33,18 @@
                 <td style="font-size: x-small;"> {{ event['long_desc'] }} </td>
                 <td style="font-size: x-small;"> {{ event['short_desc'] }} </td>
                 <td style="font-size: x-small;">
-                    <a href="https://eventor.orienteering.asn.au{{ event['results_href'] }}" target="_blank">Eventor: {{ event['results_href'] }}</a>
+                    <a href="https://eventor.orienteering.asn.au{{ event['results_href'] }}" target="_blank">Eventor result link</a>
                 </td>
                 <td style="font-size: x-small;"> {{ event['event_classification'] }} </td>
                 <td style="font-size: x-small;"> {{ event['event_distance'] }} </td>
                 <td style="font-size: x-small;"> {{ event['event_class'] }} </td>
                 {% if event['event_exists'] %}
                     <td style="font-size: x-small;">
-                        <a href="/event/au{{ event['short_desc']|lower }}{{ event['event_class']|lower }}" target="_blank">rankings page: au{{ event['short_desc']|lower }}{{ event['event_class']|lower }}</a>
+                        <a href="/event/au{{ event['short_desc']|lower }}{{ event['event_class']|lower }}{{ event['eventRaceId']|lower }}" target="_blank">rankings page: au{{ event['short_desc']|lower }}{{ event['event_class']|lower }}{{ event['eventRaceId']|lower }}</a>
                     </td>
                 {% else %}
                     <td>
-                        <a href="/race/upload_eventor/{{ event['short_desc'] }}?class={{ event['event_class'] }}" type="button" class="btn btn-outline-warning">upload</a>
+                        <a href="/race/upload_eventor/{{ event['short_desc'] }}?eventClassId={{ event['eventClassId'] }}&eventRaceId={{ event['eventRaceId'] }}" type="button" class="btn btn-outline-warning">upload</a>
                     </td>
                 {% endif %}
             </tr>
