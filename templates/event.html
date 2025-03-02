@@ -144,8 +144,8 @@
                 <div class="stats">
                   <p>Rankings calculated at: {{ stats['calculated'] }}</p>
                   <p>Rankings based on: {{ stats['rule'] }} methodology.  The Winner scores a minimum of {{ stats['min'] }} and a maximum of {{ stats['max'] }}. Enhancement factor, EF = {{ stats['enhancement_factor'] }}</p>
-                  <p>Mean MP: {{ stats['mp'] | int }} and the standard deviation SP: {{ stats['sp'] | int  }} of the race times of all non-outlier ranked athletes </p>
-                  <p>Mean MT: {{ stats['mt'] | int | _jinja2_filter_seconds_to_time }} and the standard deviation ST: {{ stats['st'] | int | _jinja2_filter_seconds_to_time }} of the race times of all non-outlier ranked athletes </p>
+                  <p>MP: {{ stats['mp'] | int }} is the mean points and SP: {{ stats['sp'] | int  }} the standard deviation points in the previous 12 months of all non-outlier ranked athletes prior to the race</p>
+                  <p>MT: {{ stats['mt'] | int | _jinja2_filter_seconds_to_time }} is the mean time and ST: {{ stats['st'] | int | _jinja2_filter_seconds_to_time }} the standard deviation of the race times of all non-outlier ranked athletes in this ranking event </p>
                   <p>Number of Australian competitors with a valid average and race time within 50% of the winner RR: {{ stats['ranked'] }}</p>
                 </div>
               {% endif %}

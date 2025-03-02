@@ -318,9 +318,15 @@ def load_race_from_eventor_by_ids(eventId, eventClassId, eventRaceId, driver):
                         row_data = [col.text.strip() for col in columns]
                         print(f"Row data: {row_data}")
                         # You can further process the row_data as needed
+                        # fix bug where place is 0
+                        if row_data[0] == 0:
+                            race_place = '999'
+                        else:
+                            race_place = row_data[0]
+
                         new_result = {
                             'race_code': "au" + event_code.lower() + my_class.lower() + eventRaceId.lower(),
-                            'place': row_data[0],
+                            'place': race_place,
                             'athlete_name': row_data[1],
                             'club': row_data[2],
                             'race_time': row_data[3],  
