@@ -77,7 +77,11 @@ def load_from_WRE(input, driver):
         rows = event_details.find_all('tr')
         event_name = rows[0].find_all('td')[1].get_text()
         event_date = rows[1].find_all('td')[1].get_text()
-        event_ip = event_details.find('span', id='MainContent_dvEventDetails_Label8').get_text()
+        ip_tag = event_details.find('span', id='MainContent_dvEventDetails_Label8')
+        if ip_tag:
+            event_ip = ip_tag.get_text()    
+        else:
+            event_ip = '1'
     else:
         print('Event Details not found')
 
