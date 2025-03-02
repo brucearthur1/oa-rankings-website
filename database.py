@@ -1,8 +1,11 @@
 import pandas as pd
 from database_connection import connection
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import logging
+import pytz  # Import pytz for timezone handling
 
+# Ensure Sydney timezone is used
+sydney_tz = pytz.timezone('Australia/Sydney')  # Use pytz to get the Sydney timezone
 
 def str_to_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d')
