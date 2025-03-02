@@ -39,6 +39,41 @@
         line-height: 50px;
         text-align: center;
         border-radius: 10px;
+        position: relative;
+      }
+      .ranking-delta {
+        position: absolute;
+        top: 0;
+        right: -25px; /* Increase the space between rank and deltaContent */
+        font-size: 1rem;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .ranking-delta.up {
+        color: green;
+      }
+      .ranking-delta.down {
+        color: red;
+      }
+      .arrow-up {
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-bottom: 10px solid green;
+        display: inline-block;
+        margin-bottom: -12px; /* Decrease the gap */
+      }
+      .arrow-down {
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 10px solid red;
+        display: inline-block;
+        margin-top: -12px; /* Decrease the gap */
       }
       h4 {
         margin-bottom: 4px;
@@ -85,19 +120,26 @@
         athletes.forEach(function(athlete) {
           if ((athlete['list'].toLowerCase() === lowerListName || lowerListName === "all") && 
               (lowerListName !== 'junior men' && lowerListName !== 'junior women' || currentYear - athlete['yob'] < 21)) {
+            var delta = athlete['delta'];
+            var deltaContent = '';
+            if (delta > 0) {
+              deltaContent = `<span class="ranking-delta down" title="change in last 90 days">${delta}<span class="arrow-down"></span></span>`;
+            } else if (delta < 0) {
+              deltaContent = `<span class="ranking-delta up" title="change in last 90 days"><span class="arrow-up"></span>${Math.abs(delta)}</span>`;
+            }
             var row = `<div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-href="/athlete/${athlete['athlete_id']}" data-list="${athlete['list']}" data-discipline="${athlete['discipline']}" data-yob="${athlete['yob']}">
                 <div class="container">
                   <div class="row 'align-items': 'flex-start' 'line-height': '48px'">
-                    <div class="col-2">
-                      <span class="ranking-number">${rank++}</span>
+                    <div class="col-3">
+                      <span class="ranking-number">${rank++}${delta !== 0 ? deltaContent : ''}</span>
                     </div>
-                    <div class="col-6">
+                    <div class="col-5">
                       <h4>${athlete['full_name']}</h4>
                       ${athlete['club_name'] ? `<div class="club-state"><b>Club</b>: ${athlete['club_name']}</div>` : ''}
                       ${athlete['state'] ? `<div class="club-state"><b>State</b>: ${athlete['state']}</div>` : ''}
                     </div>
                     <div class="col-3 sum-top-5-points">
-                      ${parseInt(athlete['sum_top_5_points'])}
+                      ${parseInt(athlete['sum_top_5_race_points'])}
                     </div>
                   </div>
                 </div>

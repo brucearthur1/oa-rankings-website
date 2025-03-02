@@ -69,31 +69,63 @@ def index():
 
     # Helper function to aggregate athletes based on discipline
     def aggregate_athletes(athletes, discipline=None):
+        start_date = twelve_months_ago
+        end_date = current_date
+        prior_period = 90 #days
+        start_date_prior_period = start_date - timedelta(days=prior_period)
+        end_date_prior_period = end_date - timedelta(days=prior_period)
+
         aggregated_athletes = {}
         for athlete in athletes:
-            if athlete['date'] >= twelve_months_ago:
+            if start_date <= athlete['date'] <= end_date:
                 if discipline is None or athlete['discipline'] == discipline:
                     key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
                     if key not in aggregated_athletes:
-                        aggregated_athletes[key] = []
-                    aggregated_athletes[key].append(athlete['race_points'])
+                        aggregated_athletes[key] = {'race_points': [], 'prior_points': []}
+                    aggregated_athletes[key]['race_points'].append(athlete['race_points'])
+
+            if start_date_prior_period <= athlete['date'] <= end_date_prior_period:
+                if discipline is None or athlete['discipline'] == discipline:
+                    key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
+                    if key not in aggregated_athletes:
+                        aggregated_athletes[key] = {'race_points': [], 'prior_points': []}
+                    prior_points = athlete['race_points']
+                    aggregated_athletes[key]['prior_points'].append(prior_points)
 
         final_aggregated_athletes = []
         for key, points in aggregated_athletes.items():
-            points.sort(reverse=True)
-            top_5_points = points[:5]
-            sum_top_5_points = sum(top_5_points)
+            race_points = sorted(points['race_points'], reverse=True)[:5]
+            prior_points = sorted(points['prior_points'], reverse=True)[:5]
+            sum_top_5_race_points = sum(race_points)
+            sum_top_5_prior_points = sum(prior_points)
             final_aggregated_athletes.append({
-                'full_name': key[0],
-                'club_name': key[1],
-                'state': key[2],
-                'list': key[3],
-                'athlete_id': key[4],  
-                'yob': key[5],
-                'sum_top_5_points': sum_top_5_points
+            'full_name': key[0],
+            'club_name': key[1],
+            'state': key[2],
+            'list': key[3],
+            'athlete_id': key[4],  
+            'yob': key[5],
+            'sum_top_5_prior_points': sum_top_5_prior_points,
+            'sum_top_5_race_points': sum_top_5_race_points
             })
 
-        final_aggregated_athletes.sort(key=lambda x: x['sum_top_5_points'], reverse=True)
+        # Sort by sum_top_5_prior_points within each list
+        for list_name in set(athlete['list'] for athlete in final_aggregated_athletes):
+            list_athletes = [athlete for athlete in final_aggregated_athletes if athlete['list'] == list_name]
+            list_athletes.sort(key=lambda x: x['sum_top_5_prior_points'], reverse=True)
+            # Store the ranking based on sum_top_5_prior_points and calculate the delta
+            for idx, athlete in enumerate(list_athletes):
+                athlete['prior_points_rank'] = idx + 1
+
+            list_athletes.sort(key=lambda x: x['sum_top_5_race_points'], reverse=True)
+            # Store the ranking based on sum_top_5_race_points
+            for idx, athlete in enumerate(list_athletes):
+                athlete['race_points_rank'] = idx + 1
+                athlete['delta'] = athlete['race_points_rank'] - athlete['prior_points_rank']
+
+        # finally sort final_aggregated_athletes by list and then sum_top_5_race_points
+        final_aggregated_athletes.sort(key=lambda x: (x['list'], x['sum_top_5_race_points']), reverse=True)  
+
         return final_aggregated_athletes
 
     # Aggregating athletes
@@ -107,6 +139,9 @@ def index():
     unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
 
     formatted_date = current_date.strftime('%d %B %Y')
+
+    print(f"{unique_lists=}")
+    print(f"{final_aggregated_athletes['all']=}")
     print(f"Ending index at: {datetime.now(sydney_tz)}")
     return render_template('index.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists, current_date=formatted_date)
 
@@ -692,4 +727,4 @@ def scrape():
 
 # main function
 if __name__ == "__main__":
-    app.run(debug=False, port=5000)
+    app.run(debug=True, port=5000)
