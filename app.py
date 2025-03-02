@@ -48,9 +48,10 @@ app.jinja_env.filters['number_format'] = number_format
 @app.route('/')
 def index():
     print(f"starting index at: {datetime.now(sydney_tz)}")
-    athletes = load_rankings_from_db()  # Your function to get athletes
     current_date = datetime.now(sydney_tz).date()
     twelve_months_ago = current_date - timedelta(days=365)
+
+    athletes = load_rankings_from_db(effective_date=current_date)  # Your function to get athletes
 
     # Ensure athlete['date'] and athlete['race_points'] are in the correct format
     for athlete in athletes:
@@ -66,6 +67,14 @@ def index():
             athlete['discipline'] = str.lower(athlete['discipline'])
         else:
             print(f"athlete '{athlete['full_name']}' has no discipline")
+
+    # filter out athlete records for juniors who are no longer eligible
+    # yob must exist to be eligible for junior ranking
+    current_year = current_date.year
+    athletes = [
+        athlete for athlete in athletes
+        if not (athlete['list'].lower().startswith('junior') and (athlete['yob'] is None or current_year - athlete['yob'] >= 21))
+    ]
 
     # Helper function to aggregate athletes based on discipline
     def aggregate_athletes(athletes, discipline=None):

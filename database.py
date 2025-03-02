@@ -554,18 +554,39 @@ def load_races_by_athlete():
         result = cursor.fetchall()
         return result
                       
-                       
 
-def load_rankings_from_db():
+def load_rankings_from_db(effective_date):
+    if effective_date is None:
+        effective_date = datetime.now(sydney_tz).date()
+    effective_date_str = effective_date.strftime('%Y-%m-%d')
     connection.autocommit(True)
+    select_query = """
+                       SELECT 
+                            results.*,
+                            athletes.id AS athlete_id,
+                            athletes.yob,
+                            events.*,
+                            clubs.*
+                        FROM
+                            results
+                                INNER JOIN
+                            athletes ON results.full_name = athletes.full_name
+                                AND athletes.eligible = 'Y'
+                                INNER JOIN
+                            events ON results.race_code = events.short_desc
+                                LEFT JOIN
+                            clubs ON athletes.club_id = clubs.id
+                        WHERE
+                            events.date <= %s
+                        ORDER BY athletes.id;
+                    """
     with connection.cursor() as cursor:
-        cursor.execute("SELECT results.* , athletes.id as athlete_id, athletes.yob, events.*, clubs.* FROM results INNER JOIN athletes ON results.full_name = athletes.full_name AND athletes.eligible= 'Y' LEFT JOIN events ON results.race_code = events.short_desc LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE 1=1 ORDER BY athletes.id;")
+        cursor.execute(select_query, effective_date_str )
         result = cursor.fetchall()
         rankings = []
         for row in result:
             rankings.append(row)
         return rankings
-
 
 
 def load_results_by_athlete(full_name):
@@ -629,8 +650,6 @@ def recalibrate_aus_scores(mylist, start_date_dt, end_date_dt, wre_mp, wre_sp, a
         print("Data updated successfully!")
 
 
-
-
 def store_athletes_in_db(data_to_insert):
     with connection.cursor() as cursor:
         # Insert data 
@@ -638,7 +657,6 @@ def store_athletes_in_db(data_to_insert):
         cursor.executemany(insert_query, data_to_insert) 
         connection.commit() 
         print("Data inserted successfully!")
-
 
 
 def store_clubs_in_db(data_to_insert):
