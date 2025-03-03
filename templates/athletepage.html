@@ -332,13 +332,13 @@
 
       <div class="container">
         <div class="row">
-          <div class="col-md-4">
-            <h5 class="mb-1"><span style="color:rgb(120,120,120);">12 months to</span></h5>
+          <div class="col-md-3">
+            <div class="mb-1"><span style="color:rgb(120,120,120);">12 months to</span></div>
             <form class="form-inline mb-2">
               <input type="date" id="rankingDate" name="rankingDate" class="form-control" value="{{effective_date}}" min="1998-01-01" max="{{ current_date }}" onchange="if(this.value && new Date(this.value).getFullYear() >= 1998 && new Date(this.value).getFullYear() <= new Date().getFullYear()) validateDate()">
             </form>
           </div>
-          <div class="col-md-8 text-end">
+          <div class="col-md-9 text-end">
             <div class="btn-group" role="group" aria-label="Race List">
               {% set default_list = segmented_stats.keys() | list | first if segmented_stats else 'default_list' %}
               {% for btn_list_name in segmented_stats.keys() %}
