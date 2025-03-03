@@ -528,28 +528,60 @@ def load_races_by_athlete():
     connection.autocommit(True)
     with connection.cursor() as cursor:
         query = """
-            select 
-                results.full_name
-                ,athletes.id as athlete_id
-                ,count(results.id) as race_count
-                ,sum(race_points) as total_points
-                ,avg(case when race_points > 0 then race_points end) as avg_points
-                ,max(cast(race_points as unsigned)) as max_points
-                ,min(place) as best_place
-                ,count(case when place = 1 then 1 end) as race_wins
-                ,round(count(case when race_points = 0 then 1 end)/count(results.id)*100,1) as dnf_rate
-                ,min(events.date) as since_date
-            from results
-            left join athletes on results.full_name = athletes.full_name
-            left join events on results.race_code = events.short_desc
-            where 
-                athletes.eligible <> 'N'
-            group by
-                results.full_name
-                ,athletes.id
-            order by
-                3 desc
-            """
+            WITH ranked_results AS (
+                SELECT 
+                    r.full_name,
+                    e.date,
+                    e.long_desc, 
+                    e.short_desc, 
+                    CAST(r.race_points AS UNSIGNED) AS race_points,
+                    ROW_NUMBER() OVER (PARTITION BY r.full_name ORDER BY CAST(r.race_points AS UNSIGNED) DESC) AS rn
+                FROM results r
+                INNER JOIN events e ON r.race_code = e.short_desc
+                JOIN (
+                    SELECT full_name, MAX(CAST(race_points AS UNSIGNED)) AS max_race_points
+                    FROM results 
+                    GROUP BY full_name
+                ) AS max_results
+                ON r.full_name = max_results.full_name AND CAST(r.race_points AS UNSIGNED) = max_results.max_race_points
+            ),
+            stats as (
+                SELECT 
+                    results.full_name,
+                    athletes.id AS athlete_id,
+                    COUNT(results.id) AS race_count,
+                    SUM(race_points) AS total_points,
+                    AVG(CASE WHEN race_points > 0 THEN race_points END) AS avg_points,
+                    MAX(CAST(race_points AS UNSIGNED)) AS max_points,
+                    MIN(place) AS best_place,
+                    COUNT(CASE WHEN place = 1 THEN 1 END) AS race_wins,
+                    ROUND(COUNT(CASE WHEN race_points = 0 THEN 1 END) / COUNT(results.id) * 100, 1) AS dnf_rate,
+                    MIN(events.date) AS since_date
+                FROM results
+                INNER JOIN athletes ON results.full_name = athletes.full_name
+                INNER JOIN events ON results.race_code = events.short_desc
+                WHERE athletes.eligible <> 'N'
+                GROUP BY results.full_name, athletes.id
+                
+            )
+
+            SELECT 
+                stats.full_name,
+                stats.athlete_id,
+                stats.race_count,
+                stats.total_points,
+                stats.avg_points,
+                stats.max_points,
+                stats.best_place,
+                stats.race_wins,
+                stats.dnf_rate,
+                stats.since_date,
+                rr.date as max_points_date, rr.long_desc as max_points_event, rr.short_desc as max_points_code
+            FROM stats
+            INNER JOIN ranked_results rr ON stats.full_name = rr.full_name
+            WHERE rr.rn = 1
+            ORDER BY race_count DESC
+        """
         cursor.execute(query)
         result = cursor.fetchall()
         return result
