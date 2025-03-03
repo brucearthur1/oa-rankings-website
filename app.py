@@ -48,10 +48,24 @@ app.jinja_env.filters['number_format'] = number_format
 @app.route('/')
 def index():
     print(f"starting index at: {datetime.now(sydney_tz)}")
-    current_date = datetime.now(sydney_tz).date()
-    twelve_months_ago = current_date - timedelta(days=365)
 
-    athletes = load_rankings_from_db(effective_date=current_date)  # Your function to get athletes
+    # Get rankingDate from request arguments if provided
+    ranking_date_str = request.args.get('rankingDate')
+    if ranking_date_str:
+        try:
+            ranking_date = datetime.strptime(ranking_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            # Handle invalid date format
+            ranking_date = datetime.now(sydney_tz).date()
+    else:
+        ranking_date = datetime.now(sydney_tz).date()
+
+    print(f"*{ranking_date=}")
+
+    current_date = datetime.now(sydney_tz).date()
+    twelve_months_ago = ranking_date - timedelta(days=365)
+
+    athletes = load_rankings_from_db(effective_date=ranking_date)  # Your function to get athletes
 
     # Ensure athlete['date'] and athlete['race_points'] are in the correct format
     for athlete in athletes:
@@ -70,16 +84,17 @@ def index():
 
     # filter out athlete records for juniors who are no longer eligible
     # yob must exist to be eligible for junior ranking
-    current_year = current_date.year
+    ranking_year = ranking_date.year
+    
     athletes = [
         athlete for athlete in athletes
-        if not (athlete['list'].lower().startswith('junior') and (athlete['yob'] is None or current_year - athlete['yob'] >= 21))
+        if not (athlete['list'].lower().startswith('junior') and (athlete['yob'] is None or ranking_year - athlete['yob'] >= 21))
     ]
 
     # Helper function to aggregate athletes based on discipline
     def aggregate_athletes(athletes, discipline=None):
         start_date = twelve_months_ago
-        end_date = current_date
+        end_date = ranking_date
         prior_period = 90 #days
         start_date_prior_period = start_date - timedelta(days=prior_period)
         end_date_prior_period = end_date - timedelta(days=prior_period)
@@ -149,12 +164,11 @@ def index():
     # Get unique lists
     unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
 
-    formatted_date = current_date.strftime('%d %B %Y')
+    formatted_date = ranking_date.strftime('%d %B %Y')
+    current_formatted_date = current_date.strftime('%d %B %Y')
 
-    print(f"{unique_lists=}")
-    print(f"{final_aggregated_athletes['all']=}")
     print(f"Ending index at: {datetime.now(sydney_tz)}")
-    return render_template('index.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists, current_date=formatted_date)
+    return render_template('index.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists, effective_date=formatted_date, current_date=current_formatted_date)
 
 ##############
 
@@ -293,12 +307,21 @@ def list_athletes():
 # individual Athlete
 @app.route("/athlete/<id>")
 def show_athlete(id):
+    effective_date_str = request.args.get('effective_date')
+    if effective_date_str:
+        try:
+            effective_date = datetime.strptime(effective_date_str, '%d %B %Y').date()
+        except ValueError:
+            effective_date = datetime.now(sydney_tz).date()
+    else:
+        effective_date = datetime.now(sydney_tz).date()
+
     print(f"starting show_athlete at: {datetime.now(sydney_tz)}")
     athlete = load_athlete_from_db(id)
     if not athlete:
         return "Not found", 404
     
-    results = load_results_by_athlete(full_name=athlete['full_name'])
+    results = load_results_by_athlete(full_name=athlete['full_name'], effective_date=effective_date)
     # Convert data types and format race time
     for result in results:
         if result['race_time']:
@@ -317,14 +340,14 @@ def show_athlete(id):
             result['place'] = ""
     
     # Calculate the date range
-    current_date = datetime.now(sydney_tz)
-    twelve_months_ago = (current_date - timedelta(days=365)).date()
-    current_year = current_date.year
+    end_date = effective_date
+    twelve_months_ago = end_date - timedelta(days=365)
+    effective_year = effective_date.year
     
     # Segment results by list and discipline and filter within the last 12 months
     segmented_results = defaultdict(lambda: defaultdict(list))
     for result in results:
-        if result['date'] and result['date'] >= twelve_months_ago:
+        if result['date'] and twelve_months_ago <= result['date'] <= end_date:
             result['ranking period'] = True
         else:
             result['ranking period'] = False
@@ -355,12 +378,12 @@ def show_athlete(id):
             }
 
     # Load results for all athletes to calculate ranking
-    all_results = load_results_for_all_athletes()
+    all_results = load_results_for_all_athletes(effective_date=effective_date)
 
     # Convert data types for all results and filter within the last 12 months
     all_athlete_stats = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for result in all_results:
-        if result['date'] and result['date'] >= twelve_months_ago:
+        if result['date'] and twelve_months_ago <= result['date'] <= effective_date:
             if isinstance(result['race_points'], str):
                 result['race_points'] = float(result['race_points'])
             if isinstance(result['list'], str):
@@ -377,7 +400,7 @@ def show_athlete(id):
             for discipline, recent_results in discipline_results.items():
                 if list_name in ["junior men", "junior women"]:
                     athlete_yob = next((result['yob'] for result in recent_results if result.get('yob')), None)
-                    if athlete_yob and current_year - athlete_yob >= 21:
+                    if athlete_yob and effective_year - athlete_yob >= 21:
                         rankings[athlete_name][list_name][discipline] = "No longer eligible"
                         continue
 
@@ -392,7 +415,7 @@ def show_athlete(id):
         for discipline in discipline_stats.keys():
             if list_name in ["junior men", "junior women"] and athlete['yob'] is None:
                 athlete_ranking[list_name][discipline] = "age not known"
-            elif list_name in ["junior men", "junior women"] and current_year - athlete['yob'] >= 21:
+            elif list_name in ["junior men", "junior women"] and effective_year - athlete['yob'] >= 21:
                 athlete_ranking[list_name][discipline] = "no longer eligible"
             else:
                 sorted_rankings = sorted(
@@ -401,8 +424,9 @@ def show_athlete(id):
                 )
                 athlete_ranking[list_name][discipline] = next((rank + 1 for rank, (name, _) in enumerate(sorted_rankings) if name == athlete['full_name']), None)
 
+    effective_date_formatted = effective_date.strftime('%d/%m/%Y')
     print(f"ending show_athlete at: {datetime.now(sydney_tz)}")
-    return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, athlete_ranking=athlete_ranking, datetime=datetime)
+    return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, athlete_ranking=athlete_ranking, datetime=datetime, effective_date=effective_date_formatted)
 ###################
 
 # Admin function to allow user to edit athlete name

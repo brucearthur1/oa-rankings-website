@@ -100,7 +100,7 @@
         var listButtons = document.querySelectorAll('.btn-group .btn-list');
         var disciplineButtons = document.querySelectorAll('.btn-group .btn-discipline');
         var rank = 1;
-        var currentYear = new Date().getFullYear();
+        var currentYear = new Date("{{ effective_date }}").getFullYear();
         var lowerListName = listName.toLowerCase(); // Convert list name to lowercase
         var lowerDiscipline = discipline.toLowerCase(); // Convert discipline to lowercase
 
@@ -127,22 +127,22 @@
             } else if (delta < 0) {
               deltaContent = `<span class="ranking-delta up" title="change in last 90 days"><span class="arrow-up"></span>${Math.abs(delta)}</span>`;
             }
-            var row = `<div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-href="/athlete/${athlete['athlete_id']}" data-list="${athlete['list']}" data-discipline="${athlete['discipline']}" data-yob="${athlete['yob']}">
-                <div class="container">
-                  <div class="row 'align-items': 'flex-start' 'line-height': '48px'">
-                    <div class="col-3">
-                      <span class="ranking-number">${rank++}${delta !== 0 ? deltaContent : ''}</span>
-                    </div>
-                    <div class="col-5">
-                      <h4>${athlete['full_name']}</h4>
-                      ${athlete['club_name'] ? `<div class="club-state"><b>Club</b>: ${athlete['club_name']}</div>` : ''}
-                      ${athlete['state'] ? `<div class="club-state"><b>State</b>: ${athlete['state']}</div>` : ''}
-                    </div>
-                    <div class="col-3 sum-top-5-points">
-                      ${parseInt(athlete['sum_top_5_race_points'])}
-                    </div>
-                  </div>
-                </div>
+            var row = `<div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-href="/athlete/${athlete['athlete_id']}?effective_date={{ effective_date }}" data-list="${athlete['list']}" data-discipline="${athlete['discipline']}" data-yob="${athlete['yob']}">
+              <div class="container">
+              <div class="row 'align-items': 'flex-start' 'line-height': '48px'">
+              <div class="col-3">
+              <span class="ranking-number">${rank++}${delta !== 0 ? deltaContent : ''}</span>
+              </div>
+              <div class="col-5">
+              <h4>${athlete['full_name']}</h4>
+              ${athlete['club_name'] ? `<div class="club-state"><b>Club</b>: ${athlete['club_name']}</div>` : ''}
+              ${athlete['state'] ? `<div class="club-state"><b>State</b>: ${athlete['state']}</div>` : ''}
+              </div>
+              <div class="col-3 sum-top-5-points">
+              ${parseInt(athlete['sum_top_5_race_points'])}
+              </div>
+              </div>
+              </div>
               </div>`;
             athleteContainer.innerHTML += row;
           }
@@ -175,6 +175,19 @@
         });
       }
 
+      function validateDate() {
+        var dateInput = document.getElementById('rankingDate');
+        var selectedDate = new Date(dateInput.value);
+        var minDate = new Date('1998-01-01');
+        var maxDate = new Date();
+
+        if (selectedDate >= minDate && selectedDate <= maxDate) {
+          window.location.href = '/?rankingDate=' + dateInput.value;
+        } else {
+          alert('Please select a date between 01/01/1998 and today.');
+        }
+      }
+
       document.addEventListener("DOMContentLoaded", function() {
         filterAthletes('women', 'all');
       });
@@ -186,10 +199,17 @@
     <div class="container" id="container">
       <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
 
-      <h3 class="mb-5" style="text-align:center; text-align:left">
-        <span style="color:#007bff">Rankings</span>
-        <span style="font-size: smaller; color: grey;">(as of {{ current_date }})</span>
-      </h3>
+      <div class="row">
+        <div class="col-9">
+          <h3 class="mb-5" style="text-align:center; text-align:left">
+            <span style="color:#007bff">Rankings</span>
+            <span style="font-size: smaller; color: grey;">(as of {{ effective_date }})</span>
+          </h3>
+        </div>
+        <div class="col-3">
+            <input type="date" id="rankingDate" name="rankingDate" class="form-control" value="{{ current_date }}" min="1998-01-01" max="{{ current_date }}" onchange="if(this.value && new Date(this.value).getFullYear() >= 1998 && new Date(this.value).getFullYear() <= new Date().getFullYear()) validateDate()">
+        </div>
+      </div>
 
       <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
         <div class="btn-group mb-3 px-2" role="group" aria-label="List Filter">

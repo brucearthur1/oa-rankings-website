@@ -625,10 +625,10 @@ def load_rankings_from_db(effective_date):
         return rankings
 
 
-def load_results_by_athlete(full_name):
+def load_results_by_athlete(full_name, effective_date):
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM results INNER JOIN events ON results.race_code = events.short_desc WHERE results.full_name = %s ORDER BY events.date DESC;", full_name)
+        cursor.execute("SELECT * FROM results INNER JOIN events ON results.race_code = events.short_desc WHERE results.full_name = %s and events.date <= %s ORDER BY events.date DESC;", (full_name, effective_date))
         result = cursor.fetchall()
         results = []
         for row in result:
@@ -636,10 +636,10 @@ def load_results_by_athlete(full_name):
         return results
 
 
-def load_results_for_all_athletes():
+def load_results_for_all_athletes(effective_date):
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT events.date, results.race_points, events.list, events.discipline, results.full_name, athletes.yob FROM results INNER JOIN events ON results.race_code = events.short_desc INNER JOIN athletes ON athletes.full_name = results.full_name WHERE athletes.eligible = 'Y' ORDER BY events.date DESC;")
+        cursor.execute("SELECT events.date, results.race_points, events.list, events.discipline, results.full_name, athletes.yob FROM results INNER JOIN events ON results.race_code = events.short_desc INNER JOIN athletes ON athletes.full_name = results.full_name WHERE athletes.eligible = 'Y' and events.date <= %s ORDER BY events.date DESC;", effective_date)
         result = cursor.fetchall()
         results = []
         for row in result:
