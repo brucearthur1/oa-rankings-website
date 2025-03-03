@@ -164,7 +164,7 @@ def index():
     # Get unique lists
     unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
 
-    formatted_date = ranking_date.strftime('%d %B %Y')
+    formatted_date = ranking_date.strftime('%Y-%m-%d')
     current_formatted_date = current_date.strftime('%d %B %Y')
 
     print(f"Ending index at: {datetime.now(sydney_tz)}")
@@ -310,7 +310,7 @@ def show_athlete(id):
     effective_date_str = request.args.get('effective_date')
     if effective_date_str:
         try:
-            effective_date = datetime.strptime(effective_date_str, '%d %B %Y').date()
+            effective_date = datetime.strptime(effective_date_str, '%Y-%m-%d').date()
         except ValueError:
             effective_date = datetime.now(sydney_tz).date()
     else:
@@ -424,7 +424,8 @@ def show_athlete(id):
                 )
                 athlete_ranking[list_name][discipline] = next((rank + 1 for rank, (name, _) in enumerate(sorted_rankings) if name == athlete['full_name']), None)
 
-    effective_date_formatted = effective_date.strftime('%d/%m/%Y')
+    effective_date_formatted = effective_date.strftime('%Y-%m-%d')
+    print(f" {effective_date_formatted=}")
     print(f"ending show_athlete at: {datetime.now(sydney_tz)}")
     return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, athlete_ranking=athlete_ranking, datetime=datetime, effective_date=effective_date_formatted)
 ###################
