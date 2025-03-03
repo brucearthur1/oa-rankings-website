@@ -86,6 +86,7 @@ def index():
 
         aggregated_athletes = {}
         for athlete in athletes:
+            # get the race_points for the current period
             if start_date <= athlete['date'] <= end_date:
                 if discipline is None or athlete['discipline'] == discipline:
                     key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
@@ -93,6 +94,7 @@ def index():
                         aggregated_athletes[key] = {'race_points': [], 'prior_points': []}
                     aggregated_athletes[key]['race_points'].append(athlete['race_points'])
 
+            # get prior race_points for the prior period
             if start_date_prior_period <= athlete['date'] <= end_date_prior_period:
                 if discipline is None or athlete['discipline'] == discipline:
                     key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
