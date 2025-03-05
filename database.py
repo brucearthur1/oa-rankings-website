@@ -621,8 +621,8 @@ def load_rankings_from_db(effective_date):
         result = cursor.fetchall()
         rankings = []
         for row in result:
-            if isinstance(row, dict) and row.get('full_name'):
-                row['full_name'] = row['full_name'].title()
+            # if isinstance(row, dict) and row.get('full_name'):
+            #     row['full_name'] = row['full_name'].title()
             rankings.append(row)
         return rankings
 
@@ -645,8 +645,8 @@ def load_results_for_all_athletes(effective_date):
         result = cursor.fetchall()
         results = []
         for row in result:
-            if isinstance(row, dict) and row.get('full_name'):
-                row['full_name'] = row['full_name'].title()
+            # if isinstance(row, dict) and row.get('full_name'):
+            #     row['full_name'] = row['full_name'].title()
             results.append(row)
         return results
 

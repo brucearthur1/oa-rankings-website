@@ -250,7 +250,7 @@
           var selectedDate = new Date(dateInput.value);
           var minDate = new Date('1998-01-01');
             var maxDate = new Date();
-            maxDate.setDate(maxDate.getDate() + 1); // Add one day to include today
+            maxDate.setDate(maxDate.getDate() + 365); // Add one year
 
             if (selectedDate >= minDate && selectedDate <= maxDate) {
             formattedDate = selectedDate.toISOString().split('T')[0];
