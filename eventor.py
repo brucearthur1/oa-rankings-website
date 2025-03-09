@@ -361,7 +361,7 @@ def scrape_events_from_eventor(end_date, days_prior):
 
     # scrape recent events from Eventor
     # get the event page
-    events_url = f"https://eventor.orienteering.asn.au/Events?competitionTypes=level1%2Clevel2%2Clevel3&classifications=National%2CChampionship%2CRegional%2CLocal&disciplines=Foot&startDate={ start_date }&endDate={ end_date }&map=false&mode=List&showMyEvents=false&cancelled=false&isExpanded=true"
+    events_url = f"https://eventor.orienteering.asn.au/Events?competitionTypes=level1%2Clevel2%2Clevel3&classifications=International%2CNational%2CChampionship%2CRegional%2CLocal&disciplines=Foot&startDate=%7B+start_date+%7D&endDate=%7B+end_date+%7D&map=false&mode=List&showMyEvents=false&cancelled=false&isExpanded=true"
     #events_url = f"https://eventor.orienteering.asn.au/Events?competitionTypes=level1%2Clevel2&classifications=National%2CChampionship%2CRegional&disciplines=Foot&startDate={ start_date }&endDate={ end_date }&map=false&mode=List&showMyEvents=false&cancelled=false&isExpanded=true"
 
     full_page_source = get_html_from_url(events_url, driver)
