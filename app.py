@@ -81,6 +81,8 @@ def index():
             athlete['discipline'] = str.lower(athlete['discipline'])
         else:
             print(f"athlete '{athlete['full_name']}' has no discipline")
+        # make sure that names like Henri du\xa0Toit are converted to Henri du Toit
+        athlete['full_name'] = athlete['full_name'].replace(u'\xa0', u' ')
 
     # filter out athlete records for juniors who are no longer eligible
     # yob must exist to be eligible for junior ranking
@@ -160,7 +162,7 @@ def index():
         'sprint': aggregate_athletes(athletes, discipline='sprint'),
         'middle/long': aggregate_athletes(athletes, discipline='middle/long')
     }
-
+    
     # Get unique lists
     unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
 
