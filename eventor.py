@@ -319,8 +319,8 @@ def load_race_from_eventor_by_ids(eventId, eventClassId, eventRaceId, driver):
                         print(f"Row data: {row_data}")
                         # You can further process the row_data as needed
                         # fix bug where place is empty string
-                        if row_data[0] == '':
-                            race_place = '999'
+                        if row_data[0] == '' or row_data[0] == '0':
+                            race_place = None
                         else:
                             race_place = row_data[0]
 
