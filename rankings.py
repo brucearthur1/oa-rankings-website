@@ -19,6 +19,11 @@ def time_to_seconds(time_str):
 
 def calculate_race_rankings(race_code):
     print(f"Starting to calculate rankings: {race_code}")
+
+    rule = "Australian Rankings"
+    my_min = 800
+    my_max = 1375
+
     # load race times from race_tmp table
     race_times = load_race_tmp(race_code)
     if race_times:
@@ -114,16 +119,18 @@ def calculate_race_rankings(race_code):
                     competitor['prelim_rp'] = 0
                     #print(f"Competitor {competitor['full_name']} has invalid race time, prelim_rp set to 0.")
         else:
-            winner_time = min(time_to_seconds(competitor['race_time']) for competitor in race_times if time_to_seconds(competitor['race_time']) is not None)
+        # no ranked runners
+            #winner_time = min(time_to_seconds(competitor['race_time']) for competitor in race_times if time_to_seconds(competitor['race_time']) is not None)
             for competitor in race_times:
-                rt = time_to_seconds(competitor['race_time'])
-                if rt is not None:
-                    prelim_rp = (2000 - rt * 1200 / winner_time) * float(enhancement_factor)
-                    competitor['prelim_rp'] = max(prelim_rp, 10)  # Ensure prelim_rp is at least 10
-                    #print(f"Competitor {competitor['full_name']} prelim_rp: {competitor['prelim_rp']}")
-                else:
-                    competitor['prelim_rp'] = 0
-                    #print(f"Competitor {competitor['full_name']} has invalid race time, prelim_rp set to 0.")
+                competitor['prelim_rp'] = None
+                # rt = time_to_seconds(competitor['race_time'])
+                # if rt is not None:
+                #     prelim_rp = (2000 - rt * 1200 / winner_time) * float(enhancement_factor)
+                #     competitor['prelim_rp'] = max(prelim_rp, 10)  # Ensure prelim_rp is at least 10
+                #     #print(f"Competitor {competitor['full_name']} prelim_rp: {competitor['prelim_rp']}")
+                # else:
+                #     competitor['prelim_rp'] = 0
+                #     #print(f"Competitor {competitor['full_name']} has invalid race time, prelim_rp set to 0.")
 
 
         # 7.1
@@ -135,7 +142,7 @@ def calculate_race_rankings(race_code):
                 else:
                     competitor['outlier'] = False
             else:
-                competitor['outlier'] = False
+                competitor['outlier'] = True
         
 
         # calculate the winner's unweighted calculated score
@@ -192,7 +199,7 @@ def calculate_race_rankings(race_code):
                     else:
                         rp = (2000 - rt * (2000 - mp_non_outliers) / mt_non_outliers) * float(ip)
                     competitor['race_points'] = max(rp, 10)  # Ensure RP is at least 10
-                    #print(f"Competitor {competitor['full_name']} RP: {competitor['race_points']}")
+                    print(f"Competitor {competitor['full_name']} RP: {competitor['race_points']}")
                 else:
                     competitor['race_points'] = 0
                     #print(f"Competitor {competitor['full_name']} has invalid race time, RP set to 0.")
@@ -201,7 +208,7 @@ def calculate_race_rankings(race_code):
             for competitor in race_times:
                 rt = time_to_seconds(competitor['race_time'])
                 if rt is not None:
-                    rp = (2000 - rt * 1200 / winner_time) * float(ip)
+                    rp = (2000 - rt * (2000-my_min) / winner_time) # * float(ip)  # IP is already included in the winner's RP
                     competitor['race_points'] = max(rp, 10)  # Ensure RP is at least 10
                     #print(f"Competitor {competitor['full_name']} RP: {competitor['race_points']}")
                 else:
@@ -212,9 +219,6 @@ def calculate_race_rankings(race_code):
         insert_new_results(race_times)
 
         calculated = datetime.now(sydney_tz)
-        rule = "Australian Rankings"
-        my_min = 800
-        my_max = 1375
         event_stats = [ calculated, mt, st, mp, sp, rule, my_min, my_max, rr_count, enhancement_factor]
         # save event_stats to database
         insert_event_statistics(event['id'], event_stats)
