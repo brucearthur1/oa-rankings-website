@@ -209,7 +209,7 @@ def get_event_ids(current_date, latest_date, driver):
     for year in years:
         print(f"Searching: {year}")
         # Find the dropdown element
-        select_element = driver.find_element(By.ID, "MainContent_ddlSelectYear")
+        select_element = driver.find_element(By.ID, "year")
 
         # Create a Select object
         select = Select(select_element)
@@ -223,7 +223,7 @@ def get_event_ids(current_date, latest_date, driver):
         for option in options:
             print(f"Searching: {option}")
             # Find the dropdown element
-            select_element = driver.find_element(By.ID, "MainContent_ddlSelectDiscipline")
+            select_element = driver.find_element(By.ID, "discipline")
 
             # Create a Select object
             select = Select(select_element)
@@ -296,9 +296,9 @@ def get_event_ids(current_date, latest_date, driver):
                                 else:
                                     print("Event ID not found")
 
-                        #print(f"Has WRE scores: {completed}")
-                    #else:
-                        #print("The event_date is not between latest_date and current_date.")
+                        print(f"Has WRE scores: {completed}")
+                    else:
+                        print("The event_date is not between latest_date and current_date.")
                 
             else:
                 print(f"Table of events not found: {option}")

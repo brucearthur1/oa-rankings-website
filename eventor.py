@@ -260,10 +260,10 @@ def load_race_from_eventor_by_ids(eventId, eventClassId, eventRaceId, driver):
                         # get name of class from the filters panel
                         filters_tag = soup.find('p', class_='filters')
                         if filters_tag:
-                            # Analyze each text block in filters_tag in between each of the <a> tags and find the text in the format " | text | "
+                            # Analyze each text block in filters_tag in between each of the <a> tags and find the text in the format " | text"
                             for tag in filters_tag.find_all(text=True, recursive=False):
                                 text = tag.strip()
-                                if re.match(r'^\|\s.*\s\|$', text):
+                                if re.match(r'^\|\s.*', text):
                                     my_class = text.strip('| ').strip()
                                     print(f"Class name from filters: {my_class}")
                                     break

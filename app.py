@@ -506,7 +506,7 @@ def show_event(short_file):
 def events_find_eventor():
     # get current date
     end_date = date.today()
-    duration = 30
+    duration = 14
     events = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
     print(f"{events=}")
     return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
@@ -661,7 +661,7 @@ def race_upload_from_eventor(short_desc):
 
     # get current date
     end_date = date.today()
-    duration = 30
+    duration = 14
     # reload admin page with updated list of events
     races = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
     return render_template('events_find_eventor.html', events=races, end_date=end_date, days_prior=duration)
