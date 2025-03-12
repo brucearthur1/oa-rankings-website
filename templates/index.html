@@ -94,6 +94,39 @@
       .athlete-row:hover {
         cursor: pointer; /* Change cursor to hand pointer */
       }
+      .popover {
+        position: absolute;
+        width: 300px;
+        padding: 0px;
+        background-color: #fff;
+        border: 1px solid #007bff; /* Blue outline */
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+      }
+      .popover-header {
+        font-weight: bold;
+        background-color: #007bff; /* Blue background */
+        color: white; /* White text */
+        padding: 10px;
+        border-radius: 5px 5px 0 0;
+      }
+      .popover-body {
+        margin-bottom: 5px;
+      }
+      .popover-close {
+        cursor: pointer;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        padding: 5px 10px;
+        margin: 10px;
+        border-radius: 5px;
+        text-decoration: none;
+      }
+      .popover-close:hover {
+        background-color: #0056b3;
+      }
     </style>
     <script>
       function filterAthletes(listName, discipline) {
@@ -188,9 +221,58 @@
           alert('Please select a date between 01/01/1998 and today.');
         }
       }
+      function showPopover() {
+        var toolbarElement = document.querySelector('.btn-toolbar');
+        var popover = document.createElement('div');
+        popover.className = 'popover';
+        popover.innerHTML = `
+          <div class="popover-header">Welcome</div>
+          <div class="popover-body">Click on each athlete to see race history, ranking scores and more. Use the date selector to see historical rankings.</div>
+          <button class="popover-close" onclick="closePopover()">Got it</button>
+        `;
+        document.body.appendChild(popover);
+
+        // Position the popover just above the toolbar element, centered horizontally
+        var rect = toolbarElement.getBoundingClientRect();
+        popover.style.top = rect.top + window.scrollY - popover.offsetHeight + 'px';
+        popover.style.left = (rect.left + (rect.width / 2) - (popover.offsetWidth / 2)) + 'px';
+      }
+
+      function closePopover() {
+        var popover = document.querySelector('.popover');
+        if (popover) {
+          popover.remove();
+        }
+      }
+
+      function setCookie(name, value, days) {
+        var expires = "";
+        if (days) {
+          var date = new Date();
+          date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+          expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+      }
+
+      function getCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+          var c = ca[i];
+          while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+      }
 
       document.addEventListener("DOMContentLoaded", function() {
         filterAthletes('women', 'all');
+
+        if (!getCookie('visited')) {
+          showPopover();
+          setCookie('visited', 'true', 365);
+        }
       });
     </script>
   </head>
