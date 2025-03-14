@@ -91,7 +91,8 @@ def process_and_store_eventor_event_by_class(input):
                 result['race_time'] = f"00:{result['race_time']}"
     data_to_insert = [tuple(result.values()) for result in data_to_insert]
     print(f"data_to_insert: {data_to_insert}")
-    short_desc = "au" + input['eventor_race_id'] + input['class']
+    new_class = input['class'].replace(' ', '').strip().lower()
+    short_desc = "au" + input['eventor_race_id'] + new_class
     store_race_tmp(short_desc, data_to_insert)
 
 

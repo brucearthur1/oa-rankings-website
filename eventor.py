@@ -112,13 +112,14 @@ def load_from_eventor_by_class(event_code, my_class, driver):
                         my_list_name = deduct_list_name_from_class_name(my_class)
 
                         # Convert event_date_str to "YYYY-MM-DD" format
+                        new_class = my_class.replace(' ', '').strip().lower()
                         event_date = datetime.strptime(event_date_str, '%A %d %B %Y').strftime('%d/%m/%Y')
                         new_event = {
                             'date': event_date,
-                            'short_desc': "au" + event_code.lower() + my_class.lower(),
+                            'short_desc': "au" + event_code.lower() + new_class,
                             'long_desc': event_name,
                             'class': my_class,
-                            'short_file': "au" + event_code.lower() + my_class.lower(),
+                            'short_file': "au" + event_code.lower() + new_class,
                             'ip': 1,
                             'list': my_list_name,
                             'eventor_id': event_code,
@@ -173,7 +174,7 @@ def load_from_eventor_by_class(event_code, my_class, driver):
                             print(f"Row data: {row_data}")
                             # You can further process the row_data as needed
                             new_result = {
-                                'race_code': "au" + event_code + my_class,
+                                'race_code': "au" + event_code + new_class,
                                 'place': row_data[0],
                                 'athlete_name': row_data[1],
                                 'club': row_data[2],
