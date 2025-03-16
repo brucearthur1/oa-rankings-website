@@ -259,7 +259,7 @@ def insert_new_results(race_times):
 def load_athletes_from_db():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM athletes LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE nationality_code = 'AUS' AND last_event_date is not NULL")
+        cursor.execute("SELECT * FROM athletes LEFT JOIN clubs ON athletes.club_id = clubs.id WHERE nationality_code = 'AUS' AND last_event_date is not NULL order by last_event_date desc, athletes.family, athletes.given")
         result = cursor.fetchall()
         athletes = []
         for row in result:
@@ -501,7 +501,7 @@ def load_event_from_db(short_file):
 def load_events_from_db():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM events")
+        cursor.execute("SELECT * FROM events order by date desc")
         result = cursor.fetchall()
         events = []
         for row in result:
