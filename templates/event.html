@@ -59,26 +59,18 @@
         #eventTable {
           font-size: 12px;
         }
-        /* .table th:nth-child(3),
-        .table td:nth-child(3) {
-          display: none;
-        } */
       }
       @media (max-width: 400px) {
         #eventTable {
           font-size: 11px;
         }
-        /* .table th:nth-child(3),
-        .table td:nth-child(3) {
-          display: none;
-        } */
       }
       @media (max-width: 380px) {
         #eventTable {
           font-size: 10px;
         }
       }
-</style>
+    </style>
   </head>
   <body>
     {% include 'nav.html' %}
@@ -115,10 +107,6 @@
                 <td>
                   {% if result['eligible'] == 'N' %}
                       *
-                  {% elif result['athlete_id'] %} 
-                  {% else %}
-                      <!-- <a href="/athlete/add?full_name={{ result['full_name'] | urlencode }}&list={{ event['list'] | urlencode }}" type="button" class="btn btn-outline-warning">Add</a>
-                      <a href="/athlete/ineligible?full_name={{ result['full_name'] | urlencode }}&list={{ event['list'] | urlencode }}" type="button" class="btn btn-outline-warning">*</a> -->
                   {% endif %} 
                 </td>
               </tr>
@@ -164,8 +152,15 @@
         $('#eventTable').DataTable({
           "order": [[ 0, "asc" ]], // Order by the first column (place) in ascending order
           "pageLength": -1, // Show all entries
+          "autoWidth": false, // Disable automatic column width calculation
           "columnDefs": [
-            { "type": "place", "targets": 0 } // Apply custom sorting to the first column
+            { "type": "place", "targets": 0 },
+            { "width": "10%", "targets": 0 }, // Set width for Place column
+            { "width": "40%", "targets": 1 }, // Set width for Name column
+            { "width": "10%", "targets": 2 }, // Set width for Club column
+            { "width": "20%", "targets": 3 }, // Set width for Time column
+            { "width": "20%", "targets": 4 }, // Set width for Ranking Points column
+            { "width": "10%", "targets": 5 }  // Set width for the last column
           ]
         });
 

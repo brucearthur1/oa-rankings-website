@@ -109,7 +109,7 @@
                     <td class="text-right" title="{{ athlete['max_points_date']|strftime('%Y') }} {{ athlete['max_points_event'] }}">
                       <a href="/event/{{ athlete['max_points_code'] }}" style="color: darkslategray;">{{ athlete['max_points'] | int | number_format }}</a>
                     </td>
-                    <td class="text-right">{{ athlete['best_place'] }}</td>
+                    <td class="text-right" data-order="{{ athlete['best_place'] | int }}">{{ athlete['best_place'] }}</td>
                     <td class="text-right">{{ athlete['race_wins'] }}</td>
                     <td class="text-right">{{ athlete['dnf_rate'] }}</td>
                     <td class="text-right">{{ athlete['since_date']|strftime('%Y') }}</td>
