@@ -13,6 +13,7 @@ from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate
 from admin import import_year
 from eventor import scrape_events_from_eventor
+from eventor_api import api_events_from_eventor
 
 
 
@@ -506,8 +507,13 @@ def show_event(short_file):
 def events_find_eventor():
     # get current date
     end_date = date.today()
-    duration = 14
-    events = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
+    end_date_str = end_date.strftime('%Y-%m-%d')
+    duration = 7
+    #events = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
+
+    events = api_events_from_eventor(end_date_str=end_date_str, days_prior=duration)
+
+
     print(f"{events=}")
     return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
 
