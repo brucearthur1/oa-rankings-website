@@ -508,6 +508,7 @@ def events_find_eventor():
     # get current date
     end_date = date.today()
     end_date_str = end_date.strftime('%Y-%m-%d')
+#    end_date_str = '2025-02-17'
     duration = 7
     #events = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
 
@@ -656,22 +657,17 @@ def race_upload_from_eventor(short_desc):
     eventClassId = request.args.get('eventClassId')
     eventRaceId = request.args.get('eventRaceId')
 
-    # if my_class:
-    #     input = {
-    #         'eventor_race_id': short_desc,
-    #         'class': request.args.get('class')
-    #         }
-
-        #process_and_store_eventor_event_by_class(input)
     process_and_store_eventor_event_by_ids(eventId, eventClassId, eventRaceId)
 
     # get current date
     end_date = date.today()
-    duration = 14
+    end_date_str = end_date.strftime('%Y-%m-%d')
+#    end_date_str = '2025-02-17'
+    duration = 7
     # reload admin page with updated list of events
-    races = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
-    return render_template('events_find_eventor.html', events=races, end_date=end_date, days_prior=duration)
-
+    #races = scrape_events_from_eventor(end_date=end_date, days_prior=duration)
+    events = api_events_from_eventor(end_date_str=end_date_str, days_prior=duration)
+    return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
 
 
 @app.route("/stats")

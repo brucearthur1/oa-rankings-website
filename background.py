@@ -3,6 +3,7 @@ from scraping import load_from_WRE, load_latest_from_WRE, load_year_from_WRE
 from database import store_events_and_results, store_race_tmp, store_events, confirm_discipline
 from scraping import setup_Chrome_driver
 from eventor import load_race_from_eventor_by_class, load_race_from_eventor_by_ids
+from eventor_api import load_race_from_eventor_api_by_ids
 from rankings import calculate_race_rankings
 from oldsite import load_year_old_site
 
@@ -113,10 +114,16 @@ def process_and_store_eventor_event_by_class(input):
 
 def process_and_store_eventor_event_by_ids(eventId, eventClassId, eventRaceId):
     print("process_and_store_eventor_event_by_ids started:", datetime.now())
-    driver = setup_Chrome_driver()
-    new_events, new_results = load_race_from_eventor_by_ids(eventId, eventClassId, eventRaceId, driver)
-    driver.quit()
-    print("Finished scraping race from Eventor site:", datetime.now())
+    
+    # firstly, scrape the event from Eventor
+    # driver = setup_Chrome_driver()
+    # new_events, new_results = load_race_from_eventor_by_ids(eventId, eventClassId, eventRaceId, driver)
+    # driver.quit()
+    # print("Finished scraping race from Eventor site:", datetime.now())
+
+    # alternatively, obtain the data from Eventor API
+    new_events, new_results = load_race_from_eventor_api_by_ids(eventId, eventClassId, eventRaceId)
+    print("Finished obtaining result data from Eventor APIs:", datetime.now())
 
     pre_data_to_insert = []
     print(f"store events: {new_events}")

@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv 
 import os 
 from database import test_race_exist
+from eventor import deduct_list_name_from_class_name
+import xml.etree.ElementTree as ET
 
 
 def filter_api_event(event):
@@ -11,6 +13,7 @@ def filter_api_event(event):
         ('school' not in event['long_desc'].lower() or event['event_classification'] == 'nat' ) and \
         (event['event_classification'] == 'champs' or event['event_classification'] == 'nat' or \
          event['event_classification'] == 'int' or \
+#         event['event_classification'] == 'loc' or \
          (event['event_classification'] == 'sta' and 'champ' in event['long_desc'].lower())) :
         include_event = True
     return include_event
@@ -82,7 +85,7 @@ def api_events_from_eventor(end_date_str, days_prior):
     end_date = datetime.strptime(end_date_str, "%Y-%m-%d")  # Convert end_date to datetime
     start_date = end_date - timedelta(days=days_prior)
     start_date_str = start_date.strftime("%Y-%m-%d")  # Convert start_date back to string
-    classificationIds = "1,2,3,6" # Comma-separated list of event classification IDs, where 1=championship event, 2=national event, 3=state event, 4=local event, 5=club event, 6=international event. Omit to include all events.
+    classificationIds = "1,2,3,6,4" # Comma-separated list of event classification IDs, where 1=championship event, 2=national event, 3=state event, 4=local event, 5=club event, 6=international event. Omit to include all events.
 
     api_url = f"https://eventor.orienteering.asn.au/api/events?fromDate={start_date_str}&toDate={end_date_str}&classificationIds={classificationIds}" 
     xml_data = call_eventor_api(api_url)
@@ -217,7 +220,123 @@ def api_events_from_eventor(end_date_str, days_prior):
                 }
                 if new_race:
                     classes_ready_for_processing.append(new_race)
-                    
 
-    
     return classes_ready_for_processing
+
+
+
+def load_race_from_eventor_api_by_ids(eventId, eventClassId, eventRaceId):
+    print(f"starting load_from_eventor_api_by_ids")
+    new_results = []
+    new_events = []
+
+    # Call the Eventor API to get the event details
+    api_url = f"https://eventor.orienteering.asn.au/api/event/{eventId}"
+    root = call_eventor_api(api_url)
+
+    event_code = eventId
+    # Parse the XML data
+    root = ET.fromstring(root)  # Parse the string into an XML element
+
+    event_name_element = root.find("Name")
+    if event_name_element is not None:
+        event_name = event_name_element.text
+    start_date_element = root.find("StartDate/Date")
+    if start_date_element is not None:
+        event_date_str = start_date_element.text
+    
+    for race in root.findall("EventRace"):
+        if race.find("EventRaceId") is not None and race.find("EventRaceId").text == eventRaceId:
+            race_date_element = race.find("RaceDate/Date")
+            if race_date_element is not None:
+                race_date_str = race_date_element.text
+            race_name_element = race.find("Name")
+            if race_name_element is not None:
+                race_name = race_name_element.text
+            break
+    if race_name is not None:
+        full_name = event_name + " " + race_name
+    else:
+        full_name = event_name
+
+    # get the class name that matches eventClassId for this event
+    my_class = None
+    api_url = f"https://eventor.orienteering.asn.au/api/eventclasses?eventId={eventId}"
+    class_root = call_eventor_api(api_url)
+    class_root = ET.fromstring(class_root)  # Parse the string into an XML element
+
+    for event_class in class_root.findall("./EventClass"):
+        class_id = event_class.find("EventClassId").text if event_class.find("EventClassId") is not None else None
+        if class_id == eventClassId:
+            my_class = event_class.find("Name").text if event_class.find("Name") is not None else None
+            break
+
+    my_list_name = deduct_list_name_from_class_name(my_class)
+    my_class_no_space = my_class.replace(" ", "")
+
+    # Convert event_date_str to "YYYY-MM-DD" format
+    race_date = datetime.strptime(race_date_str, '%Y-%m-%d').strftime('%d/%m/%Y')
+    new_event = {
+        'date': race_date,
+        'short_desc': "au" + event_code.lower() + my_class_no_space.lower() + eventRaceId.lower(),
+        'long_desc': full_name,
+        'class': my_class,
+        'short_file': "au" + event_code.lower() + my_class_no_space.lower(),
+        'ip': 1,
+        'list': my_list_name,
+        'eventor_id': event_code,
+        'iof_id': None,
+        'discipline': 'Middle/Long'  #can get this from eventor
+    }
+    new_events.append(new_event)
+
+
+    # get results for the specified class
+    api_url = f"https://eventor.orienteering.asn.au/api/results/event?eventId={eventId}"
+    result_root = call_eventor_api(api_url)
+    result_root = ET.fromstring(result_root)  # Parse the string into an XML element
+
+    # Parse the XML data
+    for class_result in result_root.findall("./ClassResult"):
+        class_id = class_result.find("EventClass/EventClassId").text if class_result.find("EventClass/EventClassId") is not None else None
+        if class_id == eventClassId:
+            for person_result in class_result.findall("./PersonResult"):
+                person = person_result.find("Person")
+                if person is not None:
+                    athlete_name = person.find("PersonName/Given").text if person.find("PersonName/Given") is not None else ""
+                    athlete_name += " " + person.find("PersonName/Family").text if person.find("PersonName/Family") is not None else ""
+
+                    organisation = person_result.find("Organisation")
+                    club = organisation.find("ShortName").text if organisation is not None and organisation.find("ShortName") is not None else ""
+
+                    for race_result in person_result.findall("RaceResult"):
+                        race_result_id = race_result.find("EventRaceId").text if race_result.find("EventRaceId") is not None else None
+                        if race_result_id == eventRaceId:
+                            result = race_result.find("Result")
+                            if result is not None:
+                                competitor_status = result.find("CompetitorStatus").attrib.get("value", None)
+                                if competitor_status == "OK":
+                                    race_time = result.find("Time").text if result.find("Time") is not None else None
+                                    if race_time and ":" in race_time and race_time.count(":") == 1:
+                                        race_time = "0:" + race_time
+                                elif competitor_status == "DidNotStart":
+                                    break
+                                else:
+                                    race_time = competitor_status
+                                race_place = result.find("ResultPosition").text if result.find("ResultPosition") is not None else None
+
+                                my_class = my_class.replace(" ", "")
+                                new_result = {
+                                    'race_code': "au" + eventId.lower() + my_class.lower() + eventRaceId.lower(),
+                                    'place': race_place,
+                                    'athlete_name': athlete_name,
+                                    'club': club,
+                                    'race_time': race_time,
+                                    'race_points': 0
+                                }
+                                new_results.append(new_result)
+                            break
+
+    print(f"{new_results=}")
+    return new_events, new_results
+
