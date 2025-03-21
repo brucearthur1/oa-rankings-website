@@ -13,8 +13,7 @@ from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate
 from admin import import_year
 from eventor import scrape_events_from_eventor
-from eventor_api import api_events_from_eventor
-
+from eventor_api import api_events_from_eventor, api_events_from_eventor_and_calculate_rankings
 
 
 app = Flask(__name__)
@@ -519,6 +518,24 @@ def events_find_eventor():
     return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
 
 
+# admin function to automatically read and process events from Eventor
+@app.route('/events/auto_eventor')
+def events_auto_eventor():
+    # get current date
+    end_date = date.today()
+    end_date_str = end_date.strftime('%Y-%m-%d')
+#    end_date_str = '2025-02-17'
+    duration = 7
+
+    events = api_events_from_eventor_and_calculate_rankings(end_date_str=end_date_str, days_prior=duration)
+
+
+    print(f"{events=}")
+    return render_template('events_auto_eventor.html', events=events, end_date=end_date, days_prior=duration)
+
+
+
+
 # admin function to allow the user to read events from Excel
 @app.route('/events/read_xls')
 def events_read_xls():
@@ -649,7 +666,7 @@ def uploaded_races():
     #display an acknowledgement 
     return render_template('races_submitted.html', df_list=df_list )
 
-
+# admin function to allow a user to upload and calculate rankings for one event/class/race 
 @app.route("/race/upload_eventor/<short_desc>")
 def race_upload_from_eventor(short_desc):
     #my_class = request.args.get('class')

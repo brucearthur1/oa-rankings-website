@@ -2,8 +2,9 @@ import requests
 from datetime import datetime, timedelta
 from dotenv import load_dotenv 
 import os 
-from database import test_race_exist
+from database import test_race_exist, store_events, store_race_tmp, confirm_discipline
 from eventor import deduct_list_name_from_class_name
+from rankings import calculate_race_rankings
 import xml.etree.ElementTree as ET
 
 
@@ -85,7 +86,7 @@ def api_events_from_eventor(end_date_str, days_prior):
     end_date = datetime.strptime(end_date_str, "%Y-%m-%d")  # Convert end_date to datetime
     start_date = end_date - timedelta(days=days_prior)
     start_date_str = start_date.strftime("%Y-%m-%d")  # Convert start_date back to string
-    classificationIds = "1,2,3,6,4" # Comma-separated list of event classification IDs, where 1=championship event, 2=national event, 3=state event, 4=local event, 5=club event, 6=international event. Omit to include all events.
+    classificationIds = "1,2,3,6" # Comma-separated list of event classification IDs, where 1=championship event, 2=national event, 3=state event, 4=local event, 5=club event, 6=international event. Omit to include all events.
 
     api_url = f"https://eventor.orienteering.asn.au/api/events?fromDate={start_date_str}&toDate={end_date_str}&classificationIds={classificationIds}" 
     xml_data = call_eventor_api(api_url)
@@ -169,7 +170,7 @@ def api_events_from_eventor(end_date_str, days_prior):
                     classes = []
                     for event_class in class_root.findall("./EventClass"):
                         class_id = event_class.find("EventClassId").text if event_class.find("EventClassId") is not None else None
-                        class_name = event_class.find("Name").text if event_class.find("Name") is not None else None
+                        class_name = event_class.find("ClassShortName").text if event_class.find("ClassShortName") is not None else None
                         if class_id and class_name:
                             classes.append({"class_id": class_id, "class_name": class_name})
                     # filter the classes
@@ -340,3 +341,273 @@ def load_race_from_eventor_api_by_ids(eventId, eventClassId, eventRaceId):
     print(f"{new_results=}")
     return new_events, new_results
 
+
+#########################
+# under construction
+#########################
+def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
+    print("Started api_events_from_eventor_and_calculate_rankings:", datetime.now())
+
+    new_events = []
+
+    # Define the start date for scraping
+    end_date = datetime.strptime(end_date_str, "%Y-%m-%d")  # Convert end_date to datetime
+    start_date = end_date - timedelta(days=days_prior)
+    start_date_str = start_date.strftime("%Y-%m-%d")  # Convert start_date back to string
+    classificationIds = "1,2,3,6" # Comma-separated list of event classification IDs, where 1=championship event, 2=national event, 3=state event, 4=local event, 5=club event, 6=international event. Omit to include all events.
+
+    api_url = f"https://eventor.orienteering.asn.au/api/events?fromDate={start_date_str}&toDate={end_date_str}&classificationIds={classificationIds}" 
+    xml_data = call_eventor_api(api_url)
+
+    # Parse the XML data
+    root = ET.fromstring(xml_data)
+
+    # Find all <Event> elements within <EventList>
+    for event_xml in root.findall("./Event"):
+        discipline_id = event_xml.find("DisciplineId")
+        if discipline_id is not None and discipline_id.text == "1":
+            event_id = event_xml.find("EventId").text if event_xml.find("EventId") is not None else None
+            event_name = event_xml.find("Name").text if event_xml.find("Name") is not None else None
+            classification_id = event_xml.find("EventClassificationId").text if event_xml.find("EventClassificationId") is not None else None
+            if classification_id == "1":
+                event_classification = "champs"
+            elif classification_id == "2":
+                event_classification = "nat"
+            elif classification_id == "3":
+                event_classification = "sta"
+            elif classification_id == "4":
+                event_classification = "loc"
+            elif classification_id == "0":
+                event_classification = "int"
+            else:
+                event_classification = "unknown"
+
+            event_date = event_xml.find("StartDate/Date").text if event_xml.find("StartDate/Date") is not None else None
+
+            event_dict = {
+                "event_code": event_id,
+                "event_date": event_date,
+                "long_desc": event_name,
+                "event_classification": event_classification
+            }
+
+            include_event = filter_api_event(event_dict)
+            if include_event:
+                # find any eligible classes for this event
+
+                my_classes = []
+                api_url = f"https://eventor.orienteering.asn.au/api/eventclasses?eventId={event_id}"
+                class_root = call_eventor_api(api_url)
+                class_root = ET.fromstring(class_root)  # Parse the string into an XML element
+
+                for event_class in class_root.findall("./EventClass"):
+                    class_id = event_class.find("EventClassId").text if event_class.find("EventClassId") is not None else None
+                    class_name = event_class.find("ClassShortName").text if event_class.find("ClassShortName") is not None else None
+                    if class_id and class_name:
+                        class_name = class_name.replace(" ", "")
+                        my_classes.append({"class_id": class_id, "class_name": class_name})
+                # filter the classes
+                filtered_classes = filter_classes(my_classes)
+
+                if len(filtered_classes) > 0:
+                    # the event contains some ranking classes
+                    event_dict["classes"] = filtered_classes
+
+                    new_races = []
+                    for race in event_xml.findall("./EventRace"):
+                        race_distance = race.attrib.get("raceDistance", "Unknown")
+                        race_id = race.find("EventRaceId").text if race.find("EventRaceId") is not None else None
+                        race_date = race.find("RaceDate/Date").text if race.find("RaceDate/Date") is not None else None
+                        race_name = race.find("Name").text if race.find("Name") is not None else ""
+
+                        # Check if results exist
+                        race_results_exist = False
+                        for key in event_xml.findall(".//Key"):
+                            if key.text and key.text.startswith(f"officialResult_{race_id}"):
+                                race_results_exist = True
+                                break
+                        if race_results_exist:
+
+                            # check if this event/race/class has already been processed
+                            for my_class in event_dict["classes"]:
+                                race_code = "au" + event_dict['event_code'].lower() + my_class['class_name'].lower().replace(" ", "") + race_id.lower()
+                                # check to see if race has already been uploaded
+
+                                race_exists = test_race_exist(race_code)
+                                if race_exists == False:
+                                    # process rankings for this class/race
+                                    results_link = f"/Events/ResultList?eventId={event_id}&eventClassId={my_class['class_id']}&eventRaceId={race_id}&overallResults=False"
+                                    if race_name is not None:
+                                        long_desc = event_dict['long_desc'] + " " + race_name
+                                    else:
+                                        long_desc = event_dict['long_desc']
+
+                                    my_list_name = deduct_list_name_from_class_name(my_class['class_name'])
+
+                                    # Add the event details to the new_events list
+                                    race = {
+                                        "race_code": race_code,
+                                        "race_distance": race_distance,
+                                        "race_id": race_id,
+                                        "class_id": my_class['class_id'],
+                                        "class_name": my_class['class_name'],
+                                        "list": my_list_name,
+                                        "race_date": race_date,
+                                        "stage_name": long_desc, 
+                                        "results_href": results_link
+                                    }
+                                    new_races.append(race)
+                    
+                    if len(new_races) > 0:
+                        event_dict["races"] = new_races
+
+                        # get results for event in one API call
+                        api_url = f"https://eventor.orienteering.asn.au/api/results/event?eventId={event_id}"
+                        result_root = call_eventor_api(api_url)
+                        result_root = ET.fromstring(result_root)
+                        for race in event_dict['races']:
+                            new_results = []
+                            for class_result in result_root.findall("./ClassResult"):
+                                class_id = class_result.find("EventClass/EventClassId").text if class_result.find("EventClass/EventClassId") is not None else None
+                                if class_id == race['class_id']:
+                                    for person_result in class_result.findall("./PersonResult"):
+                                        person = person_result.find("Person")
+                                        if person is not None:
+                                            athlete_name = person.find("PersonName/Given").text if person.find("PersonName/Given") is not None else ""
+                                            athlete_name += " " + person.find("PersonName/Family").text if person.find("PersonName/Family") is not None else ""
+
+                                            organisation = person_result.find("Organisation")
+                                            club = organisation.find("ShortName").text if organisation is not None and organisation.find("ShortName") is not None else ""
+
+                                            # find the results in a multi-race event
+                                            for race_result in person_result.findall("RaceResult"):
+                                                race_result_id = race_result.find("EventRaceId").text if race_result.find("EventRaceId") is not None else None
+                                                if race_result_id == race['race_id']:
+                                                    result = race_result.find("Result")
+                                                    if result is not None:
+                                                        competitor_status = result.find("CompetitorStatus").attrib.get("value", None)
+                                                        if competitor_status == "OK":
+                                                            race_time = result.find("Time").text if result.find("Time") is not None else None
+                                                            if race_time and ":" in race_time and race_time.count(":") == 1:
+                                                                race_time = "0:" + race_time
+                                                        elif competitor_status == "DidNotStart":
+                                                            break
+                                                        else:
+                                                            race_time = competitor_status
+                                                        race_place = result.find("ResultPosition").text if result.find("ResultPosition") is not None else None
+
+                                                        new_result = {
+                                                            'race_code': "au" + event_id.lower() + race['class_id'].lower() + race['race_id'].lower(),
+                                                            'place': race_place,
+                                                            'athlete_name': athlete_name,
+                                                            'club': club,
+                                                            'race_time': race_time,
+                                                            'race_points': 0
+                                                        }
+                                                        print(new_result)  # Debugging output
+                                                        new_results.append(new_result)
+                                                    break
+                                            # find the results in a single race event
+                                            result = person_result.find("Result")
+                                            if result is not None:
+                                                competitor_status = result.find("CompetitorStatus").attrib.get("value", None)
+                                                if competitor_status == "OK":
+                                                    race_time = result.find("Time").text if result.find("Time") is not None else None
+                                                    if race_time and ":" in race_time and race_time.count(":") == 1:
+                                                        race_time = "0:" + race_time
+                                                elif competitor_status == "DidNotStart":
+                                                    break
+                                                else:
+                                                    race_time = competitor_status
+                                                race_place = result.find("ResultPosition").text if result.find("ResultPosition") is not None else None
+                                                class_name_no_spaces = race['class_name'].replace(" ", "")
+
+                                                new_result = {
+                                                    'race_code': "au" + event_id.lower() + class_name_no_spaces.lower() + race['race_id'].lower(),
+                                                    'place': race_place,
+                                                    'athlete_name': athlete_name,
+                                                    'club': club,
+                                                    'race_time': race_time,
+                                                    'race_points': 0
+                                                }
+                                                print(new_result)  # Debugging output
+                                                new_results.append(new_result)
+                                        
+
+                            race['results'] = new_results            
+
+                    new_events.append(event_dict)
+                # completed data sourcing for this event
+
+    pre_data_to_insert = []
+
+    if new_events:  # Only proceed if new_events is not empty
+        for event in new_events:
+            print(f"store event: {event}")
+            print(f"event_date: {event['event_date']}")
+            # Convert event_date format if necessary
+            if 'event_date' in event and isinstance(event['event_date'], str):
+                try:
+                    event_date = datetime.strptime(event['event_date'], '%d/%m/%Y')
+                    event['event_date'] = event_date.strftime('%Y-%m-%d')
+                except ValueError:
+                    pass
+            print(f"reformatted date: {event['event_date']}")
+            if event.get('races'):  # Only proceed if event['races'] exists and is not empty
+                for race in event['races']:
+                    # store the race in the DB
+                    race_to_insert = {
+                        'date': race['race_date'],
+                        'short_desc': race['race_code'],
+                        'long_desc': race['stage_name'],
+                        'class': race['class_name'],
+                        'short_file': race['race_code'],
+                        'ip': 1,
+                        'list': race['list'],
+                        'eventor_id': event['event_code'],
+                        'iof_id': None,
+                        'discipline': 'Middle/Long'
+                    }
+                    row = tuple(race_to_insert.values())
+                    pre_data_to_insert.append(row)
+
+        store_events(pre_data_to_insert)
+
+        # Store results in race_tmp in the DB
+        for event in new_events:
+            if event.get('races'):  # Check if there are any races in the event
+                for race in event['races']:
+                    if race.get('results'):  # Check if there are any results for the race
+                        for result in race['results']:
+                            try:
+                                result['place'] = int(result['place'])
+                            except (ValueError, TypeError):
+                                result['place'] = 0
+                        # Prepare results for insertion
+                        data_to_insert = [{k: v for k, v in result.items() if k not in ['race_code', 'club']} for result in race['results']]
+                        # Convert MM:SS to 00:MM:SS
+                        for result in data_to_insert:
+                            if isinstance(result['race_time'], str) and result['race_time'].startswith('-'):
+                                result['race_time'] = "no time"
+                                result['place'] = 0
+                            if isinstance(result['race_time'], str) and ':' in result['race_time']:
+                                parts = result['race_time'].split(':')
+                                if len(parts) == 2:
+                                    result['race_time'] = f"00:{result['race_time']}"
+                        data_to_insert = [tuple(result.values()) for result in data_to_insert]
+                        print(f"data_to_insert: {data_to_insert}")
+
+                        store_race_tmp(race['race_code'], data_to_insert)
+
+                        print(f"preparing to calculate")
+                        print(race['race_code'])
+                        calculate_race_rankings(race['race_code'])
+
+                        my_year = datetime.strptime(race['race_date'], '%Y-%m-%d').year
+                        if my_year:
+                            print(my_year)
+                            # Remember to review Discipline (discipline = 'Middle/Long' by default)
+                            confirm_discipline(int(my_year))
+
+    print("Finished process_and_store_eventor_event_by_class:", datetime.now())
+    return new_events
