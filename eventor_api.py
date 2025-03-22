@@ -27,7 +27,7 @@ def filter_classes(my_classes):
     filtered_classes = []
     for my_class in my_classes:
         if any(keyword in my_class['class_name'].lower() for keyword in ["men", "women", "elite", "21e", "20e", "21a", "20a", "18a", "sport", "sb", "sg"]) and \
-            all(substring not in my_class['class_name'].lower() for substring in ["21as", "20as"]):
+            all(substring not in my_class['class_name'].lower() for substring in ["21as", "20as"]) :
             filtered_classes.append(my_class)
     return filtered_classes
 
@@ -433,14 +433,15 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
                                 race_code = "au" + event_dict['event_code'].lower() + my_class['class_name'].lower().replace(" ", "") + race_id.lower()
                                 # check to see if race has already been uploaded
 
+                                results_link = f"/Events/ResultList?eventId={event_id}&eventClassId={my_class['class_id']}&eventRaceId={race_id}&overallResults=False"
+                                if race_name is not None:
+                                    long_desc = event_dict['long_desc'] + " " + race_name
+                                else:
+                                    long_desc = event_dict['long_desc']
+
                                 race_exists = test_race_exist(race_code)
                                 if race_exists == False:
                                     # process rankings for this class/race
-                                    results_link = f"/Events/ResultList?eventId={event_id}&eventClassId={my_class['class_id']}&eventRaceId={race_id}&overallResults=False"
-                                    if race_name is not None:
-                                        long_desc = event_dict['long_desc'] + " " + race_name
-                                    else:
-                                        long_desc = event_dict['long_desc']
 
                                     my_list_name = deduct_list_name_from_class_name(my_class['class_name'])
 
@@ -495,9 +496,10 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
                                                         else:
                                                             race_time = competitor_status
                                                         race_place = result.find("ResultPosition").text if result.find("ResultPosition") is not None else None
+                                                        class_name_no_spaces = race['class_name'].replace(" ", "")
 
                                                         new_result = {
-                                                            'race_code': "au" + event_id.lower() + race['class_id'].lower() + race['race_id'].lower(),
+                                                            'race_code': "au" + event_id.lower() + class_name_no_spaces.lower() + race['race_id'].lower(),
                                                             'place': race_place,
                                                             'athlete_name': athlete_name,
                                                             'club': club,

@@ -18,27 +18,44 @@
                 <tr>
                 <th style="font-size: x-small;">date</th>
                 <th style="font-size: x-small;">long_desc</th>
-                <th style="font-size: x-small;">short_desc</th>
                 <th style="font-size: x-small;">results_link</th>
                 <th style="font-size: x-small;">classification</th>
-                <th style="font-size: x-small;">distance</th>
+                <th style="font-size: x-small;">status</th>
                 <th style="font-size: x-small;">class</th>
                 
                 </tr>
             </thead>
             {% for event in events %}
-            <tr>
-                <td style="font-size: x-small;"> {{ event['event_date'] }} </td>
-                <td style="font-size: x-small;"> {{ event['long_desc'] }} </td>
-                <td style="font-size: x-small;"> {{ event['short_desc'] }} </td>
-                <td style="font-size: x-small;">
-                    <a href="https://eventor.orienteering.asn.au{{ event['results_href'] }}" target="_blank">Eventor result link</a>
-                </td>
-                <td style="font-size: x-small;"> {{ event['event_classification'] }} </td>
-                <td style="font-size: x-small;"> {{ event['event_distance'] }} </td>
-                <td style="font-size: x-small;"> {{ event['event_class'] }} </td>
-            </tr>
-            {% endfor %}    
+                {% if event['races'] %}
+                    {% for race in event['races'] %}
+                        {% for class in event['classes'] %}
+                            <tr>
+                                <td style="font-size: x-small;"> {{ race['race_date'] }} </td>
+                                <td style="font-size: x-small;"> {{ race['stage_name'] }} </td>
+                                <td style="font-size: x-small;">
+                                    <a href="https://eventor.orienteering.asn.au{{ event['results_href'] }}" target="_blank">Eventor result link</a>
+                                </td>
+                                <td style="font-size: x-small;"> {{ event['event_classification'] }} </td>
+                                <td style="font-size: x-small;"> Rankings Calculated </td>
+                                <td style="font-size: x-small;"> {{ class['class_name'] }} </td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    {% for class in event['classes'] %}
+                        <tr>
+                            <td style="font-size: x-small;"> {{ event['event_date'] }} </td>
+                            <td style="font-size: x-small;"> {{ event['long_desc'] }} </td>
+                            <td style="font-size: x-small;">
+                                <a href="https://eventor.orienteering.asn.au{{ event['results_href'] }}" target="_blank">Eventor result link</a>
+                            </td>
+                            <td style="font-size: x-small;"> {{ event['event_classification'] }} </td>
+                            <td style="font-size: x-small;"> Rankings already exist </td>
+                            <td style="font-size: x-small;"> {{ class['class_name'] }} </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
             </table>
         </div>
 
