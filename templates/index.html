@@ -285,6 +285,44 @@
           setCookie('visited', 'true', 365);
         }
       });
+
+      function downloadCSV() {
+        const rows = document.querySelectorAll('#athleteContainer .athlete-row');
+        if (rows.length === 0) {
+          alert('No data available to download.');
+          return;
+        }
+      
+        // Get the effective_date, list_name, and discipline from the page
+        const effectiveDate = "{{ effective_date }}";
+        const activeListName = document.querySelector('.btn-list.active')?.textContent.trim() || 'All';
+        const activeDiscipline = document.querySelector('.btn-discipline.active')?.textContent.trim() || 'All';
+      
+        // Prepare CSV content with list_name, discipline, and effective_date as headers
+        let csvContent = `List Name: ${activeListName}, Discipline: ${activeDiscipline}, Effective Date: ${effectiveDate}\n\n`;
+        csvContent += 'Ranking,Full Name,Club,State,Sum of Top 5 Race Points\n';
+      
+        let rank = 0; // Initialize ranking number
+        rows.forEach(row => {
+          rank++; // Increment ranking number
+          const fullName = row.querySelector('h4')?.textContent.trim() || '';
+          const club = row.querySelector('.club-state:nth-of-type(1)')?.textContent.replace('Club: ', '').trim() || '';
+          const state = row.querySelector('.club-state:nth-of-type(2)')?.textContent.replace('State: ', '').trim() || '';
+          const points = row.querySelector('.sum-top-5-points')?.textContent.trim() || '';
+          csvContent += `${rank},"${fullName}","${club}","${state}","${points}"\n`;
+        });
+      
+        // Create a Blob and download the file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ranking_data_${activeListName}_${activeDiscipline}_${effectiveDate}.csv`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     </script>
   </head>
   <body>
@@ -325,6 +363,12 @@
         <!-- Athlete rows will be dynamically rendered here -->
       </div>
       <br>
+
+      <!-- Add a button to download the data -->
+      <div class="text-left mb-4">
+        <button class="btn btn-secondary" onclick="downloadCSV()">Download CSV</button>
+      </div>
+
     </div>
     {% include 'footer.html' %}
   </body>
