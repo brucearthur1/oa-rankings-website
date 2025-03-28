@@ -9,7 +9,25 @@
         <li class="nav-item"><a href="/" class="nav-link" aria-current="page">Rankings</a></li>
         <li class="nav-item"><a href="/events" class="nav-link">Events</a></li>
         <li class="nav-item"><a href="/athletes" class="nav-link">Athletes</a></li>
-        <li class="nav-item"><a href="/stats" class="nav-link">Stats</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" aria-haspopup="true" aria-expanded="false" onclick="toggleDropdown(event)">Stats</a>
+          <div class="dropdown-menu" style="display: none;">
+            <a class="dropdown-item" href="/stats">Overall</a>
+            <a class="dropdown-item" href="/stats/participation">Participation</a>
+          </div>
+        </li>
+
+      <script>
+        function toggleDropdown(event) {
+          event.preventDefault();
+          const dropdownMenu = event.target.nextElementSibling;
+          if (dropdownMenu.style.display === "none" || dropdownMenu.style.display === "") {
+            dropdownMenu.style.display = "block";
+          } else {
+            dropdownMenu.style.display = "none";
+          }
+        }
+      </script>
         <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
       </ul>
     </header>

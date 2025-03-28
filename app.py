@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete, load_participation_lists
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year, parse_result_from_df
 from datetime import datetime, timedelta, timezone, date
 from formatting import convert_to_time_format, is_valid_time_format
@@ -686,13 +686,6 @@ def race_upload_from_eventor(short_desc):
     return render_template('events_find_eventor.html', events=events, end_date=end_date, days_prior=duration)
 
 
-@app.route("/stats")
-def stats_page():
-    athletes = load_races_by_athlete()
-    #print(athletes)
-    return render_template('stats.html', athletes=athletes)
-
-
 
 # icon for browser header
 @app.route('/favicon.png')
@@ -779,6 +772,85 @@ def scrape():
     browserless_selenium()
 
     return "Scraping"
+
+
+@app.route("/stats")
+def stats_page():
+    athletes = load_races_by_athlete()
+    #print(athletes)
+    return render_template('stats.html', athletes=athletes)
+
+
+@app.route("/stats/participation")
+def stats_participation_page():
+    # athletes = [
+    #             {'athlete_id': 15, 'full_name': 'John', 'list': 'men', 'discipline': 'Sprint', 'races': 10, 'year': 2023},
+    #             ]
+
+    athletes = load_participation_lists()  # Your function to get athletes
+
+    # Ensure athlete['date'] and athlete['race_points'] are in the correct format
+    for athlete in athletes:
+        athlete['races'] = float(athlete['races'])
+        athlete['athlete_id'] = str(athlete['athlete_id'])  # Convert athlete_id to string
+        if athlete['list']:
+            athlete['list'] = str.lower(athlete['list'])
+        else:
+            print(f"athlete '{athlete['full_name']}' has no list")
+        if athlete['discipline']:
+            athlete['discipline'] = str.lower(athlete['discipline'])
+        else:
+            print(f"athlete '{athlete['full_name']}' has no discipline")
+        # make sure that names like Henri du\xa0Toit are converted to Henri du Toit
+        athlete['full_name'] = athlete['full_name'].replace(u'\xa0', u' ')
+
+    # Helper function to aggregate athletes based on discipline
+    def aggregate_athletes(athletes, discipline=None):
+
+        aggregated_athletes = {}
+        for athlete in athletes:
+            # get the races for the current period
+            if discipline is None or athlete['discipline'] == discipline:
+                key = (athlete['full_name'], athlete['list'], athlete['athlete_id'])
+                if key not in aggregated_athletes:
+                    aggregated_athletes[key] = {'races': [], 'years': []}
+                aggregated_athletes[key]['races'].append(athlete['races'])
+                aggregated_athletes[key]['years'].append(athlete['year'])
+
+        final_aggregated_athletes = []
+        for key, sub_totals in aggregated_athletes.items():
+            sum_races = sum(sub_totals['races'])
+            earliest_year = min(sub_totals['years'])
+            final_aggregated_athletes.append({
+            'full_name': key[0],
+            'list': key[1],
+            'athlete_id': key[2],  
+            'sum_races': sum_races,
+            'since_year': earliest_year
+            })
+
+        # Sort by sum_top_5_prior_points within each list
+        for list_name in set(athlete['list'] for athlete in final_aggregated_athletes):
+            list_athletes = [athlete for athlete in final_aggregated_athletes if athlete['list'] == list_name]
+
+            list_athletes.sort(key=lambda x: x['sum_races'], reverse=True)
+
+        # finally sort final_aggregated_athletes by list and then sum_races
+        final_aggregated_athletes.sort(key=lambda x: (x['list'], x['sum_races']), reverse=True)  
+
+        return final_aggregated_athletes
+
+    # Aggregating athletes
+    final_aggregated_athletes = {
+        'all': aggregate_athletes(athletes),
+        'sprint': aggregate_athletes(athletes, discipline='sprint'),
+        'middle/long': aggregate_athletes(athletes, discipline='middle/long')
+    }
+    # Get unique lists
+    unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
+    
+    return render_template('participation.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists)
+
 
 
 # main function
