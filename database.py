@@ -515,6 +515,23 @@ def load_events_from_db():
             race_codes.append(row['race_code'].lower())
         return events, race_codes
 
+def load_high_scores_lists():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = """
+            SELECT a.id as athlete_id, a.full_name, e.list, e.discipline, e.date, e.long_desc, e.short_desc, r.race_points as race_points
+            FROM athletes a
+            INNER JOIN results r ON a.full_name = r.full_name
+            INNER JOIN events e ON e.short_desc = r.race_code
+            WHERE a.eligible = 'Y'
+            and (cast(r.race_points as float) > 1100 and e.list like 'junior%' or cast(r.race_points as float)>1200)
+            order by cast(r.race_points as float) desc
+        """
+        cursor.execute(query)
+        athletes = cursor.fetchall()
+        return athletes
+
+
 
 def load_participation_lists():
     connection.autocommit(True)
