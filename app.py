@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete, load_participation_lists, load_high_scores_lists
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete, load_participation_lists, load_high_scores_lists, load_recent_milestones, load_approaching_milestones
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year, parse_result_from_df
 from datetime import datetime, timedelta, timezone, date
 from formatting import convert_to_time_format, is_valid_time_format
@@ -781,6 +781,14 @@ def stats_page():
     return render_template('stats.html', athletes=athletes)
 
 
+
+@app.route("/stats/approaching_milestones")
+def stats_approaching_milestones():
+    athletes = load_approaching_milestones()
+    #print(athletes)
+    return render_template('approaching_milestones.html', athletes=athletes)
+
+
 @app.route("/stats/high_scores")
 def stats_high_scores_page():
     # athletes = [
@@ -897,6 +905,12 @@ def stats_participation_page():
     
     return render_template('participation.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists)
 
+
+@app.route("/stats/recent_milestones")
+def stats_recent_milestones():
+    athletes = load_recent_milestones()
+    #print(athletes)
+    return render_template('recent_milestones.html', athletes=athletes)
 
 
 # main function

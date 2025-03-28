@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 20px;
+      }
+      h4 {
+        margin-bottom: 1rem;
+        color: #007bff;
+        text-align: center;
+      }
+      .table {
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 100%; /* Ensure the table uses full width */
+      }
+      .table th, .table td {
+        border-top: none;
+        border-bottom: 1px solid #dee2e6;
+        padding: 3px !important; /* Set the padding for table cells with !important */
+      }
+      .table th {
+        background-color: #f1f1f1;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+      }
+      #eventTable {
+        width: 100% !important; /* Ensure the table uses full width */
+      }
+      #eventTable tbody tr td { 
+        border-top: none !important;
+        border-bottom: none !important; 
+      }
+      #eventTable tbody tr:hover {
+        cursor: pointer; /* Change cursor to hand icon */
+      }
+      .text-nowrap {
+        white-space: nowrap;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+      .badge {
+        font-weight: bold;
+        font-size: 1.5em;
+        font-family: 'Georgia', serif;
+      }
+      @media (max-width: 500px) {
+        #eventTable {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 450px) {
+        #eventTable {
+          font-size: 10px;
+        }
+      }
+      @media (max-width: 400px) {
+        #eventTable {
+          font-size: 9px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
+
+        <h4 class="mb-2"><span style='color:#007bff'>Statistics - Approaching Milestones</span></h4>
+        
+
+        <div class="table-responsive" style="width:100%" >
+          <table id="eventTable" class="table table-hover table-striped table-responsive" style="width:100%"> <!-- Ensure the table uses full width -->
+            <thead>
+                <tr width="100%">
+                    <th>Athlete</th>
+                    <th class="text-right">List</th>
+                    <th>Discipline</th>
+                    <th>Race Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for athlete in athletes %}
+                <tr width="100%">
+                    <td class="col-4"><a href="/athlete/{{athlete['athlete_id']}}" style="color: darkslategray;">{{ athlete['full_name'] }}</a></td>
+                    <td class="text-right col-3">{{ athlete['list']|title }}</td>
+                    <td class="text-right col-3">{{ athlete['discipline'] }}</td>
+                    <td class="text-right col-3">
+                      <span class="badge" style="color: black;">
+                          {{ athlete['race_count'] }}
+                      </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+          </table>
+        </div>
+    </div>
+    {% include "footer.html" %}
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script> <!-- Include DataTables JS -->
+    <script>
+      $(document).ready(function () {
+        $('#eventTable').DataTable({
+          "order": [[3, "desc"]], // Order by the fourth column (Race Count) in descending order
+          columnDefs: [
+            { targets: 0, width: '40%' }, // Set width for the Athlete column
+            { targets: 1, width: '20%', className: 'text-end' }, // Set width for Ranking Races and right-align
+            { targets: 2, width: '20%', className: 'text-end' }, // Set width for Milestones and right-align
+            { targets: 3, width: '20%', className: 'text-end' } // Set width for Since Year and right-align
+          ],
+          "pageLength": 100, // Default to showing 10 rows per page
+          "autoWidth": true, // Enable automatic column width calculation
+          "searching": true, // Enable search functionality
+          "lengthChange": true, // Enable the ability to change the number of rows displayed
+          "scrollX": true, // Enable horizontal scrolling to ensure full width usage
+        });
+
+        // Add click event listener to each row
+        $('#eventTable tbody').on('click', 'tr', function () {
+          var href = $(this).data('href');
+          if (href && href !== '#') {
+            window.location.href = href;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+
+
+
+

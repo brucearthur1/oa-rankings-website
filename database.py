@@ -440,6 +440,77 @@ def update_to_athlete_db(id, update):
         connection.commit()
 
 
+def load_approaching_milestones():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = """
+            WITH all_races AS (
+                SELECT 
+                    a.id AS athlete_id, 
+                    a.full_name, 
+                    e.list, 
+                    'All' AS discipline, 
+                    e.date, 
+                    e.long_desc, 
+                    ROW_NUMBER() OVER (PARTITION BY a.id, e.list ORDER BY e.date) AS race_count
+                FROM 
+                    athletes a
+                INNER JOIN 
+                    results r ON a.full_name = r.full_name
+                INNER JOIN 
+                    events e ON e.short_desc = r.race_code
+                WHERE 
+                    a.eligible = 'Y'
+                UNION ALL
+                SELECT 
+                    a.id AS athlete_id, 
+                    a.full_name, 
+                    e.list, 
+                    e.discipline, 
+                    e.date, 
+                    e.long_desc, 
+                    ROW_NUMBER() OVER (PARTITION BY a.id, e.list, e.discipline ORDER BY e.date) AS race_count
+                FROM 
+                    athletes a
+                INNER JOIN 
+                    results r ON a.full_name = r.full_name
+                INNER JOIN 
+                    events e ON e.short_desc = r.race_code
+                WHERE 
+                    a.eligible = 'Y'
+            ),
+            ranked_races AS (
+                SELECT 
+                    athlete_id, 
+                    full_name, 
+                    list, 
+                    discipline, 
+                    date, 
+                    long_desc, 
+                    race_count, 
+                    RANK() OVER (PARTITION BY athlete_id, list, discipline ORDER BY race_count DESC) AS rank_position
+                FROM 
+                    all_races
+            )
+            SELECT *
+            FROM ranked_races
+            WHERE rank_position = 1
+                AND date > DATE_SUB(CURRENT_DATE, INTERVAL 90 DAY)
+                AND (
+                    race_count + 1 IN (10, 25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
+                    OR race_count + 2 IN (10, 25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
+                    OR race_count + 3 IN (10, 25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
+                )
+            ORDER BY race_count DESC
+         """
+        cursor.execute(query)
+        athletes = cursor.fetchall()
+        return athletes
+
+
+
+
+
 def load_event_date(race_code):
     query = "SELECT id, date, ip, list from events WHERE short_desc = %s"
     connection.autocommit(True)
@@ -658,6 +729,60 @@ def load_rankings_from_db(effective_date):
             #     row['full_name'] = row['full_name'].title()
             rankings.append(row)
         return rankings
+
+
+
+
+
+def load_recent_milestones():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = """
+            select * from
+            (
+                SELECT 
+                    a.id AS athlete_id, 
+                    a.full_name, 
+                    e.list, 
+                    'All' as discipline, 
+                    e.date, 
+                    e.long_desc, 
+                    ROW_NUMBER() OVER (PARTITION BY a.id, e.list ORDER BY e.date) AS race_count
+                FROM 
+                    athletes a
+                INNER JOIN 
+                    results r ON a.full_name = r.full_name
+                INNER JOIN 
+                    events e ON e.short_desc = r.race_code
+                WHERE 
+                    a.eligible = 'Y'
+                UNION ALL
+                SELECT 
+                    a.id AS athlete_id, 
+                    a.full_name, 
+                    e.list, 
+                    e.discipline, 
+                    e.date, 
+                    e.long_desc, 
+                    ROW_NUMBER() OVER (PARTITION BY a.id, e.list, e.discipline ORDER BY e.date) AS race_count
+                FROM 
+                    athletes a
+                INNER JOIN 
+                    results r ON a.full_name = r.full_name
+                INNER JOIN 
+                    events e ON e.short_desc = r.race_code
+                WHERE 
+                    a.eligible = 'Y'
+                ORDER BY 
+                    athlete_id, list, discipline, date, race_count
+            ) all_races
+            where date > DATE_SUB(CURRENT_DATE, INTERVAL 90 DAY)
+                and race_count in (10, 25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
+            order by race_count desc
+        """
+        cursor.execute(query)
+        athletes = cursor.fetchall()
+        return athletes
 
 
 def load_results_by_athlete(full_name, effective_date):

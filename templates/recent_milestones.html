@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 20px;
+      }
+      h4 {
+        margin-bottom: 1rem;
+        color: #007bff;
+        text-align: center;
+      }
+      .table {
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .table th, .table td {
+        border-top: none;
+        border-bottom: 1px solid #dee2e6;
+        padding: 3px !important; /* Set the padding for table cells with !important */
+      }
+      .table th {
+        background-color: #f1f1f1;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+      }
+      #eventTable tbody tr td { 
+        border-top: none !important;
+        border-bottom: none !important; 
+        font-size: 12px;
+      }
+      #eventTable tbody tr:hover {
+        cursor: pointer; /* Change cursor to hand icon */
+      }
+      #eventTable th:nth-child(6), 
+      #eventTable td:nth-child(6) {
+        width: 40%; /* Adjust the width as needed */
+      }
+      .text-nowrap {
+        white-space: nowrap;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+      .badge {
+        font-weight: bold;
+        font-size: 1.5em;
+        font-family: 'Georgia', serif;
+      }
+      @media (max-width: 500px) {
+        #eventTable {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 450px) {
+        #eventTable {
+          font-size: 10px;
+        }
+      }
+      @media (max-width: 400px) {
+        #eventTable {
+          font-size: 9px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {% include 'nav.html' %}
+    <div class="container" id="container">
+        <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
+
+        <h4 class="mb-2"><span style='color:#007bff'>Statistics - Recent Milestones</span></h4>
+        
+
+        <div class="table-responsive">
+          <table id="eventTable" class="table table-hover table-striped table-responsive">
+            <thead>
+                <tr>
+                    <th>Milestone</th>
+                    <th>Athlete</th>
+                    <th>List</th>
+                    <th>Discipline</th>
+                    <th>Date</th>
+                    <th>Event</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for athlete in athletes %}
+                <tr>
+                    <td class="text-right">
+                        <span class="badge" style="color: {{ 
+                            'goldenrod' if athlete['race_count'] == 500 else
+                            'darkslategrey' if athlete['race_count'] == 450 else
+                            '#CD7F32' if athlete['race_count'] == 400 else
+                            'hotpink' if athlete['race_count'] == 350 else
+                            'teal' if athlete['race_count'] == 300 else
+                            'green' if athlete['race_count'] == 250 else
+                            'orange' if athlete['race_count'] == 200 else
+                            'blue' if athlete['race_count'] == 150 else
+                            'black' if athlete['race_count'] == 100 else
+                            'red' if athlete['race_count'] == 50 else
+                            'purple' if athlete['race_count'] == 25 else 
+                            'brown' if athlete['race_count'] == 10 else 
+                            'inherit' }};">
+                            {{ athlete['race_count'] }}
+                        </span>
+                    </td>
+                    <td><a href="/athlete/{{athlete['athlete_id']}}" style="color: darkslategray;">{{ athlete['full_name'] }}</a></td>
+                    <td class="text-right">{{ athlete['list']|title }}</td>
+                    <td class="text-right">{{ athlete['discipline'] }}</td>
+                    <td class="text-right">{{ athlete['date'] }}</td>
+                    <td class="text-right">{{ athlete['long_desc'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        
+          </table>
+        </div>
+    </div>
+    {% include "footer.html" %}
+    <script>
+      $(document).ready(function () {
+
+        $('#eventTable').DataTable({
+          "order": [[ 0, "desc" ], [ 4, "desc" ]], // Order by the first column (place) in descending order, then by the fourth column in descending order
+          "pageLength": 100, // Show all entries
+        });
+
+        // Add click event listener to each row
+        $('#eventTable tbody').on('click', 'tr', function () {
+          var href = $(this).data('href');
+          if (href && href !== '#') {
+            window.location.href = href;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+
+
+
+
