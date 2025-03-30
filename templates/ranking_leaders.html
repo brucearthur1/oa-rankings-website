@@ -98,6 +98,21 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script>
+      function updateEmoji(listName, discipline) {
+        const emojiMap = {
+          "men": { "all": "🏆", "sprint": "🏅", "middle/long": "🌲" },
+          "women": { "all": "🏆", "sprint": "🏅", "middle/long": "🌲" },
+          "junior men": { "all": "🎖️", "sprint": "👟", "middle/long": "🍃" },
+          "junior women": { "all": "🎖️", "sprint": "👟", "middle/long": "🍃" }
+        };
+
+        const lowerListName = listName.toLowerCase();
+        const lowerDiscipline = discipline.toLowerCase();
+        const emoji = emojiMap[lowerListName]?.[lowerDiscipline] || "🏆";
+
+        document.getElementById("dynamic-emoji").textContent = emoji;
+      }
+
       function filterAthletes(listName, discipline) {
         var listButtons = document.querySelectorAll('.btn-group .btn-list');
         var disciplineButtons = document.querySelectorAll('.btn-group .btn-discipline');
@@ -148,6 +163,8 @@
             button.classList.remove('active');
           }
         });
+
+        updateEmoji(listName, discipline);
       }
 
       document.addEventListener("DOMContentLoaded", function() {
@@ -172,6 +189,7 @@
             });
           }
         });
+        updateEmoji('women', 'all');
         filterAthletes('women', 'all');
       });
     </script>
@@ -182,8 +200,14 @@
     <div class="container" id="container">
       <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
 
-      <h4 class="mb-3"><span style='color:#007bff'>Statistics - Ranking Leaders  🏆 </span></h4>
-           
+      <h4 class="mb-3">
+        <span style='color:#007bff'>
+          Statistics - Ranking Leaders 
+          <span id="dynamic-emoji">🏆</span>
+        </span>
+      </h4>
+
+  
 
       <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
         <div class="btn-group mb-3 px-2" role="group" aria-label="List Filter">
