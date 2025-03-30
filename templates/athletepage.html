@@ -13,6 +13,11 @@
     <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <!-- DataTables DateTime plug-in -->
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/plug-ins/1.11.5/sorting/datetime-moment.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script>
+      import 'chartjs-adapter-date-fns';
+    </script>
    <style>
       body {
         font-family: 'Roboto', sans-serif;
@@ -390,6 +395,89 @@
               </table>
             </div>
 
+            <div class="m-2 p-2">
+              <h5 class="mb-1"><span style="color:rgb(120,120,120)">Ranking Trend</span></h5>
+              <canvas id="rankingChart_{{ list_name }}_{{ discipline }}" width="400" height="200"></canvas>
+            </div>
+            <script>
+              document.addEventListener("DOMContentLoaded", function() {
+              var ctx = document.getElementById('rankingChart_{{ list_name }}_{{ discipline }}');
+              if (!ctx) {
+                console.error("Canvas element not found");
+                return;
+              }
+              ctx = ctx.getContext('2d');
+              var rankingData = JSON.parse('{{ athlete_ranking_history | selectattr("discipline", "equalto", discipline) | selectattr("list", "equalto", list_name) | map(attribute="ranking") | list | default([]) | tojson | escape }}');
+              var dateData = JSON.parse('{{ athlete_ranking_history | selectattr("discipline", "equalto", discipline) | selectattr("list", "equalto", list_name) | map(attribute="snapshot_date") | map("strftime", "%Y-%m-%d") | list | default([]) | tojson | escape }}');
+              console.log(rankingData);
+              // Convert date strings to ISO 8601 format
+              dateData = dateData.map(function(date) {
+                return new Date(date).toISOString().split('T')[0]; // Keep only the date part
+              });
+              console.log(dateData);
+              new Chart(ctx, {
+                type: 'line',
+                data: {
+                  labels: dateData,
+                  datasets: [{
+                    label: 'Ranking',
+                    data: rankingData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
+                    fill: false
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  scales: {
+                    x: {
+                      type: 'time',
+                      time: {
+                        unit: 'month', // Ensure the unit is set to 'day' to match every date in dateData
+                        parsing: {
+                          xAxisKey: 'x',
+                          yAxisKey: 'y',
+                          format: 'yyyy-MM-dd'
+                        }
+                      },
+                      title: {
+                        display: true,
+                        text: 'Date'
+                      },
+                      ticks: {
+                        autoSkip: false, // Ensure every date is displayed on the x-axis
+                        maxRotation: 45, // Rotate labels if needed to prevent overlap
+                        minRotation: 0
+                      },
+                      grid: {
+                        drawOnChartArea: true, // Draw grid lines on the chart area
+                        drawTicks: true // Draw grid lines for ticks
+                      }
+                    },
+                    y: {
+                      reverse: true, // Rankings are better when lower
+                      title: {
+                        display: true,
+                        text: 'Ranking'
+                      },
+                      grid: {
+                        drawOnChartArea: true // Draw horizontal grid lines
+                      }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      display: false
+                    }
+                  }
+                }
+              });
+              });
+            </script>
+
+
+
             <h5 class="mb-1"><span style="color:rgb(120,120,120)">Results in {{ row_count }} ranking races since {{ oldest_year }} - <span class="text-capitalize">{{ list_name }}</span> - {{ discipline | capitalize }}</span></h5>
             <div class="table-responsive">
               <table id="resultsTable_{{ list_name }}_{{ discipline }}" class="table table-hover table-striped">
@@ -485,3 +573,4 @@
     {% include "footer.html" %}
   </body>
 </html>
+`````

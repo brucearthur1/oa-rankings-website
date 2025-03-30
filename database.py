@@ -510,6 +510,18 @@ def load_approaching_milestones():
 
 
 
+def load_athlete_ranking_history(athlete_id, effective_date):
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = """
+            SELECT snapshot_date, discipline, list, ranking, ranking_points FROM ranking_history 
+            WHERE athlete_id = %s and snapshot_date <= %s
+            ORDER BY snapshot_date
+        """
+        cursor.execute(query, (athlete_id, effective_date))
+        data = cursor.fetchall()
+        return data
+
 
 
 def load_event_date(race_code):

@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete, load_participation_lists, load_high_scores_lists, load_recent_milestones, load_approaching_milestones, store_ranking_in_db, update_results_titlecase, load_ranking_leaders_lists
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete, load_participation_lists, load_high_scores_lists, load_recent_milestones, load_approaching_milestones, store_ranking_in_db, update_results_titlecase, load_ranking_leaders_lists, load_athlete_ranking_history
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year, parse_result_from_df
 from datetime import datetime, timedelta, timezone, date
 from formatting import convert_to_time_format, is_valid_time_format
@@ -413,9 +413,11 @@ def show_athlete(id):
                 athlete_ranking[list_name][discipline] = next((rank + 1 for rank, (name, _) in enumerate(sorted_rankings) if name == athlete['full_name']), None)
 
     effective_date_formatted = effective_date.strftime('%Y-%m-%d')
-    print(f" {effective_date_formatted=}")
+
+    athlete_ranking_history = load_athlete_ranking_history(athlete_id=id, effective_date=effective_date_formatted)
+    
     print(f"ending show_athlete at: {datetime.now(sydney_tz)}")
-    return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, athlete_ranking=athlete_ranking, datetime=datetime, effective_date=effective_date_formatted)
+    return render_template('athletepage.html', athlete=athlete, results=results, segmented_stats=segmented_stats, athlete_ranking=athlete_ranking, datetime=datetime, effective_date=effective_date_formatted, athlete_ranking_history=athlete_ranking_history)
 ###################
 
 # Admin function to allow user to edit athlete name
