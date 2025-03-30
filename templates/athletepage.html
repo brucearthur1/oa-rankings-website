@@ -15,9 +15,6 @@
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/plug-ins/1.11.5/sorting/datetime-moment.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    <script>
-      import 'chartjs-adapter-date-fns';
-    </script>
    <style>
       body {
         font-family: 'Roboto', sans-serif;
@@ -264,7 +261,7 @@
             alert('Please select a date between 01/01/1998 and today.');
           }
       }
-
+      
     </script>
   </head>
   <body>
@@ -396,7 +393,7 @@
             </div>
 
             <div class="m-2 p-2">
-              <h5 class="mb-1"><span style="color:rgb(120,120,120)">Ranking Trend</span></h5>
+                <h5 class="mb-1"><span style="color:rgb(120,120,120)">Ranking Trend for {{ athlete.full_name }} - <span class="text-capitalize">{{ list_name }}</span> - {{ discipline | capitalize }}</span></h5>
               <canvas id="rankingChart_{{ list_name }}_{{ discipline }}" width="400" height="200"></canvas>
             </div>
             <script>
@@ -415,64 +412,65 @@
                 return new Date(date).toISOString().split('T')[0]; // Keep only the date part
               });
               console.log(dateData);
-              new Chart(ctx, {
+                new Chart(ctx, {
                 type: 'line',
                 data: {
                   labels: dateData,
                   datasets: [{
-                    label: 'Ranking',
-                    data: rankingData,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderWidth: 2,
-                    fill: false
+                  label: 'Ranking',
+                  data: rankingData,
+                  borderColor: 'rgba(0, 123, 255, 1)',
+                  backgroundColor: 'rgba(0, 123, 255, 0.8)',
+                  borderWidth: 1,
+                  fill: false,
+                  pointRadius: 0, // Reduce the size of the data point circle
+                  pointHoverRadius: 5 // Adjust hover size if needed
                   }]
                 },
                 options: {
                   responsive: true,
                   scales: {
-                    x: {
-                      type: 'time',
-                      time: {
-                        unit: 'month', // Ensure the unit is set to 'day' to match every date in dateData
-                        parsing: {
-                          xAxisKey: 'x',
-                          yAxisKey: 'y',
-                          format: 'yyyy-MM-dd'
-                        }
-                      },
-                      title: {
-                        display: true,
-                        text: 'Date'
-                      },
-                      ticks: {
-                        autoSkip: false, // Ensure every date is displayed on the x-axis
-                        maxRotation: 45, // Rotate labels if needed to prevent overlap
-                        minRotation: 0
-                      },
-                      grid: {
-                        drawOnChartArea: true, // Draw grid lines on the chart area
-                        drawTicks: true // Draw grid lines for ticks
-                      }
+                  x: {
+                    type: 'time',
+                    time: {
+                    unit: 'month', // Ensure the unit is set to 'day' to match every date in dateData
+                    parsing: {
+                      xAxisKey: 'x',
+                      yAxisKey: 'y',
+                      format: 'yyyy-MM-dd'
+                    }
                     },
-                    y: {
-                      reverse: true, // Rankings are better when lower
-                      title: {
-                        display: true,
-                        text: 'Ranking'
-                      },
-                      grid: {
-                        drawOnChartArea: true // Draw horizontal grid lines
-                      }
+                    title: {
+                    display: true,
+                    },
+                    ticks: {
+                    autoSkip: false, // Ensure every date is displayed on the x-axis
+                    maxRotation: 45, // Rotate labels if needed to prevent overlap
+                    minRotation: 0
+                    },
+                    grid: {
+                    drawOnChartArea: false, // Draw grid lines on the chart area
+                    drawTicks: true // Draw grid lines for ticks
                     }
                   },
-                  plugins: {
-                    legend: {
-                      display: false
+                  y: {
+                    reverse: true, // Rankings are better when lower
+                    title: {
+                    display: true,
+                    text: 'Ranking'
+                    },
+                    grid: {
+                    drawOnChartArea: true // Draw horizontal grid lines
                     }
                   }
+                  },
+                  plugins: {
+                  legend: {
+                    display: false
+                  }
+                  }
                 }
-              });
+                });
               });
             </script>
 
@@ -493,7 +491,7 @@
                 </thead>
                 <tbody>
                   {% for result in filtered_results %}
-                    <tr class="{% if result in stats.top_5_recent_results %}table-success{% endif %}" data-href="/event/{{result['short_desc']}}">
+                    <tr class="{% if result in stats.top_5_recent_results %}table-primary{% endif %}" data-href="/event/{{result['short_desc']}}">
                       <td class="text-nowrap">{{ result['date']|_jinja2_filter_datetime }}</td>
                       <td>{{ result['long_desc'] }}</td>
                       <td>{{ result['class'] }}</td>
