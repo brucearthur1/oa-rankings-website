@@ -3,6 +3,7 @@ from database_connection import connection
 from datetime import datetime, timedelta, date
 import logging
 import pytz  # Import pytz for timezone handling
+import re
 
 # Ensure Sydney timezone is used
 sydney_tz = pytz.timezone('Australia/Sydney')  # Use pytz to get the Sydney timezone
@@ -731,6 +732,18 @@ def load_rankings_from_db(effective_date):
         return rankings
 
 
+def load_ranking_leaders_lists():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = """
+            SELECT snapshot_date, discipline, list, athlete_id, full_name, ranking, ranking_points FROM ranking_history
+            where ranking = 1
+            order by list, discipline, snapshot_date desc
+        """
+        cursor.execute(query)
+        athletes = cursor.fetchall()
+        return athletes
+
 
 
 
@@ -1138,8 +1151,61 @@ def store_race_tmp(short_desc, data_to_insert):
         connection.commit()
         #print("Data inserted successfully!")
 
+###########################################################################################################
 
+def store_ranking_in_db(final_aggregated_athletes, ranking_date):
 
+    print("store_ranking_in_db starting:", datetime.now())
+
+    for discipline in final_aggregated_athletes:
+        ranking_date_str = ranking_date.strftime('%Y-%m-%d')
+
+        # Prepare a set of existing rankings to reduce database calls
+        select_query = """
+            SELECT athlete_id, lower(discipline) as discipline, lower(list) as list
+            FROM ranking_history
+            WHERE snapshot_date = %s
+        """
+        existing_rankings = set()
+        with connection.cursor() as cursor:
+            cursor.execute(select_query, (ranking_date_str,))
+            for row in cursor.fetchall():
+                existing_rankings.add((row['athlete_id'], row['discipline'], row['list']))
+
+        # Prepare bulk insert data
+        insert_data = []
+        for athlete in final_aggregated_athletes[discipline]:
+            key = (athlete['athlete_id'], discipline.lower(), athlete['list'].lower())
+            if key not in existing_rankings:
+                insert_data.append((
+                    ranking_date_str,
+                    discipline,
+                    athlete['list'],
+                    athlete['athlete_id'],
+                    athlete['full_name'],
+                    athlete['race_points_rank'],
+                    athlete['sum_top_5_race_points']
+                ))
+
+        # Perform bulk insert
+        if insert_data:
+            insert_query = """
+            INSERT INTO ranking_history (
+                snapshot_date,
+                discipline,
+                list,
+                athlete_id,
+                full_name,
+                ranking,
+                ranking_points
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            with connection.cursor() as cursor:
+                cursor.executemany(insert_query, insert_data)
+                connection.commit()
+                print(f"Inserted {len(insert_data)} rankings for discipline {discipline} on date {ranking_date_str}")
+    print("store_ranking_in_db finished:", datetime.now())
 
 
 ############################################################################################################
@@ -1280,3 +1346,33 @@ def update_event_ip(race_code, ip):
         cursor.execute(update_query, (ip, race_code))
         connection.commit()
         #print("Event IP updated successfully!")
+
+
+def update_results_titlecase():
+    with connection.cursor() as cursor:
+
+        # Fetch rows with 3 or more consecutive uppercase characters
+        cursor.execute("SELECT id, full_name FROM results WHERE full_name COLLATE utf8mb4_bin REGEXP '[A-Z]{3,}';")
+        rows = cursor.fetchall()
+
+        # Helper function to convert matched words to Title case
+        def convert_to_title_case(full_name):
+            return re.sub(r'\b([A-Z]{3,}\w*)\b', lambda match: match.group(0).capitalize(), full_name)
+
+        # Process rows and update the database
+        for row in rows:
+            print(row)
+            # Extract record ID and full name
+            record_id = row['id']
+            full_name = row['full_name']
+            print(f"Updating record ID {record_id} with full name: {full_name}")
+            # Convert to Title case
+            updated_name = convert_to_title_case(full_name)
+            print(f"{full_name} -> {updated_name}")
+            # Update the record in the database
+            cursor.execute("UPDATE results SET full_name = %s WHERE id = %s", (updated_name, record_id))
+
+        # Commit changes
+        connection.commit()
+
+        #print("Results updated to titlecase!")

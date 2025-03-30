@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn.active {
+        background-color: #0056b3 !important;
+        color: white !important;
+        border-color: #0056b3 !important;
+      }
+      .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 20px;
+      }
+      .table {
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .table th, .table td {
+        border-top: none;
+        border-bottom: 1px solid #dee2e6;
+        padding: 10px;
+      }
+      .table th {
+        background-color: #f1f1f1;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+      }
+      #participationTable tbody tr td { 
+        border-top: none !important;
+        border-bottom: none !important; 
+      }
+      #participationTable tbody tr:hover {
+        cursor: pointer; /* Change cursor to hand icon */
+      }
+      .sum-top-5-points {
+        font-size: 1rem;
+        text-align: right;
+      }
+      .since-year {
+        font-size: 1rem;
+        text-align: right;
+      }
+      h4 {
+        color: #007bff;
+        text-align: center;
+      }
+      .club-state {
+        font-size: 0.9rem;
+        color: #666;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+      .athlete-row:hover {
+        cursor: pointer; /* Change cursor to hand pointer */
+      }
+      .badge {
+        font-weight: bold;
+        font-size: 1.2em;
+        font-family: 'Georgia', serif;
+      }
+      @media (max-width: 460px) {
+        .btn-toolbar .btn-group .btn {
+          font-size: 12px;
+        }
+        #participationTable {
+          font-size: 12px;
+        }
+      }
+      @media (max-width: 390px) {
+        .btn-toolbar .btn-group .btn {
+          font-size: 11px;
+        }
+        #participationTable {
+          font-size: 11px;
+        }
+      }
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+      function filterAthletes(listName, discipline) {
+        var listButtons = document.querySelectorAll('.btn-group .btn-list');
+        var disciplineButtons = document.querySelectorAll('.btn-group .btn-discipline');
+        var currentYear = new Date("{{ effective_date }}").getFullYear();
+        var lowerListName = listName.toLowerCase(); // Convert list name to lowercase
+        var lowerDiscipline = discipline.toLowerCase(); // Convert discipline to lowercase
+
+        // Determine which list to loop through based on discipline
+        var athletes = [];
+        {% for key, value in final_aggregated_athletes.items() %}
+          if (lowerDiscipline === "{{ key }}") {
+            athletes = {{ value | tojson }};
+          }
+        {% endfor %}
+
+        // Prepare new data for the table
+        var tableData = [];
+        athletes.forEach(function(athlete) {
+          if (athlete['list'].toLowerCase() === lowerListName || lowerListName === "all") {
+            tableData.push([
+            `<span style="display:none;">${new Date(athlete['snapshot_date']).toISOString()}</span>${new Date(athlete['snapshot_date']).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`,
+            `1`,
+              `<a href="/athlete/${athlete['athlete_id']}" class="athlete-link" style="color: darkslategrey;">${athlete['full_name']}</a>`,
+              parseInt(athlete['ranking_points']),
+            ]);
+          } 
+        });
+
+        // Update the DataTable with the new data
+        var table = $('#participationTable').DataTable();
+        table.clear(); // Clear existing data
+        table.rows.add(tableData); // Add new data
+        table.draw(); // Redraw the table
+
+        // Update active button states
+        listButtons.forEach(function(button) {
+          if (button.getAttribute('data-list').toLowerCase() === lowerListName) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+
+        disciplineButtons.forEach(function(button) {
+          if (button.getAttribute('data-discipline').toLowerCase() === lowerDiscipline) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        $('#participationTable').DataTable({
+          pageLength: 100, // Set default entries per page to 100
+          order: [[0, 'desc']], // Sort by the first column (span element) in descending order
+          columnDefs: [
+            { targets: 0, width: '20%' }, // Set width for the Athlete column
+            { targets: 1, width: '15%', className: 'text-center' }, // Set width for Ranking Races and right-align
+            { targets: 2, width: '40%'}, // Set width for Milestones
+            { targets: 3, width: '25%', className: 'text-end' } // Set width for Since Year and right-align
+          ],
+          createdRow: function(row, data) {
+            $(row).css('cursor', 'pointer');
+            $(row).on('click', function(event) {
+              if (!$(event.target).is('a')) { // Prevent row click if the target is a link
+                var link = $(row).find('a.athlete-link').attr('href');
+                if (link) {
+                  window.location.href = link;
+                }
+              }
+            });
+          }
+        });
+        filterAthletes('women', 'all');
+      });
+    </script>
+  </head>
+  <body>
+    {% include 'nav.html' %}
+
+    <div class="container" id="container">
+      <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
+
+      <h4 class="mb-3"><span style='color:#007bff'>Statistics - Ranking Leaders</span></h4>
+
+      <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+        <div class="btn-group mb-3 px-2" role="group" aria-label="List Filter">
+          {% for list_name in unique_lists %}
+          <button class="btn btn-outline-primary text-capitalize btn-list" onclick="filterAthletes('{{ list_name }}', document.querySelector('.btn-discipline.active').getAttribute('data-discipline'))" data-list="{{ list_name }}">{{ list_name }}</button>
+          {% endfor %}
+        </div>
+        <div class="btn-group mb-3 px-2" role="group" aria-label="Discipline Filter">
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'all')" data-discipline="all">All</button>
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'sprint')" data-discipline="sprint">Sprint</button>
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'middle/long')" data-discipline="middle/long">Middle/Long</button>
+        </div>
+      </div>
+
+      <div id="participationContainer" class="table-responsive">
+        <table id="participationTable" class="table table-hover table-striped" style="width:100%">
+          <thead>
+            <tr>
+                <th>Month</th>
+                <th>Ranking</th>
+                <th>Athlete</th>
+                <th>Ranking Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows will be dynamically rendered here -->
+          </tbody>
+        </table>
+      </div>
+      <br>
+
+    </div>
+    {% include 'footer.html' %}
+  </body>
+</html>

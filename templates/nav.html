@@ -5,20 +5,23 @@
         <span class="fs-4">Elite Rankings</span>
       </a>
 
-      <ul class="nav nav-pills mr-4">
+      <ul class="nav nav-pills">
         <li class="nav-item"><a href="/" class="nav-link" aria-current="page">Rankings</a></li>
-        <li class="nav-item"><a href="/events" class="nav-link">Events</a></li>
-        <li class="nav-item"><a href="/athletes" class="nav-link">Athletes</a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" aria-haspopup="true" aria-expanded="false" onclick="toggleDropdown(event)">Stats</a>
           <div class="dropdown-menu" style="display: none;">
             <a class="dropdown-item" href="/stats">Overall</a>
-            <a class="dropdown-item" href="/stats/participation">Participation</a>
+            <hr class="dropdown-divider">
             <a class="dropdown-item" href="/stats/high_scores">High Scores</a>
+            <a class="dropdown-item" href="/stats/ranking_leaders">Ranking Leaders</a>
+            <hr class="dropdown-divider">
+            <a class="dropdown-item" href="/stats/participation">Participation</a>
             <a class="dropdown-item" href="/stats/recent_milestones">Recent Milestones</a>
             <a class="dropdown-item" href="/stats/approaching_milestones">Approaching Milestones</a>
           </div>
         </li>
+        <li class="nav-item"><a href="/events" class="nav-link">Events</a></li>
+        <li class="nav-item"><a href="/athletes" class="nav-link">Athletes</a></li>
 
       <script>
         function toggleDropdown(event) {

@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, send_from_directory, jsonify, request
-from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete, load_participation_lists, load_high_scores_lists, load_recent_milestones, load_approaching_milestones
+from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete, load_participation_lists, load_high_scores_lists, load_recent_milestones, load_approaching_milestones, store_ranking_in_db, update_results_titlecase, load_ranking_leaders_lists
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year, parse_result_from_df
 from datetime import datetime, timedelta, timezone, date
 from formatting import convert_to_time_format, is_valid_time_format
@@ -10,7 +10,7 @@ from threading import Thread
 from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event_by_class, get_year_old_site, process_and_store_eventor_event_by_ids
 from pytz import timezone
 from browserless import browserless_selenium
-from rankings import calculate_race_rankings, recalibrate
+from rankings import calculate_race_rankings, recalibrate, rank_athletes
 from admin import import_year
 from eventor import scrape_events_from_eventor
 from eventor_api import api_events_from_eventor, api_events_from_eventor_and_calculate_rankings
@@ -60,117 +60,24 @@ def index():
     else:
         ranking_date = datetime.now(sydney_tz).date()
 
-    print(f"*{ranking_date=}")
 
-    current_date = datetime.now(sydney_tz).date()
-    twelve_months_ago = ranking_date - timedelta(days=365)
-
+    # Load athletes from the database
     athletes = load_rankings_from_db(effective_date=ranking_date)  # Your function to get athletes
-
-    # Ensure athlete['date'] and athlete['race_points'] are in the correct format
-    for athlete in athletes:
-        if isinstance(athlete['date'], str):
-            athlete['date'] = datetime.strptime(athlete['date'], '%Y-%m-%d').date()
-        athlete['race_points'] = float(athlete['race_points'])
-        athlete['athlete_id'] = str(athlete['athlete_id'])  # Convert athlete_id to string
-        if athlete['list']:
-            athlete['list'] = str.lower(athlete['list'])
-        else:
-            print(f"athlete '{athlete['full_name']}' has no list")
-        if athlete['discipline']:
-            athlete['discipline'] = str.lower(athlete['discipline'])
-        else:
-            print(f"athlete '{athlete['full_name']}' has no discipline")
-        # make sure that names like Henri du\xa0Toit are converted to Henri du Toit
-        athlete['full_name'] = athlete['full_name'].replace(u'\xa0', u' ')
-
-    # filter out athlete records for juniors who are no longer eligible
-    # yob must exist to be eligible for junior ranking
-    ranking_year = ranking_date.year
     
-    athletes = [
-        athlete for athlete in athletes
-        if not (athlete['list'].lower().startswith('junior') and (athlete['yob'] is None or ranking_year - athlete['yob'] >= 21))
-    ]
+    # calculate rankings for all athletes
+    final_aggregated_athletes = rank_athletes(athletes=athletes, ranking_date=ranking_date)
 
-    # Helper function to aggregate athletes based on discipline
-    def aggregate_athletes(athletes, discipline=None):
-        start_date = twelve_months_ago
-        end_date = ranking_date
-        prior_period = 90 #days
-        start_date_prior_period = start_date - timedelta(days=prior_period)
-        end_date_prior_period = end_date - timedelta(days=prior_period)
 
-        aggregated_athletes = {}
-        for athlete in athletes:
-            # get the race_points for the current period
-            if start_date <= athlete['date'] <= end_date:
-                if discipline is None or athlete['discipline'] == discipline:
-                    key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
-                    if key not in aggregated_athletes:
-                        aggregated_athletes[key] = {'race_points': [], 'prior_points': []}
-                    aggregated_athletes[key]['race_points'].append(athlete['race_points'])
-
-            # get prior race_points for the prior period
-            if start_date_prior_period <= athlete['date'] <= end_date_prior_period:
-                if discipline is None or athlete['discipline'] == discipline:
-                    key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
-                    if key not in aggregated_athletes:
-                        aggregated_athletes[key] = {'race_points': [], 'prior_points': []}
-                    prior_points = athlete['race_points']
-                    aggregated_athletes[key]['prior_points'].append(prior_points)
-
-        final_aggregated_athletes = []
-        for key, points in aggregated_athletes.items():
-            race_points = sorted(points['race_points'], reverse=True)[:5]
-            prior_points = sorted(points['prior_points'], reverse=True)[:5]
-            sum_top_5_race_points = sum(race_points)
-            sum_top_5_prior_points = sum(prior_points)
-            final_aggregated_athletes.append({
-            'full_name': key[0],
-            'club_name': key[1],
-            'state': key[2],
-            'list': key[3],
-            'athlete_id': key[4],  
-            'yob': key[5],
-            'sum_top_5_prior_points': sum_top_5_prior_points,
-            'sum_top_5_race_points': sum_top_5_race_points
-            })
-
-        # Sort by sum_top_5_prior_points within each list
-        for list_name in set(athlete['list'] for athlete in final_aggregated_athletes):
-            list_athletes = [athlete for athlete in final_aggregated_athletes if athlete['list'] == list_name]
-            list_athletes.sort(key=lambda x: x['sum_top_5_prior_points'], reverse=True)
-            # Store the ranking based on sum_top_5_prior_points and calculate the delta
-            for idx, athlete in enumerate(list_athletes):
-                athlete['prior_points_rank'] = idx + 1
-
-            list_athletes.sort(key=lambda x: x['sum_top_5_race_points'], reverse=True)
-            # Store the ranking based on sum_top_5_race_points
-            for idx, athlete in enumerate(list_athletes):
-                athlete['race_points_rank'] = idx + 1
-                athlete['delta'] = athlete['race_points_rank'] - athlete['prior_points_rank']
-
-        # finally sort final_aggregated_athletes by list and then sum_top_5_race_points
-        final_aggregated_athletes.sort(key=lambda x: (x['list'], x['sum_top_5_race_points']), reverse=True)  
-
-        return final_aggregated_athletes
-
-    # Aggregating athletes
-    final_aggregated_athletes = {
-        'all': aggregate_athletes(athletes),
-        'sprint': aggregate_athletes(athletes, discipline='sprint'),
-        'middle/long': aggregate_athletes(athletes, discipline='middle/long')
-    }
-    
     # Get unique lists
     unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
 
-    formatted_date = ranking_date.strftime('%Y-%m-%d')
+    formatted_ranking_date = ranking_date.strftime('%Y-%m-%d')
+    current_date = datetime.now(sydney_tz).date()
+    # Format the current date
     current_formatted_date = current_date.strftime('%d %B %Y')
 
     print(f"Ending index at: {datetime.now(sydney_tz)}")
-    return render_template('index.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists, effective_date=formatted_date, current_date=current_formatted_date)
+    return render_template('index.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists, effective_date=formatted_ranking_date, current_date=current_formatted_date)
 
 ##############
 
@@ -220,6 +127,85 @@ def admin_recalibrate_year():
         update = recalibrate(last_day_of_year, item, 1)  
     
     return render_template('update_submitted.html', update=update)    
+
+##################################################################
+
+@app.route("/admin/save_rankings_at_date")
+def admin_save_rankings_at_date():
+    input = request.args.get('date')
+    if input:
+        try:
+            ranking_date = datetime.strptime(input, '%Y-%m-%d').date()
+        except ValueError:
+            # Handle invalid date format
+            ranking_date = datetime.now(sydney_tz).date()
+    else:
+        ranking_date = datetime.now(sydney_tz).date()
+
+    print(f"starting save_rankings_at_date at: {ranking_date}")
+    athletes = load_rankings_from_db(effective_date=ranking_date)
+
+    # calculate rankings for all athletes
+    final_aggregated_athletes = rank_athletes(athletes=athletes, ranking_date=ranking_date)
+
+    store_ranking_in_db(final_aggregated_athletes=final_aggregated_athletes, ranking_date=ranking_date)
+    print(f"ending save_rankings_at_date at: {datetime.now(sydney_tz)}")
+
+    return render_template('admin.html')
+
+
+@app.route("/admin/save_rankings_at_previous_month_end")
+def admin_save_rankings_at_previous_month_end():
+    # Get the current date
+    current_date = datetime.now(sydney_tz).date()
+
+    # Calculate the first day of the current month
+    first_day_of_current_month = current_date.replace(day=1)
+
+    # Calculate the last day of the previous month
+    last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
+
+    print(f"starting save_rankings_at_previous_month_end at: {last_day_of_previous_month}")
+    athletes = load_rankings_from_db(effective_date=last_day_of_previous_month)
+
+    # calculate rankings for all athletes
+    final_aggregated_athletes = rank_athletes(athletes=athletes, ranking_date=last_day_of_previous_month)
+
+    store_ranking_in_db(final_aggregated_athletes=final_aggregated_athletes, ranking_date=last_day_of_previous_month)
+    print(f"ending save_rankings_at_previous_month_end at: {datetime.now(sydney_tz)}")
+
+    return render_template('admin.html')
+
+
+@app.route("/admin/save_rankings_all_month_ends")
+def admin_save_rankings_all_month_ends():
+    start_date = datetime(2025, 2, 28).date()
+    end_date = datetime(1998, 1, 31).date()
+
+    current_date = start_date
+    while current_date >= end_date:
+        print(f"Processing rankings for: {current_date}")
+        athletes = load_rankings_from_db(effective_date=current_date)
+
+        # Calculate rankings for all athletes
+        final_aggregated_athletes = rank_athletes(athletes=athletes, ranking_date=current_date)
+
+        # Store rankings in the database
+        store_ranking_in_db(final_aggregated_athletes=final_aggregated_athletes, ranking_date=current_date)
+
+        # Move to the previous month's end
+        current_date = (current_date.replace(day=1) - timedelta(days=1))
+
+    return render_template('admin.html')
+
+
+@app.route("/admin/titlecase_results")
+def admin_titlecase_results():
+    update_results_titlecase()
+    return render_template('admin.html')
+
+
+###################################################################
 
 @app.route("/athlete/add")
 def add_athlete():
@@ -904,6 +890,54 @@ def stats_participation_page():
     unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
     
     return render_template('participation.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists)
+
+
+@app.route("/stats/ranking_leaders")
+def stats_ranking_leaders():
+    # athletes = [
+    #             {'athlete_id': 15, 'full_name': 'John', 'list': 'men', 'discipline': 'Sprint', 'races': 10, 'year': 2023},
+    #             ]
+
+    athletes = load_ranking_leaders_lists()  # Your function to get athletes
+    # snapshot_date, discipline, list, athlete_id, full_name, ranking, ranking_points 
+    #athletes = load_high_scores_lists()  # Your function to get athletes
+
+    # Ensure athlete['date'] and athlete['race_points'] are in the correct format
+    for athlete in athletes:
+        athlete['ranking_points'] = int(float(athlete['ranking_points']))
+        athlete['athlete_id'] = str(athlete['athlete_id'])  # Convert athlete_id to string
+        if athlete['list']:
+            athlete['list'] = str.lower(athlete['list'])
+        else:
+            print(f"athlete '{athlete['full_name']}' has no list")
+        if athlete['discipline']:
+            athlete['discipline'] = str.lower(athlete['discipline'])
+        else:
+            print(f"athlete '{athlete['full_name']}' has no discipline")
+        # make sure that names like Henri du\xa0Toit are converted to Henri du Toit
+        athlete['full_name'] = athlete['full_name'].replace(u'\xa0', u' ')
+
+    # Helper function to aggregate athletes based on discipline
+    def filter_athletes(athletes, discipline=None):
+
+        filtered_athletes = []
+        for athlete in athletes:
+            # get the races for the current discipline
+            if discipline is None or athlete['discipline'] == discipline:
+                filtered_athletes.append(athlete)
+
+        return filtered_athletes
+
+    # Aggregating athletes
+    final_aggregated_athletes = {
+        'all': filter_athletes(athletes, discipline='all'),
+        'sprint': filter_athletes(athletes, discipline='sprint'),
+        'middle/long': filter_athletes(athletes, discipline='middle/long')
+    }
+    # Get unique lists
+    unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
+    
+    return render_template('ranking_leaders.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists)
 
 
 @app.route("/stats/recent_milestones")
