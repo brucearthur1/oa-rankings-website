@@ -929,7 +929,7 @@ def stats_age_grade_ranking():
 def stats_age_grade_records():
 
     athletes = load_age_grade_records_lists()  # Your function to get athletes
-    # age, full_name, discipline, list, ranking_points, age_adjustment, snapshot_date
+    # age, athlete_id, full_name, discipline, list, ranking_points, age_adjustment, snapshot_date
 
     # Helper function to aggregate athletes based on discipline
     def filter_athletes(athletes, discipline=None):

@@ -448,6 +448,7 @@ def load_age_grade_records_lists():
             WITH RankedData AS (
                 SELECT 
                     ag.age,
+                    a.id as athlete_id,
                     a.full_name,
                     a.yob,
                     rh.snapshot_date,
@@ -470,6 +471,7 @@ def load_age_grade_records_lists():
             )
             SELECT 
                 age,
+                athlete_id,
                 full_name,
                 discipline,
                 list,
