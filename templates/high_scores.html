@@ -120,8 +120,8 @@
             tableData.push([
               `${athlete['full_name']}`,
               `<a href="/event/${athlete['short_desc']}" class="event-link" style="color: darkslategrey;">${athlete['long_desc']}</a>`,
-              new Date(athlete['date']).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
-              parseInt(athlete['race_points']),
+              `<span style="display:none;">${new Date(athlete['date']).toISOString()}</span>${new Date(athlete['date']).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' })}`,
+              parseInt(athlete['race_points'])
             ]);
           } 
         });
