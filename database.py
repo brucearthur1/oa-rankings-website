@@ -441,6 +441,54 @@ def update_to_athlete_db(id, update):
         connection.commit()
 
 
+def load_age_grade_records_lists():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = """
+            WITH RankedData AS (
+                SELECT 
+                    ag.age,
+                    a.full_name,
+                    a.yob,
+                    rh.snapshot_date,
+                    rh.discipline,
+                    rh.list,
+                    rh.ranking_points,
+                    ag.age_adjustment,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY ag.age, rh.discipline, rh.list 
+                        ORDER BY rh.ranking_points DESC
+                    ) AS my_rank
+                FROM ranking_history rh
+                INNER JOIN athletes a 
+                    ON a.id = rh.athlete_id AND a.yob IS NOT NULL
+                INNER JOIN age_grades ag 
+                    ON ag.gender = a.gender 
+                    AND ag.age = YEAR(rh.snapshot_date) - a.yob
+                WHERE rh.ranking_points > (50 * ag.age_adjustment * 70) 
+                    AND YEAR(rh.snapshot_date) > a.yob
+            )
+            SELECT 
+                age,
+                full_name,
+                discipline,
+                list,
+                ranking_points,
+                age_adjustment,
+                snapshot_date
+            FROM RankedData
+            WHERE my_rank = 1
+            ORDER BY 
+                list, 
+                discipline, 
+                age;
+         """
+        cursor.execute(query)
+        athletes = cursor.fetchall()
+        return athletes
+
+    
+
 def load_approaching_milestones():
     connection.autocommit(True)
     with connection.cursor() as cursor:
