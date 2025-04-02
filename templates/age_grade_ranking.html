@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn.active {
+        background-color: #0056b3 !important;
+        color: white !important;
+        border-color: #0056b3 !important;
+      }
+      .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 10px;
+      }
+      .table {
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .table th, .table td {
+        border-top: none;
+        border-bottom: 1px solid #dee2e6;
+        padding: 2px;
+      }
+      .table th {
+        background-color: #f1f1f1;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+      }
+      #athleteTable tbody tr td { 
+        border-top: none !important;
+        border-bottom: none !important; 
+      }
+      #athleteTable tbody tr:hover {
+        cursor: pointer; /* Change cursor to hand icon */
+      }
+      .sum-top-5-points {
+        font-size: 1rem;
+        text-align: right;
+      }
+      h4 {
+        color: #007bff;
+        text-align: center;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+      .athlete-row:hover {
+        cursor: pointer; /* Change cursor to hand pointer */
+      }
+      .badge {
+        font-weight: bold;
+        font-size: 1.2em;
+        font-family: 'Georgia', serif;
+      }
+      @media (max-width: 460px) {
+        .btn-toolbar .btn-group .btn {
+          font-size: 12px;
+        }
+        #athleteTable {
+          font-size: 12px;
+        }
+      }
+      @media (max-width: 390px) {
+        .btn-toolbar .btn-group .btn {
+          font-size: 11px;
+        }
+        #athleteTable {
+          font-size: 11px;
+        }
+      }
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+      function filterAthletes(listName, discipline) {
+        var listButtons = document.querySelectorAll('.btn-group .btn-list');
+        var disciplineButtons = document.querySelectorAll('.btn-group .btn-discipline');
+        var currentYear = new Date("{{ effective_date }}").getFullYear();
+        var rank = 1; // Initialize rank counter
+        var lowerListName = listName.toLowerCase(); // Convert list name to lowercase
+        var lowerDiscipline = discipline.toLowerCase(); // Convert discipline to lowercase
+
+        // Determine which list to loop through based on discipline
+        var athletes = [];
+        {% for key, value in final_aggregated_athletes.items() %}
+          if (lowerDiscipline === "{{ key }}") {
+            athletes = {{ value | tojson }};
+          }
+        {% endfor %}
+
+        // Prepare new data for the table
+        var tableData = [];
+        athletes.forEach(function(athlete) {
+          if (!athlete['age_adjustment']) athlete['age_adjustment'] = 1;
+          if (athlete['list'].toLowerCase() === lowerListName || lowerListName === "all") {
+            tableData.push([
+              `<span class="ranking-number">${rank++}</span>`,
+              `<a href="/athlete/${athlete['athlete_id']}" class="event-link" style="color: darkslategrey;">${athlete['full_name']}</a>`,
+              `${parseInt(athlete['sum_top_5_race_points'])}`,
+              `${athlete['yob']}` ? athlete['yob'] : 'N/A',
+              // `${athlete['age_adjustment']}` ? athlete['age_adjustment'] : 'N/A',
+              `${parseFloat(athlete['sum_top_5_race_points']/70/athlete['age_adjustment']).toFixed(2)}%`
+            ]);
+          } 
+        });
+
+        // Update the DataTable with the new data
+        var table = $('#athleteTable').DataTable();
+        table.clear(); // Clear existing data
+        table.rows.add(tableData); // Add new data
+        table.draw(); // Redraw the table
+
+        // Update active button states
+        listButtons.forEach(function(button) {
+          if (button.getAttribute('data-list').toLowerCase() === lowerListName) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+
+        disciplineButtons.forEach(function(button) {
+          if (button.getAttribute('data-discipline').toLowerCase() === lowerDiscipline) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        $('#athleteTable').DataTable({
+          pageLength: 100, // Set default entries per page to 100
+          order: [[0, 'asc']], // Set default sort order: column index 1 (Ranking Races) in descending order
+          columnDefs: [
+            { targets: 0, width: '20%', className: 'text-center'}, // Set width for the Athlete column
+            { targets: 1, width: '35%' }, // Set width 
+            { targets: 2, width: '15%', className: 'text-end' }, 
+            { targets: 3, width: '15%', className: 'text-end' }, 
+            { targets: 4, width: '15%', className: 'text-end' }, 
+            // { targets: 5, width: '10%', className: 'text-end' } 
+          ],
+          createdRow: function(row, data) {
+            $(row).css('cursor', 'pointer');
+            $(row).on('click', function(event) {
+              if (!$(event.target).is('a')) { // Prevent row click if the target is a link
+                var link = $(row).find('a.event-link').attr('href');
+                if (link) {
+                  window.location.href = link;
+                }
+              }
+            });
+          }
+        });
+        filterAthletes('women', 'all');
+      });
+    </script>
+  </head>
+  <body>
+    {% include 'nav.html' %}
+
+    <div class="container" id="container">
+      <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
+
+      <h4 class="mb-3">
+        <span style='color:#007bff'>
+          Statistics - Ranking by Age Grade % 
+        </span>
+      </h4>
+
+  
+
+      <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+        <div class="btn-group mb-3 px-2" role="group" aria-label="List Filter">
+          {% for list_name in unique_lists %}
+          <button class="btn btn-outline-primary text-capitalize btn-list" onclick="filterAthletes('{{ list_name }}', document.querySelector('.btn-discipline.active').getAttribute('data-discipline'))" data-list="{{ list_name }}">{{ list_name }}</button>
+          {% endfor %}
+        </div>
+        <div class="btn-group mb-3 px-2" role="group" aria-label="Discipline Filter">
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'all')" data-discipline="all">All</button>
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'sprint')" data-discipline="sprint">Sprint</button>
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'middle/long')" data-discipline="middle/long">Middle/Long</button>
+        </div>
+      </div>
+
+      <div id="athleteContainer" class="table-responsive">
+        <table id="athleteTable" class="table table-hover table-striped" style="width:100%">
+          <thead>
+            <tr>
+                <th>Age Grade Ranking</th>
+                <th>Athlete</th>
+                <th>Ranking Points</th>
+                <th>Year of Birth</th>
+                <!-- <th>Age Adjustment</th> -->
+                <th>Age Grade %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows will be dynamically rendered here -->
+          </tbody>
+        </table>
+        <div>
+            <strong>Note:</strong> <p>Age Grade Ranking is for interest only, and is not an official ranking. </p>
+            <p>The Age Grade % adjustment factor is broadly based on the WMA (World Masters Athletics) tables for 10k records. The final Age Grade % is the adjusted ranking points divided by (1375 x 5), expressed as a percentage.</p>
+            <p>Men peak between the ages of 23 and 27. Women peak between 21 and 29. After that there is a slow and steady decline in performance until the late 50s where it tails off at an even faster rate.</p>
+        </div>  
+      </div>
+      <br>
+
+    </div>
+    {% include 'footer.html' %}
+  </body>
+</html>

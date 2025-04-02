@@ -894,6 +894,38 @@ def stats_participation_page():
     return render_template('participation.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists)
 
 
+@app.route("/stats/age_grade_ranking")
+def stats_age_grade_ranking():
+
+    ranking_date = datetime.now(sydney_tz).date()
+    # Load athletes from the database
+    athletes = load_rankings_from_db(effective_date=ranking_date, age_grade=True)  # Your function to get athletes
+
+    # calculate rankings for all athletes
+    final_aggregated_athletes = rank_athletes(athletes=athletes, ranking_date=ranking_date, age_grade=True)
+
+    # Sort athletes within each list by sum_top_5_race_points / age_adjustment
+    for list_name, athletes in final_aggregated_athletes.items():
+        for athlete in athletes:
+            if athlete['age_adjustment']:  # Avoid division by zero
+                athlete['adjusted_points'] = athlete['sum_top_5_race_points'] / athlete['age_adjustment']
+            else:
+                athlete['adjusted_points'] = athlete['sum_top_5_race_points']
+
+        # Sort athletes by adjusted_points in descending order
+        athletes.sort(key=lambda x: x['adjusted_points'], reverse=True)
+
+    # Get unique lists
+    unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
+
+    formatted_ranking_date = ranking_date.strftime('%Y-%m-%d')
+    current_date = datetime.now(sydney_tz).date()
+    # Format the current date
+    current_formatted_date = current_date.strftime('%d %B %Y')
+
+    return render_template('age_grade_ranking.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists, effective_date=formatted_ranking_date, current_date=current_formatted_date)
+
+
 @app.route("/stats/ranking_leaders")
 def stats_ranking_leaders():
     # athletes = [

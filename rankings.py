@@ -237,7 +237,7 @@ def calculate_race_rankings(race_code):
     return
 
 
-def rank_athletes(athletes, ranking_date):
+def rank_athletes(athletes, ranking_date, age_grade=False):
 
     twelve_months_ago = ranking_date - timedelta(days=365)
 
@@ -280,7 +280,10 @@ def rank_athletes(athletes, ranking_date):
             # get the race_points for the current period
             if start_date <= athlete['date'] <= end_date:
                 if discipline is None or athlete['discipline'] == discipline:
-                    key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
+                    if age_grade:
+                        key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'], athlete['age_adjustment'])
+                    else:
+                        key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
                     if key not in aggregated_athletes:
                         aggregated_athletes[key] = {'race_points': [], 'prior_points': []}
                     aggregated_athletes[key]['race_points'].append(athlete['race_points'])
@@ -288,7 +291,10 @@ def rank_athletes(athletes, ranking_date):
             # get prior race_points for the prior period
             if start_date_prior_period <= athlete['date'] <= end_date_prior_period:
                 if discipline is None or athlete['discipline'] == discipline:
-                    key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
+                    if age_grade:
+                        key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'], athlete['age_adjustment'])
+                    else:
+                        key = (athlete['full_name'], athlete['club_name'], athlete['state'], athlete['list'], athlete['athlete_id'], athlete['yob'])
                     if key not in aggregated_athletes:
                         aggregated_athletes[key] = {'race_points': [], 'prior_points': []}
                     prior_points = athlete['race_points']
@@ -300,16 +306,19 @@ def rank_athletes(athletes, ranking_date):
             prior_points = sorted(points['prior_points'], reverse=True)[:5]
             sum_top_5_race_points = sum(race_points)
             sum_top_5_prior_points = sum(prior_points)
-            final_aggregated_athletes.append({
-            'full_name': key[0],
-            'club_name': key[1],
-            'state': key[2],
-            'list': key[3],
-            'athlete_id': key[4],  
-            'yob': key[5],
-            'sum_top_5_prior_points': sum_top_5_prior_points,
-            'sum_top_5_race_points': sum_top_5_race_points
-            })
+            athlete_data = {
+                'full_name': key[0],
+                'club_name': key[1],
+                'state': key[2],
+                'list': key[3],
+                'athlete_id': key[4],  
+                'yob': key[5],
+                'sum_top_5_prior_points': sum_top_5_prior_points,
+                'sum_top_5_race_points': sum_top_5_race_points
+            }
+            if age_grade:
+                athlete_data['age_adjustment'] = key[6]
+            final_aggregated_athletes.append(athlete_data)
 
         # Sort by sum_top_5_prior_points within each list
         for list_name in set(athlete['list'] for athlete in final_aggregated_athletes):

@@ -704,37 +704,60 @@ def load_races_by_athlete():
         return result
                       
 
-def load_rankings_from_db(effective_date):
+def load_rankings_from_db(effective_date, age_grade=False):
     if effective_date is None:
         effective_date = datetime.now(sydney_tz).date()
     effective_date_str = effective_date.strftime('%Y-%m-%d')
     connection.autocommit(True)
-    select_query = """
-                       SELECT 
-                            results.race_points,
-                            results.full_name,
-                            athletes.id AS athlete_id,
-                            athletes.yob,
-                            events.date,
-                            events.list,
-                            events.discipline,
-                            clubs.club_name,
-                            clubs.state
-                        FROM
-                            results
-                                INNER JOIN
-                            athletes ON results.full_name = athletes.full_name
-                                AND athletes.eligible = 'Y'
-                                INNER JOIN
-                            events ON results.race_code = events.short_desc
-                                LEFT JOIN
-                            clubs ON athletes.club_id = clubs.id
-                        WHERE
-                            events.date <= %s
-                        ORDER BY athletes.id;
-                    """
+    if age_grade:
+        select_query = """
+            SELECT 
+                results.race_points,
+                results.full_name,
+                athletes.id AS athlete_id,
+                athletes.yob,
+                age_grades.age_adjustment,
+                events.date,
+                events.list,
+                events.discipline,
+                clubs.club_name,
+                clubs.state
+            FROM
+                results
+                INNER JOIN	athletes ON results.full_name = athletes.full_name	AND athletes.eligible = 'Y'
+                INNER JOIN	events ON results.race_code = events.short_desc
+                LEFT JOIN	clubs ON athletes.club_id = clubs.id
+                LEFT JOIN age_grades ON athletes.gender = age_grades.gender AND  (year(%s) - athletes.yob) = age_grades.age
+            WHERE
+                events.date <= %s
+            ORDER BY athletes.id;
+                        """
+    else:
+        select_query = """
+            SELECT 
+                results.race_points,
+                results.full_name,
+                athletes.id AS athlete_id,
+                athletes.yob,
+                events.date,
+                events.list,
+                events.discipline,
+                clubs.club_name,
+                clubs.state
+            FROM
+                results
+                INNER JOIN	athletes ON results.full_name = athletes.full_name	AND athletes.eligible = 'Y'
+                INNER JOIN	events ON results.race_code = events.short_desc
+                LEFT JOIN	clubs ON athletes.club_id = clubs.id
+            WHERE
+                events.date <= %s
+            ORDER BY athletes.id;
+                        """
     with connection.cursor() as cursor:
-        cursor.execute(select_query, effective_date_str )
+        if age_grade:
+            cursor.execute(select_query, (effective_date_str, effective_date_str) )
+        else:
+            cursor.execute(select_query, effective_date_str )
         result = cursor.fetchall()
         rankings = []
         for row in result:
