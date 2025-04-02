@@ -320,8 +320,8 @@ def load_latest_from_WRE():
     # Convert the date strings to datetime objects
     #latest_date = datetime.strptime(latest_date_str, '%Y-%m-%d').date()
 
-    # set latest date to current date minus 14 days
-    latest_date = current_date - timedelta(days=14)
+    # set latest date to current date minus 7 days
+    latest_date = current_date - timedelta(days=7)
 
     driver = setup_Chrome_driver()
 
