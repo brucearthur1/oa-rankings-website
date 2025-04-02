@@ -445,30 +445,6 @@ def load_age_grade_records_lists():
     connection.autocommit(True)
     with connection.cursor() as cursor:
         query = """
-            WITH RankedData AS (
-                SELECT 
-                    ag.age,
-                    a.id as athlete_id,
-                    a.full_name,
-                    a.yob,
-                    rh.snapshot_date,
-                    rh.discipline,
-                    rh.list,
-                    rh.ranking_points,
-                    ag.age_adjustment,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY ag.age, rh.discipline, rh.list 
-                        ORDER BY rh.ranking_points DESC
-                    ) AS my_rank
-                FROM ranking_history rh
-                INNER JOIN athletes a 
-                    ON a.id = rh.athlete_id AND a.yob IS NOT NULL
-                INNER JOIN age_grades ag 
-                    ON ag.gender = a.gender 
-                    AND ag.age = YEAR(rh.snapshot_date) - a.yob
-                WHERE rh.ranking_points > (50 * ag.age_adjustment * 70) 
-                    AND YEAR(rh.snapshot_date) > a.yob
-            )
             SELECT 
                 age,
                 athlete_id,
@@ -478,8 +454,7 @@ def load_age_grade_records_lists():
                 ranking_points,
                 age_adjustment,
                 snapshot_date
-            FROM RankedData
-            WHERE my_rank = 1
+            FROM age_records
             ORDER BY 
                 list, 
                 discipline, 
@@ -944,6 +919,69 @@ def recalibrate_aus_scores(mylist, start_date_dt, end_date_dt, wre_mp, wre_sp, a
         cursor.execute(update_query, (aus_mp, aus_sp, wre_sp, wre_mp, mylist, start_date, end_date )) 
         connection.commit() 
         print("Data updated successfully!")
+
+
+def reload_age_records():
+    with connection.cursor() as cursor:
+        # Define the query with a placeholder 
+        truncate_query = """
+            TRUNCATE TABLE age_records;
+            """ 
+        #Execute the query with the parameter 
+        cursor.execute(truncate_query) 
+        connection.commit()
+
+        insert_query = """
+            insert into age_records
+            select * from
+            (
+                        WITH RankedData AS (
+                            SELECT 
+                                ag.age,
+                                a.id as athlete_id,
+                                a.full_name,
+                                a.yob,
+                                rh.snapshot_date,
+                                rh.discipline,
+                                rh.list,
+                                rh.ranking_points,
+                                ag.age_adjustment,
+                                ROW_NUMBER() OVER (
+                                    PARTITION BY ag.age, rh.discipline, rh.list 
+                                    ORDER BY rh.ranking_points DESC
+                                ) AS my_rank
+                            FROM ranking_history rh
+                            INNER JOIN athletes a 
+                                ON a.id = rh.athlete_id AND a.yob IS NOT NULL
+                            INNER JOIN age_grades ag 
+                                ON ag.gender = a.gender 
+                                AND ag.age = YEAR(rh.snapshot_date) - a.yob
+                            WHERE rh.ranking_points > (3500 * ag.age_adjustment ) 
+                                AND YEAR(rh.snapshot_date) > a.yob
+                        )
+                        SELECT 
+                            age,
+                            list,
+                            discipline,
+                            athlete_id,
+                            full_name,
+                            ranking_points,
+                            age_adjustment,
+                            snapshot_date
+                        FROM RankedData
+                        WHERE my_rank = 1
+                        ORDER BY 
+                            list, 
+                            discipline, 
+                            age
+            ) age_records_tmp
+            """
+        #Execute the query with the parameter 
+        cursor.execute(insert_query) 
+        connection.commit()
+
+        print("Age records updated successfully!")
+
 
 
 def store_athletes_in_db(data_to_insert):
