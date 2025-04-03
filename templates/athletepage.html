@@ -294,7 +294,20 @@
             <span id="completedRacesBadge" class="badge text-align-top" style="display: {% if completed_races >= 10 %}inline{% else %}none{% endif %};" title="milestone completed"></span>
         </span>
       </div>
-      </div>
+      {% if athlete.iof_id %}
+        <div>
+          <a href="https://eventor.orienteering.org/Athletes/Details/{{ athlete.iof_id }}" target="_blank">IOF Eventor Profile</a>
+        </div>
+        <div>
+          <a href="https://ranking.orienteering.org/PersonView?person={{ athlete.iof_id }}" target="_blank">World Ranking</a>
+        </div>
+        {% if athlete.has_iof_photo == 'Y' %}
+        <div>
+            <img src="https://eventor.orienteering.org/MyPages/ProfilePhoto/{{ athlete.iof_id }}" alt="Athlete Photo" style="width: 100px; height: auto;" onerror="this.onerror=null; this.src='/static/default_photo.jpeg';">
+        </div>
+        {% endif %}
+      {% endif %}
+    </div>
 
       <div class="m-2 p-2">
         <table class="table">

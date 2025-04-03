@@ -1,5 +1,7 @@
 import os
-from flask import Flask, render_template, send_from_directory, jsonify, request
+# import requests
+# from io import BytesIO
+from flask import Flask, render_template, send_from_directory, jsonify, request, send_file
 from database import load_athletes_from_db, load_athlete_from_db, update_to_athlete_db, store_race_from_excel, store_events_from_excel, load_events_from_db, load_event_from_db, store_clubs_in_db, store_athletes_in_db, insert_athlete_db, load_athletes_from_results, load_results_by_athlete, load_rankings_from_db, load_results_for_all_athletes, store_race_tmp_from_excel, load_event_stats, load_unmatched_athletes, load_latest_event_date, load_races_by_athlete, load_participation_lists, load_high_scores_lists, load_recent_milestones, load_approaching_milestones, store_ranking_in_db, update_results_titlecase, load_ranking_leaders_lists, load_athlete_ranking_history, load_age_grade_records_lists, reload_age_records
 from excel import load_from_xls, load_from_xlsx, load_multiple_from_xlsx, import_events_from_excel, add_multiple_races_for_list_year, parse_result_from_df
 from datetime import datetime, timedelta, timezone, date
@@ -1010,6 +1012,23 @@ def stats_recent_milestones():
     athletes = load_recent_milestones()
     #print(athletes)
     return render_template('recent_milestones.html', athletes=athletes)
+
+
+
+
+
+# @app.route('/proxy/photo')
+# def proxy_photo():
+#     iof_id = request.args.get('iof_id')
+#     if not iof_id:
+#         return jsonify({'error': 'Missing iof_id'}), 400
+
+#     url = f'https://eventor.orienteering.org/MyPages/ProfilePhoto/{iof_id}'
+#     response = requests.get(url)
+#     if response.status_code == 200:
+#         return send_file(BytesIO(response.content), mimetype='image/jpeg')
+#     else:
+#         return jsonify({'error': 'Failed to fetch image'}), response.status_code
 
 
 # main function
