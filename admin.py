@@ -1,9 +1,11 @@
 from datetime import datetime
 from excel import import_events_from_excel, add_multiple_races_for_list_year
 from pytz import timezone
-from database import confirm_discipline
+from database import confirm_discipline, update_athletes_with_iof_ids, load_athletes_with_iof_id, update_athlete_photo
 from rankings import recalibrate
 from background import upload_year_WRE_races
+from scraping import scrape_iof_athlete_search
+import requests
 
 sydney_tz = timezone('Australia/Sydney')
 
@@ -59,3 +61,41 @@ def import_year(year):
 
     print(f"finished import_year {year} at: {datetime.now(sydney_tz)}")
     return df_html
+
+
+def scrape_and_update_athletes_with_iof_ids():
+    print(f"starting update_athletes_with_iof_ids at: {datetime.now(sydney_tz)}")
+
+    # Iterate through every character in the alphabet
+#    for next_character in 'abcdefghijklmnopqrstuvwxyz':
+    for next_character in 'mnopqrstuvwxyz':
+        # read IOF eventor athlete search page
+        athletes = scrape_iof_athlete_search(my_char=next_character)
+        print(f"Finished scraping from IOF site for character {next_character}:", datetime.now(sydney_tz))
+        # store athletes
+        update_athletes_with_iof_ids(athletes)
+        print(f"Finished updating athletes with IOF IDs for character {next_character}:", datetime.now(sydney_tz))
+
+    print(f"finished update_athletes_with_iof_ids at: {datetime.now(sydney_tz)}")
+
+
+def check_for_iof_photo():
+    print(f"starting check_for_iof_photo at: {datetime.now(sydney_tz)}")
+
+    # load athletes from db where IOF ID is not null and photo is Y
+    athletes = load_athletes_with_iof_id()
+    print(f"Finished loading athletes with IOF IDs:", datetime.now(sydney_tz))
+    # iterate through athletes
+    for athlete in athletes:
+        # check if photo exists
+        athlete_id = athlete['iof_id']
+        #try to open photos/athlete_id.jpg
+        try:
+            with open(f"photos/{athlete_id}.jpg", "rb") as photo_file:
+                print(f"Photo already exists for athlete {athlete['full_name']}")
+            continue
+        except FileNotFoundError:
+            print(f"Photo does not exist locally for athlete {athlete['full_name']}")
+
+            update_athlete_photo(athlete_id)
+            print(f"photo removed for athlete {athlete['full_name']}")

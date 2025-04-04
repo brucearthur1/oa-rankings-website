@@ -13,7 +13,7 @@ from background import process_and_store_data, process_latest_WRE_races, upload_
 from pytz import timezone
 from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate, rank_athletes
-from admin import import_year
+from admin import import_year, scrape_and_update_athletes_with_iof_ids, check_for_iof_photo
 from eventor import scrape_events_from_eventor
 from eventor_api import api_events_from_eventor, api_events_from_eventor_and_calculate_rankings
 
@@ -96,6 +96,17 @@ def admin_page():
 def admin_athletes():
     unmatched_athletes  = load_unmatched_athletes()
     return render_template('athleteadmin.html', athletes=unmatched_athletes)
+
+@app.route("/admin/check_for_iof_photo")
+def admin_check_for_iof_photo():
+    check_for_iof_photo()
+    return render_template('admin.html')
+
+@app.route("/admin/get_eventor_ids")
+def admin_get_eventor_ids():
+    scrape_and_update_athletes_with_iof_ids()
+    return render_template('admin.html')
+
 
 @app.route("/admin/import_years")
 def admin_import_years():

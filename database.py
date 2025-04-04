@@ -547,6 +547,17 @@ def load_athlete_ranking_history(athlete_id, effective_date):
         data = cursor.fetchall()
         return data
 
+# load athletes from db where IOF ID is not null and photo is null
+def load_athletes_with_iof_id():
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        query = "SELECT * FROM athletes WHERE iof_id IS NOT NULL AND has_iof_photo = 'Y'"
+        cursor.execute(query)
+        data = cursor.fetchall()
+        athletes = []
+        for row in data:
+            athletes.append(row)
+    return athletes
 
 
 def load_event_date(race_code):
@@ -1462,6 +1473,23 @@ def test_race_exist(race_code):
         if result:
             race_exists = True
     return race_exists
+
+def update_athletes_with_iof_ids(athletes):
+    with connection.cursor() as cursor:
+        for athlete in athletes:
+            update_query = "UPDATE athletes SET iof_id = %s WHERE full_name = %s and iof_id is null"
+            cursor.execute(update_query, (athlete['iof_id'], athlete['full_name']))
+        connection.commit()
+        print("Athletes updated successfully!")
+
+# Update athlete record with has_iof_photo flag = 'Y'
+def update_athlete_photo(athlete_iof_id):
+    with connection.cursor() as cursor:
+        update_query = "UPDATE athletes SET has_iof_photo = 'N' WHERE iof_id = %s"
+        cursor.execute(update_query, (athlete_iof_id,))
+        connection.commit()
+        print("Athlete photo updated successfully!")
+
 
 def update_event_ip(race_code, ip):
     with connection.cursor() as cursor:

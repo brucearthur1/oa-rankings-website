@@ -381,3 +381,100 @@ def load_year_from_WRE(year):
     driver.quit()
 
     return new_events, new_results
+
+
+def scrape_iof_athlete_search(my_char=''):
+    driver = setup_Chrome_driver()
+    url = "https://eventor.orienteering.org/Athletes"
+    print('\033[94m' + 'Open browser for ' + url + '\033[0m')
+    # Load the webpage
+    driver.get(url)
+    time.sleep(2)
+    # Get the full page source including data loaded by JavaScript
+    full_page_source = driver.page_source
+    print('\033[94m' + f"{full_page_source=}" + '\033[0m')
+    
+    # Now you can use BeautifulSoup to parse the HTML content
+    soup = BeautifulSoup(full_page_source, 'html.parser')
+    
+    # Find the search form and fill in the search criteria
+    search_form_div = driver.find_element(By.ID, "search_athlete")
+    if search_form_div:
+        search_form = search_form_div.find_element(By.TAG_NAME, "form")
+        # Find the input field for the search query
+        try:
+            search_gender = search_form.find_element(By.ID, "PersonSex")
+            # Enter the search query (e.g., "AUS")
+            search_gender.send_keys("Female")
+            
+            search_lastname = search_form.find_element(By.ID, "LastName")
+            # Enter the search query (e.g., "AUS")
+            search_lastname.send_keys(my_char)
+
+            search_nationality = search_form.find_element(By.ID, "CountryId")
+            # Enter the search query (e.g., "AUS")
+            search_nationality.send_keys("Australia")
+            
+            search_volume = search_form.find_element(By.ID, "MaxNumberOfResults")
+            # Enter the search query (e.g., "AUS")
+            search_volume.send_keys(500)
+        except Exception as e:
+            print(f"Search input not found: {e}")
+            # Enter the search query (e.g., "AUS")
+        else:
+            print("Search input not found")
+
+
+    # Find the search form and click the search button
+    search_button = driver.find_element(By.ID, "Search")
+    if search_button:
+        search_button.click()
+    else:
+        print("Search button not found")
+    time.sleep(2)
+
+    # Get the updated page source
+    updated_html = driver.page_source
+    # Parse the updated HTML with BeautifulSoup
+    soup = BeautifulSoup(updated_html, 'html.parser')
+
+    athletes = []
+    # Find the table with athlete information
+    div = soup.find('div', id='athleteList')
+    if div:
+        print
+        # Find the table with athlete information
+        table = div.find('table')
+
+        if table:
+            rows = table.find_all('tr')
+            for row in rows:
+                # Check if the row contains any <th> elements
+                if row.find_all('th'):
+                    continue  # Skip rows with <th> elements
+                # Process rows with <td> elements
+                cells = row.find_all('td')
+                if cells:
+                    athlete = {}
+                    athlete['iof_id'] = cells[0].get_text(strip=True)
+                    athlete['full_name'] = cells[1].get_text(strip=True)
+                    athlete['eventor_id'] = cells[2].get_text(strip=True)
+                    athlete['nationality'] = cells[3].get_text(strip=True)
+                    athlete['discipline'] = cells[4].get_text(strip=True)
+                    athletes.append(athlete)
+        else:
+            print('\033[94m' + 'Athlete table not found' + '\033[0m')
+    else:
+        print('\033[94m' + 'Athlete list not found' + '\033[0m')
+
+    print(f"Found {len(athletes)} athletes")
+    # Print the athletes
+    for athlete in athletes:
+        print(athlete)
+
+
+    # close the driver
+    driver.quit()
+
+    return athletes
+    
