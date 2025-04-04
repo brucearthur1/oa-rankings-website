@@ -81,13 +81,21 @@
         }
       }
       @media (max-width: 550px) {
-        .table th:nth-child(3), .table td:nth-child(3) {
+        .table th:nth-child(3), .table td:nth-child(3){
           display: none;
         }
       }
       @media (max-width: 500px) {
         .table th:nth-child(5), .table td:nth-child(5) {
           display: none;
+        }
+      }
+      @media (max-width: 500px) {
+        .athlete-photo {
+          width: 60px !important;
+        }
+        h4, .athleteName, a {
+          font-size: 0.8rem !important;
         }
       }
 
@@ -274,16 +282,16 @@
 
         {% if athlete.has_iof_photo == 'Y' %}
         <div class="col col-3">
-            <img src="https://eventor.orienteering.org/MyPages/ProfilePhoto/{{ athlete.iof_id }}" alt="Athlete Photo" style="width: 100px; height: auto;" onerror="this.onerror=null; this.src='/static/default_photo.jpeg';">
+            <img src="https://eventor.orienteering.org/MyPages/ProfilePhoto/{{ athlete.iof_id }}" alt="Athlete Photo" style="width: 100px; height: auto; vertical-align: top;" onerror="this.onerror=null; this.src='/static/default_photo.jpeg';" class="athlete-photo">
         </div>
         <div class="row col-9">
-          <div class="row">
+          <div class="row" id="athleteName">
             <h4 class="col col-6">
               {{ athlete.full_name }}
             </h4>
         {% else %}
         <div class="row col-12">
-          <div class="row">
+          <div class="row" id="athleteName">
             <h4 class="col col-6">
               {{ athlete.full_name }}
           </h4>
@@ -291,19 +299,26 @@
           <h4 class="col text-end col-4 mx-0" style="font-size: small; color: grey;">
               <input type="hidden" id="currentDiscipline" value="all">
               <input type="hidden" id="currentList" value="{{ segmented_stats.keys() | list | first if segmented_stats else 'default_list' }}">
-              <span id="completedRaces">
-            {% set currentDiscipline = request.args.get('currentDiscipline', 'all') %}
-            {% set currentList = request.args.get('currentList', segmented_stats.keys() | list | first if segmented_stats else 'default_list') %}
-            {{ currentDiscipline }}
-            {% if currentDiscipline == 'all' %}
-              {% set filtered_results = results | selectattr('discipline', 'in', ['sprint', 'middle/long']) | selectattr('list', 'equalto', currentList) | list %}
-            {% else %}
-              {% set filtered_results = results | selectattr('discipline', 'equalto', currentDiscipline) | selectattr('list', 'equalto', currentList) | list %}
-            {% endif %}
-            {% set completed_races = filtered_results | length %}
-            {{ completed_races }} races in this category
-              </span>
-          </h4>
+                <span id="completedRaces" style="display: none;">
+                {% set currentDiscipline = request.args.get('currentDiscipline', 'all') %}
+                {% set currentList = request.args.get('currentList', segmented_stats.keys() | list | first if segmented_stats else 'default_list') %}
+                {{ currentDiscipline }}
+                {% if currentDiscipline == 'all' %}
+                  {% set filtered_results = results | selectattr('discipline', 'in', ['sprint', 'middle/long']) | selectattr('list', 'equalto', currentList) | list %}
+                {% else %}
+                  {% set filtered_results = results | selectattr('discipline', 'equalto', currentDiscipline) | selectattr('list', 'equalto', currentList) | list %}
+                {% endif %}
+                {% set completed_races = filtered_results | length %}
+                {{ completed_races }} races in this category
+                </span>
+              </h4>
+              <style>
+              @media (min-width: 551px) {
+                #completedRaces {
+                display: inline !important;
+                }
+              }
+              </style>
           <span class="col text-end col-2 py-0 pb-1">
                 <span id="completedRacesBadge" class="badge text-align-top" style="display: {% if completed_races >= 10 %}inline{% else %}none{% endif %};" title="milestone completed"></span>
           </span>
