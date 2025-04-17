@@ -489,8 +489,13 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
                                                         competitor_status = result.find("CompetitorStatus").attrib.get("value", None)
                                                         if competitor_status == "OK":
                                                             race_time = result.find("Time").text if result.find("Time") is not None else None
+                                                            if race_time and "." in race_time:
+                                                                race_time = race_time.split(".")[0]
                                                             if race_time and ":" in race_time and race_time.count(":") == 1:
-                                                                race_time = "0:" + race_time
+                                                                minutes, seconds = race_time.split(":")
+                                                                hours = int(minutes) // 60
+                                                                minutes = int(minutes) % 60
+                                                                race_time = f"{hours}:{minutes:02}:{seconds}"
                                                         elif competitor_status == "DidNotStart":
                                                             break
                                                         else:
@@ -515,8 +520,13 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
                                                 competitor_status = result.find("CompetitorStatus").attrib.get("value", None)
                                                 if competitor_status == "OK":
                                                     race_time = result.find("Time").text if result.find("Time") is not None else None
+                                                    if race_time and "." in race_time:
+                                                        race_time = race_time.split(".")[0]
                                                     if race_time and ":" in race_time and race_time.count(":") == 1:
-                                                        race_time = "0:" + race_time
+                                                        minutes, seconds = race_time.split(":")
+                                                        hours = int(minutes) // 60
+                                                        minutes = int(minutes) % 60
+                                                        race_time = f"{hours}:{minutes:02}:{seconds}"
                                                 elif competitor_status == "DidNotStart":
                                                     break
                                                 else:
