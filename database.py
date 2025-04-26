@@ -1196,8 +1196,8 @@ def store_race_tmp_from_excel(sheetname, data_to_insert):
 
         # Define the insert queries
         insert_query_results = """ 
-        INSERT INTO results (race_code, place, full_name, race_time, race_points, race_points_static) 
-        VALUES (%s, %s, %s, %s, %s, %s) 
+        INSERT INTO race_tmp (race_code, place, full_name, race_time, race_points) 
+        VALUES (%s, %s, %s, %s, %s) 
         """
         # insert_query_results_static = """ 
         # INSERT INTO results_static (race_code, place, full_name, race_time, race_points) 
@@ -1209,9 +1209,9 @@ def store_race_tmp_from_excel(sheetname, data_to_insert):
             cursor.execute(select_query, (sheetname, full_name))
             exists = cursor.fetchone()
             if not exists:
-                cursor.execute(insert_query_results, (sheetname, place, full_name, race_time, race_points, race_points))
+                cursor.execute(insert_query_results, (sheetname, place, full_name, race_time, race_points))
                 # cursor.execute(insert_query_results_static, (sheetname, place, full_name, race_time, race_points))
-                #print(f"Inserted row: {(sheetname, place, full_name, race_time, race_points)}")
+                print(f"Inserted row: {(sheetname, place, full_name, race_time, race_points)}")
             else:
                 print(f"Row already exists: {(sheetname, place, full_name, race_time, race_points)}")
 
