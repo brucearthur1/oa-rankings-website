@@ -305,7 +305,7 @@ def load_race_from_eventor_api_by_ids(eventId, eventClassId, eventRaceId):
                 person = person_result.find("Person")
                 if person is not None:
                     athlete_name = person.find("PersonName/Given").text if person.find("PersonName/Given") is not None else ""
-                    athlete_name += " " + person.find("PersonName/Family").text if person.find("PersonName/Family") is not None else ""
+                    athlete_name = (athlete_name or "") + " " + person.find("PersonName/Family").text if person.find("PersonName/Family") is not None else ""
 
                     organisation = person_result.find("Organisation")
                     club = organisation.find("ShortName").text if organisation is not None and organisation.find("ShortName") is not None else ""
@@ -475,7 +475,7 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
                                         person = person_result.find("Person")
                                         if person is not None:
                                             athlete_name = person.find("PersonName/Given").text if person.find("PersonName/Given") is not None else ""
-                                            athlete_name += " " + person.find("PersonName/Family").text if person.find("PersonName/Family") is not None else ""
+                                            athlete_name = (athlete_name or "") + " " + person.find("PersonName/Family").text if person.find("PersonName/Family") is not None else ""
 
                                             organisation = person_result.find("Organisation")
                                             club = organisation.find("ShortName").text if organisation is not None and organisation.find("ShortName") is not None else ""
@@ -567,23 +567,26 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
             print(f"reformatted date: {event['event_date']}")
             if event.get('races'):  # Only proceed if event['races'] exists and is not empty
                 for race in event['races']:
-                    # store the race in the DB
-                    race_to_insert = {
-                        'date': race['race_date'],
-                        'short_desc': race['race_code'],
-                        'long_desc': race['stage_name'],
-                        'class': race['class_name'],
-                        'short_file': race['race_code'],
-                        'ip': 1,
-                        'list': race['list'],
-                        'eventor_id': event['event_code'],
-                        'iof_id': None,
-                        'discipline': 'Middle/Long'
-                    }
-                    row = tuple(race_to_insert.values())
-                    pre_data_to_insert.append(row)
+                    if race.get('results'):  # Check if there are any results for the race
+                        
+                        # store the race in the DB
+                        race_to_insert = {
+                            'date': race['race_date'],
+                            'short_desc': race['race_code'],
+                            'long_desc': race['stage_name'],
+                            'class': race['class_name'],
+                            'short_file': race['race_code'],
+                            'ip': 1,
+                            'list': race['list'],
+                            'eventor_id': event['event_code'],
+                            'iof_id': None,
+                            'discipline': 'Middle/Long'
+                        }
+                        row = tuple(race_to_insert.values())
+                        pre_data_to_insert.append(row)
 
-        store_events(pre_data_to_insert)
+        if pre_data_to_insert:
+            store_events(pre_data_to_insert)
 
         # Store results in race_tmp in the DB
         for event in new_events:
