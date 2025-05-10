@@ -195,7 +195,8 @@ def admin_save_rankings_at_previous_month_end():
 
 @app.route("/admin/save_rankings_all_month_ends")
 def admin_save_rankings_all_month_ends():
-    start_date = datetime(2025, 2, 28).date()
+    start_date = datetime(2025, 4, 30).date()
+    # end_date = datetime(2025, 3, 31).date()
     end_date = datetime(1998, 1, 31).date()
 
     current_date = start_date

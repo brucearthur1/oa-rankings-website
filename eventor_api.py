@@ -15,6 +15,8 @@ def filter_api_event(event):
         (event['event_classification'] == 'champs' or event['event_classification'] == 'nat' or \
          event['event_classification'] == 'int' or \
 #         event['event_classification'] == 'loc' or \
+         (event['event_classification'] == 'sta' and 'nol' in event['long_desc'].lower()) or \
+         (event['event_classification'] == 'sta' and 'national' in event['long_desc'].lower()) or \
          (event['event_classification'] == 'sta' and 'champ' in event['long_desc'].lower())) :
         include_event = True
     return include_event
