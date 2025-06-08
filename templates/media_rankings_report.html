@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+    
+    <meta name="description" content="The official Orienteering Australia elite rankings">
+    <meta name="keywords" content="orienteering, rankings, Australia, OA, elite, easter, champs, championships, ratings, seedings, sport">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn.active {
+        background-color: #0056b3 !important;
+        color: white !important;
+        border-color: #0056b3 !important;
+      }
+      .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 20px;
+      }
+      .sum-top-5-points {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: right;
+        color: #007bff;
+        line-height: 24px;
+      }
+      .ranking-number {
+        font-size: 1.8rem;
+        background-color: #007bff;
+        color: white;
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+        border-radius: 10px;
+        position: relative;
+      }
+      .ranking-delta {
+        position: absolute;
+        top: 0;
+        right: -25px; /* Increase the space between rank and deltaContent */
+        font-size: 1rem;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .ranking-delta.up {
+        color: green;
+      }
+      .ranking-delta.down {
+        color: red;
+      }
+      .arrow-up {
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-bottom: 10px solid green;
+        display: inline-block;
+        margin-bottom: -12px; /* Decrease the gap */
+      }
+      .arrow-down {
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 10px solid red;
+        display: inline-block;
+        margin-top: -12px; /* Decrease the gap */
+      }
+      h4 {
+        margin-bottom: 4px;
+        color: #333;
+      }
+      .club-state {
+        font-size: 0.9rem;
+        color: #666;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+      .athlete-row:hover {
+        cursor: pointer; /* Change cursor to hand pointer */
+      }
+      .popover {
+        position: absolute;
+        width: 300px;
+        padding: 0px;
+        background-color: #fff;
+        border: 1px solid #007bff; /* Blue outline */
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+      }
+      .popover-header {
+        font-weight: bold;
+        background-color: #007bff; /* Blue background */
+        color: white; /* White text */
+        padding: 10px;
+        border-radius: 5px 5px 0 0;
+      }
+      .popover-body {
+        margin-bottom: 5px;
+      }
+      .popover-close {
+        cursor: pointer;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        padding: 5px 10px;
+        margin: 10px;
+        border-radius: 5px;
+        text-decoration: none;
+      }
+      .popover-close:hover {
+        background-color: #0056b3;
+      }
+      @media (max-width: 460px) {
+        .btn-toolbar .btn-group .btn {
+          font-size: 12px;
+        }
+      }
+      @media (max-width: 390px) {
+        .btn-toolbar .btn-group .btn {
+          font-size: 11px;
+        }
+      }
+
+    </style>
+    <script>
+      function filterAthletes(listName, discipline) {
+        var listButtons = document.querySelectorAll('.btn-group .btn-list');
+        var disciplineButtons = document.querySelectorAll('.btn-group .btn-discipline');
+        var rank = 1;
+        var currentYear = new Date("{{ effective_date }}").getFullYear();
+        var lowerListName = listName.toLowerCase(); // Convert list name to lowercase
+        var lowerDiscipline = discipline.toLowerCase(); // Convert discipline to lowercase
+
+        // Clear existing rows
+        var athleteContainer = document.getElementById('athleteContainer');
+        athleteContainer.innerHTML = '';
+
+        // Determine which list to loop through based on discipline
+        var athletes = [];
+        {% for key, value in final_aggregated_athletes.items() %}
+          if (lowerDiscipline === "{{ key }}") {
+            athletes = {{ value | tojson }};
+          }
+        {% endfor %}
+
+        // Loop through the selected athletes list
+        athletes.forEach(function(athlete) {
+          if ((athlete['list'].toLowerCase() === lowerListName || lowerListName === "all") && 
+              (lowerListName !== 'junior men' && lowerListName !== 'junior women' || currentYear - athlete['yob'] < 21)) {
+            var delta = athlete['delta'];
+            var deltaContent = '';
+            if (delta > 0) {
+              deltaContent = `<span class="ranking-delta down" title="change in last 90 days">${delta}<span class="arrow-down"></span></span>`;
+            } else if (delta < 0) {
+              deltaContent = `<span class="ranking-delta up" title="change in last 90 days"><span class="arrow-up"></span>${Math.abs(delta)}</span>`;
+            }
+            var row = `<div class="border-bottom row athlete-row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0;" data-href="/athlete/${athlete['athlete_id']}?effective_date={{ effective_date }}" data-list="${athlete['list']}" data-discipline="${athlete['discipline']}" data-yob="${athlete['yob']}">
+              <div class="container">
+              <div class="row 'align-items': 'flex-start' 'line-height': '48px'">
+              <div class="col-2">
+              <span class="ranking-number">${rank++}${delta !== 0 ? deltaContent : ''}</span>
+              </div>
+              <div class="col-2">
+                <img src="https://eventor.orienteering.org/MyPages/ProfilePhoto/${athlete['iof_id']}" alt="Athlete Photo" style="width: 100px; height: auto; vertical-align: top;" onerror="this.onerror=null; this.src='/static/default_photo.jpeg';" class="athlete-photo">
+              </div>
+              <div class="col-4">
+              <h4>${athlete['full_name']}</h4>
+              ${athlete['club_name'] ? `<div class="club-state"><b>Club</b>: ${athlete['club_name']}</div>` : ''}
+              ${athlete['state'] ? `<div class="club-state"><b>State</b>: ${athlete['state']}</div>` : ''}
+              </div>
+              <div class="col-3 sum-top-5-points"  title="Sum of top 5 ranking points scores in the last 12 months">
+              ${parseInt(athlete['sum_top_5_race_points'])}
+              </div>
+              </div>
+              </div>
+              </div>`;
+            athleteContainer.innerHTML += row;
+          }
+        });
+
+        listButtons.forEach(function(button) {
+          if (button.getAttribute('data-list').toLowerCase() === lowerListName) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+
+        disciplineButtons.forEach(function(button) {
+          if (button.getAttribute('data-discipline').toLowerCase() === lowerDiscipline) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+
+        // Add click event listener to each row
+        document.querySelectorAll('.athlete-row').forEach(function(row) {
+          row.addEventListener('click', function() {
+            var href = this.getAttribute('data-href');
+            if (href) {
+              window.location.href = href;
+            }
+          });
+        });
+      }
+
+      function validateDate() {
+        var dateInput = document.getElementById('rankingDate');
+        var selectedDate = new Date(dateInput.value);
+        var minDate = new Date('1998-01-01');
+        var maxDate = new Date();
+        maxDate.setDate(maxDate.getDate() + 365); // Add one year
+
+        if (selectedDate >= minDate && selectedDate <= maxDate) {
+          window.location.href = '/?rankingDate=' + dateInput.value;
+        } else {
+          alert('Please select a date between 01/01/1998 and today.');
+        }
+      }
+      function showPopover() {
+        var toolbarElement = document.querySelector('.btn-toolbar');
+        var popover = document.createElement('div');
+        popover.className = 'popover';
+        popover.innerHTML = `
+          <div class="popover-header">Welcome</div>
+          <div class="popover-body">Select an athlete to view race history, ranking scores and more. Use the date selector to view historical rankings.</div>
+          <button class="popover-close" onclick="closePopover()">Got it</button>
+        `;
+        document.body.appendChild(popover);
+
+        // Position the bottom of the popover aligned to the bottom of the toolbar element, centered horizontally
+        var rect = toolbarElement.getBoundingClientRect();
+        popover.style.top = (rect.bottom + window.scrollY - popover.offsetHeight) + 'px';
+        popover.style.left = (rect.left + (rect.width / 2) - (popover.offsetWidth / 2)) + 'px';
+      }
+
+      function closePopover() {
+        var popover = document.querySelector('.popover');
+        if (popover) {
+          popover.remove();
+        }
+      }
+
+      function setCookie(name, value, days) {
+        var expires = "";
+        if (days) {
+          var date = new Date();
+          date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+          expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+      }
+
+      function getCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+          var c = ca[i];
+          while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        filterAthletes('women', 'all');
+
+        if (!getCookie('visited')) {
+          showPopover();
+          setCookie('visited', 'true', 365);
+        }
+      });
+
+      function downloadCSV() {
+        const rows = document.querySelectorAll('#athleteContainer .athlete-row');
+        if (rows.length === 0) {
+          alert('No data available to download.');
+          return;
+        }
+      
+        // Get the effective_date, list_name, and discipline from the page
+        const effectiveDate = "{{ effective_date }}";
+        const activeListName = document.querySelector('.btn-list.active')?.textContent.trim() || 'All';
+        const activeDiscipline = document.querySelector('.btn-discipline.active')?.textContent.trim() || 'All';
+      
+        // Prepare CSV content with list_name, discipline, and effective_date as headers
+        let csvContent = `List Name: ${activeListName}, Discipline: ${activeDiscipline}, Effective Date: ${effectiveDate}\n\n`;
+        csvContent += 'Ranking,Full Name,Club,State,Sum of Top 5 Race Points\n';
+      
+        let rank = 0; // Initialize ranking number
+        rows.forEach(row => {
+          rank++; // Increment ranking number
+          const fullName = row.querySelector('h4')?.textContent.trim() || '';
+          const club = row.querySelector('.club-state:nth-of-type(1)')?.textContent.replace('Club: ', '').trim() || '';
+          const state = row.querySelector('.club-state:nth-of-type(2)')?.textContent.replace('State: ', '').trim() || '';
+          const points = row.querySelector('.sum-top-5-points')?.textContent.trim() || '';
+          csvContent += `${rank},"${fullName}","${club}","${state}","${points}"\n`;
+        });
+      
+        // Create a Blob and download the file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ranking_data_${activeListName}_${activeDiscipline}_${effectiveDate}.csv`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    </script>
+  </head>
+  <body>
+    {% include 'nav.html' %}
+
+    <div class="container" id="container">
+      <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG">
+
+
+      <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+        <div class="btn-group mb-3 px-2" role="group" aria-label="List Filter">
+          {% for list_name in unique_lists %}
+          <button class="btn btn-outline-primary text-capitalize btn-list" onclick="filterAthletes('{{ list_name }}', document.querySelector('.btn-discipline.active').getAttribute('data-discipline'))" data-list="{{ list_name }}">{{ list_name }}</button>
+          {% endfor %}
+        </div>
+        <div class="btn-group mb-3 px-2" role="group" aria-label="Discipline Filter">
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'all')" data-discipline="all">All</button>
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'sprint')" data-discipline="sprint">Sprint</button>
+          <button class="btn btn-outline-primary btn-discipline" onclick="filterAthletes(document.querySelector('.btn-list.active').getAttribute('data-list'), 'middle/long')" data-discipline="middle/long">Middle/Long</button>
+        </div>
+      </div>
+      <div class="row">
+        <div style="height: 50px;"></div>
+      </div>  
+      <div class="row">
+        <div class="col-6">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+                <img class="bi me-2" width="40" height="40" src="/static/OA_Primary_Logo_Square.png">
+                <span class="fs-4">Elite Rankings</span>
+            </a>
+        
+          <!-- <h3 class="mb-5" style="text-align:center; text-align:left">
+            <span style="color:#007bff">Rankings</span>
+            <span style="font-size: smaller; color: grey;">(as of {{ effective_date }})</span> 
+          </h3> -->
+        </div>
+        <div class="col-5">
+            <div class="d-flex align-items-center">
+                <!-- <label for="rankingDate" class="form-label mb-0 mr-2" style="min-width: 105px; color: grey;">12 months to:</label> -->
+              <input type="date" id="rankingDate" name="rankingDate" class="form-control" value="{{ effective_date }}" min="1998-01-01" max="{{ current_date }}" onchange="if(this.value && new Date(this.value).getFullYear() >= 1998 && new Date(this.value).getFullYear() <= new Date().getFullYear()) validateDate()">
+            </div>
+        </div>
+      </div>
+
+      <div class="row my-2 fs-5" style="text-align:center; text-align:left" color="black">
+            <div class="col-6">{{ active_list_name }}</div>
+            <div class="col-5">Format: All</div>
+      </div>
+
+      <div id="athleteContainer">
+        <!-- Athlete rows will be dynamically rendered here -->
+      </div>
+      <br>
+
+      <!-- Add a button to download the data -->
+      <div class="text-left mb-4">
+        <button class="btn btn-secondary" onclick="downloadCSV()">Download CSV</button>
+      </div>
+
+    </div>
+    {% include 'footer.html' %}
+  </body>
+</html>

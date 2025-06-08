@@ -752,6 +752,8 @@ def load_rankings_from_db(effective_date, age_grade=False):
                 results.full_name,
                 athletes.id AS athlete_id,
                 athletes.yob,
+                athletes.iof_id,
+                athletes.has_iof_photo,
                 age_grades.age_adjustment,
                 events.date,
                 events.list,
@@ -775,6 +777,8 @@ def load_rankings_from_db(effective_date, age_grade=False):
                 results.full_name,
                 athletes.id AS athlete_id,
                 athletes.yob,
+                athletes.iof_id,
+                athletes.has_iof_photo,
                 events.date,
                 events.list,
                 events.discipline,
@@ -831,6 +835,8 @@ def load_recent_milestones():
                     'All' as discipline, 
                     e.date, 
                     e.long_desc, 
+                    a.iof_id,
+                    a.has_iof_photo,
                     ROW_NUMBER() OVER (PARTITION BY a.id, e.list ORDER BY e.date) AS race_count
                 FROM 
                     athletes a
@@ -848,6 +854,8 @@ def load_recent_milestones():
                     e.discipline, 
                     e.date, 
                     e.long_desc, 
+                    a.iof_id,
+                    a.has_iof_photo,
                     ROW_NUMBER() OVER (PARTITION BY a.id, e.list, e.discipline ORDER BY e.date) AS race_count
                 FROM 
                     athletes a
@@ -862,7 +870,7 @@ def load_recent_milestones():
             ) all_races
             where date > DATE_SUB(CURRENT_DATE, INTERVAL 90 DAY)
                 and race_count in (10, 25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
-            order by race_count desc
+            order by race_count desc, discipline, has_iof_photo desc desc
         """
         cursor.execute(query)
         athletes = cursor.fetchall()

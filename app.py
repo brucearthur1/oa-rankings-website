@@ -126,6 +126,43 @@ def admin_import_years_go():
 
     return render_template('admin.html')
 
+#admin media rankings report
+@app.route('/admin/media_rankings_report')
+def admin_media_rankings_report():
+    print(f"starting media_rankings_report at: {datetime.now(sydney_tz)}")
+
+    # Get rankingDate from request arguments if provided
+    ranking_date_str = request.args.get('rankingDate')
+    if ranking_date_str:
+        try:
+            ranking_date = datetime.strptime(ranking_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            # Handle invalid date format
+            ranking_date = datetime.now(sydney_tz).date()
+    else:
+        ranking_date = datetime.now(sydney_tz).date()
+
+
+    # Load athletes from the database
+    athletes = load_rankings_from_db(effective_date=ranking_date)  # Your function to get athletes
+    
+    # calculate rankings for all athletes
+    final_aggregated_athletes = rank_athletes(athletes=athletes, ranking_date=ranking_date)
+
+
+    # Get unique lists
+    unique_lists = sorted(set(athlete['list'] for athlete in final_aggregated_athletes['all']))
+
+    formatted_ranking_date = ranking_date.strftime('%Y-%m-%d')
+    current_date = datetime.now(sydney_tz).date()
+    # Format the current date
+    current_formatted_date = current_date.strftime('%d %B %Y')
+
+    print(f"Ending media_rankings_report at: {datetime.now(sydney_tz)}")
+    return render_template('media_rankings_report.html', final_aggregated_athletes=final_aggregated_athletes, unique_lists=unique_lists, effective_date=formatted_ranking_date, current_date=current_formatted_date)
+
+##############
+
 
 @app.route("/admin/recalibrate")
 def admin_recalibrate():
@@ -142,6 +179,15 @@ def admin_recalibrate_year():
     return render_template('update_submitted.html', update=update)    
 
 ##################################################################
+
+
+@app.route("/admin/recent_milestones")
+def media_recent_milestones():
+    athletes = load_recent_milestones()
+    #print(athletes)
+    return render_template('media_recent_milestones.html', athletes=athletes)
+
+
 
 @app.route("/admin/save_rankings_at_date")
 def admin_save_rankings_at_date():

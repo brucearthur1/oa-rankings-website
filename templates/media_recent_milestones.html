@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f9f9f9;
+      }
+      .btn:hover {
+        background-color: #004999 !important;
+      }
+      .container {
+        padding: 20px;
+      }
+      h4 {
+        margin-bottom: 1rem;
+        color: #007bff;
+        text-align: center;
+      }
+      .table {
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .table th, .table td {
+        border-top: none;
+        border-bottom: 1px solid #dee2e6;
+        padding: 3px !important; /* Set the padding for table cells with !important */
+      }
+      .table th {
+        background-color: #f1f1f1;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+      }
+      .text-nowrap {
+        white-space: nowrap;
+      }
+      .footer {
+        padding: 20px 0;
+        text-align: center;
+        background-color: #f1f1f1;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+      .badge {
+        font-weight: bold;
+        font-size: 24px;
+        font-family: 'Georgia', serif;
+      }
+      @media (max-width: 500px) {
+        #eventTable {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 450px) {
+        #eventTable {
+          font-size: 10px;
+        }
+      }
+      @media (max-width: 400px) {
+        #eventTable {
+          font-size: 9px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- {% include 'nav.html' %} -->
+    <div class="container" id="container">
+        <!-- <img class="img-fluid" id="banner" src="/static/IMG_3354.JPG"> -->
+        <div class="d-flex mb-4">
+          <img class="bi me-2" width="40" height="40" src="/static/OA_Primary_Logo_Square.png">
+          <span class="fs-4">Participation milestones in ranking events</span>
+        </div>
+
+        <div class="table table-hover table-responsive" id="eventTable" >
+                {% for athlete in athletes %}
+                <div class="border-bottom row" style="margin-bottom:16px; padding-bottom:8px; padding-left: 0; height: 80px;">
+                    <div class="col-1 text-right">
+                      <span class="badge" style="color: {{ 
+                              'goldenrod' if athlete['race_count'] == 500 else
+                              'darkslategrey' if athlete['race_count'] == 450 else
+                              '#CD7F32' if athlete['race_count'] == 400 else
+                              'hotpink' if athlete['race_count'] == 350 else
+                              'teal' if athlete['race_count'] == 300 else
+                              'green' if athlete['race_count'] == 250 else
+                              'orange' if athlete['race_count'] == 200 else
+                              'blue' if athlete['race_count'] == 150 else
+                              'black' if athlete['race_count'] == 100 else
+                              'red' if athlete['race_count'] == 50 else
+                              'purple' if athlete['race_count'] == 25 else 
+                              'brown' if athlete['race_count'] == 10 else 
+                              'inherit' }};">
+                              {{ athlete['race_count'] }}
+                      </span>
+                    </div>
+                    <div class="col-2">
+                        {% if athlete['has_iof_photo'] == 'Y' %}
+                          <img src="https://eventor.orienteering.org/MyPages/ProfilePhoto/{{ athlete['iof_id'] }}" 
+                            alt="Athlete Photo" 
+                            style="width: 60px; height: auto; vertical-align: top; display: block; margin-left: auto; margin-right: auto;" 
+                            onerror="this.onerror=null; this.src='/static/default_photo.jpeg';" 
+                            class="athlete-photo">
+                        {% else %}
+                          <!-- Leave blank -->
+                        {% endif %}
+                    </div>
+                        <div class="col-4" style="text-align: left; color: darkslategray; font-size: 24px; display: inline-block;">
+                          {{ athlete['full_name'] }}
+                        </div>
+                        <div class="col-1 text-right" style="font-size: 14px;">{{ athlete['list']|title }}</div>
+                        <!-- <div class="col-2 text-right" style="font-size: 14px;">{{ athlete['discipline'] }}</div> -->
+                        <div class="col-4 text-right" style="font-size: 14px;">{{ athlete['long_desc'] }}</div>
+                </div>
+                {% endfor %}
+        
+        </div>
+    </div>
+    {% include "footer.html" %}
+    <script>
+      $(document).ready(function () {
+
+        // Add click event listener to each row
+        $('#eventTable tbody').on('click', 'tr', function () {
+          var href = $(this).data('href');
+          if (href && href !== '#') {
+            window.location.href = href;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+
+
+
+
