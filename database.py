@@ -870,7 +870,7 @@ def load_recent_milestones():
             ) all_races
             where date > DATE_SUB(CURRENT_DATE, INTERVAL 90 DAY)
                 and race_count in (10, 25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
-            order by race_count desc, discipline, has_iof_photo desc desc
+            order by race_count desc, discipline, has_iof_photo desc
         """
         cursor.execute(query)
         athletes = cursor.fetchall()
