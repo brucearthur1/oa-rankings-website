@@ -11,3 +11,4 @@ flask[async]
 selenium
 webdriver-manager
 pytz==2025.1
+cryptography

@@ -1,3 +1,6 @@
+# Ensure the 'cryptography' package is installed for sha256_password/caching_sha2_password authentication:
+# pip install cryptography
+
 import pymysql
 from dotenv import load_dotenv 
 import os 
