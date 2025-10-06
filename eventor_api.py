@@ -29,7 +29,7 @@ def filter_classes(my_classes):
     filtered_classes = []
     for my_class in my_classes:
         if any(keyword in my_class['class_name'].lower() for keyword in ["men", "women", "elite", "21", "20", "18", "sport", "sb", "sg"]) and \
-            all(substring not in my_class['class_name'].lower() for substring in ["21as", "20as", "18as"]) :
+            all(substring not in my_class['class_name'].lower() for substring in ["21as", "20as", "18as", "open"]) :
             filtered_classes.append(my_class)
     return filtered_classes
 
