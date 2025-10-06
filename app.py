@@ -575,7 +575,7 @@ def events_auto_eventor():
     # get current date
     end_date = date.today()
     end_date_str = end_date.strftime('%Y-%m-%d')
-    duration = 3
+    duration = 5
 
     events = api_events_from_eventor_and_calculate_rankings(end_date_str=end_date_str, days_prior=duration)
 
