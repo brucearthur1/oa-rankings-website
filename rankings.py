@@ -419,8 +419,8 @@ def recalibrate(end_date, my_list, years=1):
             if aus_mp_base and aus_sp_base and aus_mp and aus_sp:
                 # apply recalibration to AUS results for this list and year
                 # new score = (original - aus_mp)/aus_sp * wre_sp + wre_mp
-                recalibrate_aus_scores(mylist=list, start_date_dt=end_date - timedelta(days=365*years), end_date_dt=end_date, wre_mp=aus_mp_base, wre_sp=aus_sp_base, aus_mp=aus_mp, aus_sp=aus_sp)
-                #print("recalibrate_aus_scores not implemented")
+                # recalibrate_aus_scores(mylist=list, start_date_dt=end_date - timedelta(days=365*years), end_date_dt=end_date, wre_mp=aus_mp_base, wre_sp=aus_sp_base, aus_mp=aus_mp, aus_sp=aus_sp)
+                print("recalibrate_aus_scores not implemented as not enough data for historical athletes")
             else:
                 print("not enough data to recalibrate")
 

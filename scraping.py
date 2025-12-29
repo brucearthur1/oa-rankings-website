@@ -348,6 +348,36 @@ def load_latest_from_WRE():
     return new_events, new_results
 
 
+def load_year_from_OA_archive(year):
+    year_int = int(year['year'])
+
+    # Define the start and end dates for the given year
+    start_date = date(year_int, 1, 1)
+    end_date = date(year_int, 12, 31)
+
+    driver = setup_Chrome_driver()
+
+    # get event ids with results between last date and current date
+    # event_codes = get_event_ids(end_date, start_date, driver)
+    # print(event_codes)
+
+    # for each event, retrieve the new_events and new_results by scraping the web page
+    #new_events = []
+    #new_results = []
+
+
+
+    #for event_code in event_codes:
+    #    events, results = load_from_WRE(event_code, driver)
+    #    for event in events:
+    #        new_events.append(event)
+    #    for result in results:
+    #        new_results.append(result)
+
+    # Close the WebDriver
+    driver.quit()
+
+    #return new_events, new_results
 
 
 

@@ -42,6 +42,12 @@ def upload_year_WRE_races(year):
     store_events_and_results(new_events, new_results)
     print("Finished process_latest_WRE_races:", datetime.now())
 
+def upload_year_OA_archive_races(year):
+    print("Started process_latest_OA_archive_races:", datetime.now())
+    # new_events, new_results = load_year_from_OA_archive(year)
+    print("Finished scraping from OA archive site:", datetime.now())
+    # store_events_and_results(new_events, new_results)
+    # print("Finished process_latest_OA_archive_races:", datetime.now())
 
 
 def process_and_store_eventor_event_by_class(input):

@@ -9,7 +9,7 @@ from formatting import convert_to_time_format, is_valid_time_format
 from xml_util import load_clubs_from_xml, load_athletes_from_xml
 from collections import defaultdict
 from threading import Thread
-from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event_by_class, get_year_old_site, process_and_store_eventor_event_by_ids
+from background import process_and_store_data, process_latest_WRE_races, upload_year_WRE_races, process_and_store_eventor_event_by_class, get_year_old_site, process_and_store_eventor_event_by_ids, upload_year_OA_archive_races
 from pytz import timezone
 from browserless import browserless_selenium
 from rankings import calculate_race_rankings, recalibrate, rank_athletes
@@ -801,11 +801,26 @@ def year_old_site():
     # Render the template using Jinja2
     print("Render response year_old_site():", datetime.now(sydney_tz))
     return render_template('events_submitted.html', df_html=input)
-    
+
+
+@app.route("/races/year_OA_archive")
+def year_OA_archive():
+    return render_template('year_OA_archive.html')    
+
+@app.route("/races/year_OA_archive_upload", methods=['POST'])
+def year_OA_archive_upload():
+    year = request.form
+    print(f"Starting year_OA_archive_upload(): {year} ", datetime.now(sydney_tz))
+    upload_year_OA_archive_races(year)
+    # Render the template using Jinja2
+    print("Render response uploaed_year_OA_archive():", datetime.now(sydney_tz))
+    return render_template('events_submitted.html', df_html=input)
+
 
 @app.route("/races/year_WRE")
 def year_WRE():
     return render_template('year_WRE.html')    
+
 
 @app.route("/races/year_WRE_upload", methods=['POST'])
 def year_WRE_upload():
@@ -815,6 +830,9 @@ def year_WRE_upload():
     # Render the template using Jinja2
     print("Render response year_WRE_upload():", datetime.now(sydney_tz))
     return render_template('events_submitted.html', df_html=input)
+
+
+
 
 
 @app.route("/scrape")
