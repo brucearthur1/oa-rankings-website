@@ -211,12 +211,21 @@ def get_event_ids(current_date, latest_date, driver):
         # Find the dropdown element
         select_element = driver.find_element(By.ID, "year")
 
+# bug in rankings.orienteering.org which is not always loading the current year page when selected.
+# workaround is to select another year first. Then swap to the desired year
         # Create a Select object
         select = Select(select_element)
+        # Select an option by value
+        select.select_by_value('2025')
+        # Optionally, wait for the page to load the new content (adjust the sleep time as needed)
+        time.sleep(1)
 
+        # Find the dropdown element
+        select_element = driver.find_element(By.ID, "year")
+        # Create a Select object
+        select = Select(select_element)
         # Select an option by value
         select.select_by_value(year)
-
         # Optionally, wait for the page to load the new content (adjust the sleep time as needed)
         time.sleep(1)
 

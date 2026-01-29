@@ -258,7 +258,7 @@
       function validateDate() {
           var dateInput = document.getElementById('rankingDate');
           var selectedDate = new Date(dateInput.value);
-          var minDate = new Date('1995-01-01');
+          var minDate = new Date('1993-01-01');
             var maxDate = new Date();
             maxDate.setDate(maxDate.getDate() + 365); // Add one year
 
@@ -266,7 +266,7 @@
             formattedDate = selectedDate.toISOString().split('T')[0];
             window.location.href = '/athlete/{{ athlete.id }}?effective_date=' + formattedDate;
           } else {
-            alert('Please select a date between 01/01/1995 and today.');
+            alert('Please select a date between 01/01/1993 and today.');
           }
       }
       
@@ -378,7 +378,7 @@
           <div class="col-md-3">
             <div class="mb-1"><span style="color:rgb(120,120,120);">12 months to</span></div>
             <form class="form-inline mb-2">
-              <input type="date" id="rankingDate" name="rankingDate" class="form-control" value="{{effective_date}}" min="1995-01-01" max="{{ current_date }}" onchange="if(this.value && new Date(this.value).getFullYear() >= 1995 && new Date(this.value).getFullYear() <= new Date().getFullYear()) validateDate()">
+              <input type="date" id="rankingDate" name="rankingDate" class="form-control" value="{{effective_date}}" min="1993-01-01" max="{{ current_date }}" onchange="if(this.value && new Date(this.value).getFullYear() >= 1993 && new Date(this.value).getFullYear() <= new Date().getFullYear()) validateDate()">
             </form>
           </div>
           <div class="col-md-9 text-end">
