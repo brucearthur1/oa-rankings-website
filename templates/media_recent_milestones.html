@@ -100,9 +100,10 @@
                               {{ athlete['race_count'] }}
                       </span>
                     </div>
-                    <div class="col-2">
+                    <div class="col-1">
                         {% if athlete['has_iof_photo'] == 'Y' %}
-                          <img src="https://eventor.orienteering.org/MyPages/ProfilePhoto/{{ athlete['iof_id'] }}" 
+                          <!-- src="https://eventor.orienteering.org/MyPages/ProfilePhoto/{{ athlete['iof_id'] }}" -->
+                          <img src="/static/{{ athlete['iof_id'] }}.jpeg" 
                             alt="Athlete Photo" 
                             style="width: 60px; height: auto; vertical-align: top; display: block; margin-left: auto; margin-right: auto;" 
                             onerror="this.onerror=null; this.src='/static/default_photo.jpeg';" 
@@ -115,7 +116,7 @@
                           {{ athlete['full_name'] }}
                         </div>
                         <div class="col-1 text-right" style="font-size: 14px;">{{ athlete['list']|title }}</div>
-                        <!-- <div class="col-2 text-right" style="font-size: 14px;">{{ athlete['discipline'] }}</div> -->
+                        <div class="col-1 text-right" style="font-size: 14px;">{{ athlete['discipline'] }}</div>
                         <div class="col-4 text-right" style="font-size: 14px;">{{ athlete['long_desc'] }}</div>
                 </div>
                 {% endfor %}

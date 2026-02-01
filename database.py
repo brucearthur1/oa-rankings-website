@@ -551,7 +551,7 @@ def load_athlete_ranking_history(athlete_id, effective_date):
 def load_athletes_with_iof_id():
     connection.autocommit(True)
     with connection.cursor() as cursor:
-        query = "SELECT * FROM athletes WHERE iof_id IS NOT NULL AND has_iof_photo = 'Y'"
+        query = "SELECT * FROM athletes WHERE iof_id IS NOT NULL AND has_iof_photo = 'N'"
         cursor.execute(query)
         data = cursor.fetchall()
         athletes = []
@@ -1493,7 +1493,7 @@ def update_athletes_with_iof_ids(athletes):
 # Update athlete record with has_iof_photo flag = 'Y'
 def update_athlete_photo(athlete_iof_id):
     with connection.cursor() as cursor:
-        update_query = "UPDATE athletes SET has_iof_photo = 'N' WHERE iof_id = %s"
+        update_query = "UPDATE athletes SET has_iof_photo = 'Y' WHERE iof_id = %s"
         cursor.execute(update_query, (athlete_iof_id,))
         connection.commit()
         print("Athlete photo updated successfully!")

@@ -178,7 +178,8 @@
               <span class="ranking-number">${rank++}${delta !== 0 ? deltaContent : ''}</span>
               </div>
               <div class="col-2">
-                <img src="https://eventor.orienteering.org/MyPages/ProfilePhoto/${athlete['iof_id']}" alt="Athlete Photo" style="width: 100px; height: auto; vertical-align: top;" onerror="this.onerror=null; this.src='/static/default_photo.jpeg';" class="athlete-photo">
+                <!-- img src="https://eventor.orienteering.org/MyPages/ProfilePhoto/${athlete['iof_id']}" alt="Athlete Photo" style="width: 100px; height: auto; vertical-align: top;" onerror="this.onerror=null; this.src='/static/default_photo.jpeg';" class="athlete-photo" -->
+                <img src="/static/${athlete['iof_id']}.jpeg" alt="Athlete Photo" style="width: 100px; height: auto; vertical-align: top;" onerror="this.onerror=null; this.src='/static/default_photo.jpeg';" class="athlete-photo"> 
               </div>
               <div class="col-4">
               <h4>${athlete['full_name']}</h4>

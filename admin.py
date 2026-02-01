@@ -6,6 +6,7 @@ from rankings import recalibrate
 from background import upload_year_WRE_races
 from scraping import scrape_iof_athlete_search
 import requests
+import os
 
 sydney_tz = timezone('Australia/Sydney')
 
@@ -82,20 +83,35 @@ def scrape_and_update_athletes_with_iof_ids():
 def check_for_iof_photo():
     print(f"starting check_for_iof_photo at: {datetime.now(sydney_tz)}")
 
-    # load athletes from db where IOF ID is not null and photo is Y
+    # load athletes from db where IOF ID is not null and photo is N
     athletes = load_athletes_with_iof_id()
-    print(f"Finished loading athletes with IOF IDs:", datetime.now(sydney_tz))
+    print(f"Finished loading athletes with IOF IDs and no photo:", datetime.now(sydney_tz))
     # iterate through athletes
     for athlete in athletes:
         # check if photo exists
         athlete_id = athlete['iof_id']
         #try to open photos/athlete_id.jpg
-        try:
-            with open(f"photos/{athlete_id}.jpg", "rb") as photo_file:
-                print(f"Photo already exists for athlete {athlete['full_name']}")
-            continue
-        except FileNotFoundError:
+        photo_path = f"static/{athlete_id}.jpeg"
+        if os.path.exists(photo_path):
+            update_athlete_photo(athlete_id)
+            print(f"Local photo exists for athlete {athlete['full_name']}")
+        else:
             print(f"Photo does not exist locally for athlete {athlete['full_name']}")
 
-            update_athlete_photo(athlete_id)
-            print(f"photo removed for athlete {athlete['full_name']}")
+            # update_athlete_photo(athlete_id)
+            # print(f"photo removed for athlete {athlete['full_name']}")
+
+        #try to open IOF photos /athlete_id
+        # try:
+        #     response = requests.head(f"https://eventor.orienteering.sport/MyPages/ProfilePhoto/9440", timeout=10)
+        #     if response.status_code == 200:
+        #         print(f"URL exists for athlete {athlete['full_name']}")
+        #     resp = requests.get(f"https://eventor.orienteering.sport/MyPages/ProfilePhoto/{athlete_id}", timeout=10, stream=True)
+        #     if resp.status_code == 200 and resp.headers.get('Content-Type', '').startswith('image'):
+        #         update_athlete_photo(athlete_id)
+        #         print(f"IOF photo exists for athlete {athlete['full_name']}")
+        #         continue
+        #     else:
+        #         print(f"IOF Photo not accessible for athlete {athlete['full_name']} (status {resp.status_code})")
+        # except requests.RequestException as e:
+        #     print(f"IOF Photo request failed for athlete {athlete['full_name']}: {e}")
