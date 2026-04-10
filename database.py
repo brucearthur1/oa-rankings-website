@@ -12,7 +12,7 @@ def str_to_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d')
 
 def convert_place(place):
-    cleaned_place = place.strip().replace('\xa0', '')
+    cleaned_place = place.strip().replace('\xa0', '').replace('-', '')
     if cleaned_place:
         return int(cleaned_place)
     return None

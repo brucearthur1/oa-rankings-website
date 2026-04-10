@@ -72,16 +72,29 @@ def load_from_WRE(input, driver):
 
     new_events = []
 
-    event_details = soup.find('table', id='MainContent_dvEventDetails')
+    event_details = soup.find('div', class_='mb-3')
     if event_details:
-        rows = event_details.find_all('tr')
-        event_name = rows[0].find_all('td')[1].get_text()
-        event_date = rows[1].find_all('td')[1].get_text()
-        ip_tag = event_details.find('span', id='MainContent_dvEventDetails_Label8')
-        if ip_tag:
-            event_ip = ip_tag.get_text()    
-        else:
-            event_ip = '1'
+        event_name = event_details.find('h2').get_text()
+        event_date_str = event_details.find('div', class_='text-muted').get_text()
+        try:
+            event_date = datetime.strptime(event_date_str, '%d %B %Y').strftime('%d/%m/%Y')
+        except ValueError:
+            # Handle dates in other languages (e.g., 'mars' for French)
+            event_date_str_normalized = event_date_str.replace('mars', 'March').replace('januari', 'January').replace('februari', 'February').replace('janvier', 'January').replace('février', 'February').replace('avril', 'April').replace('mai', 'May').replace('juin', 'June').replace('juillet', 'July').replace('août', 'August').replace('september', 'September').replace('septembre', 'September').replace('oktober', 'October').replace('octobre', 'October').replace('november', 'November').replace('novembre', 'November').replace('december', 'December').replace('décembre', 'December')
+            event_date = datetime.strptime(event_date_str_normalized, '%d %B %Y').strftime('%d/%m/%Y')
+
+        panel_details = soup.find('div', id='paneldetails')
+        if panel_details:
+            ip_tag = panel_details.find('div', class_='small')
+            if ip_tag:
+                text = ip_tag.get_text()
+                match = re.search(r'IP=(\d+\.\d+)', text)
+                if match:
+                    event_ip = match.group(1)
+                else:
+                    event_ip = '1'
+            else:
+                event_ip = '1'
     else:
         print('Event Details not found')
 
@@ -250,7 +263,7 @@ def get_event_ids(current_date, latest_date, driver):
             soup = BeautifulSoup(updated_html, 'html.parser')
 
 
-            gvCalendar = soup.find('table', id='MainContent_gvCalendar')
+            gvCalendar = soup.find('table', class_='table')
             if gvCalendar:
                 rows = gvCalendar.find_all('tr')
                 for row in rows:
@@ -258,52 +271,48 @@ def get_event_ids(current_date, latest_date, driver):
                     if row.find_all('th'):
                         continue  # Skip rows with <th> elements
                     
-                    # Process rows with <td> elements            event_date = row.find_all('td')[0].get_text()
-                    event_date_str = row.find_all('td')[0].get_text()
-                    event_date = datetime.strptime(event_date_str, '%d/%m/%Y').date()
+                    # Process rows with <td> elements
+                    event_date_str = row.find_all('td')[0].get_text().strip()
+                    event_date = datetime.strptime(event_date_str.strip(), '%m/%d/%Y').date()
 
                     # Check if event_date is between latest_date and current_date
                     if latest_date < event_date <= current_date:
                         event_name = row.find_all('td')[2].get_text()
 
-                        # Use a regular expression to find the img tag with id starting with 'MainContent_gvCalendar_Image2'
-                        img_tag = row.find('img', id=re.compile(r'^MainContent_gvCalendar_Image2'))
                         # Initialize the completed variable
                         completed = False
-                        # Check the src attribute
-                        if img_tag and img_tag.get('src') == "../Content/Check.png":
 
-                            # if the WRE is in Australia, don't import this WRE
-                            td_element = row.find_all('td')[1]
-                            # Find the <span> element with class 'flag-hint'
-                            flag_hint_span = td_element.find('span', class_='flag-hint')
-                            # Extract the text 'AUS' from the flag-hint span
-                            event_country = flag_hint_span.get_text(strip=True)
+                        # if the WRE is in Australia, don't import this WRE
+                        td_element = row.find_all('td')[1]
+                        # Find the <span> element with class 'flag-hint'
+                        flag_hint_span = td_element.find('span', class_='flag-hint')
+                        # Extract the 3-character country code from the flag-hint span
+                        event_country = flag_hint_span.get_text(strip=True).split()[-1]
 
-                            if event_country != 'AUS':
-                                print(event_date)
-                                print(event_name)
-                                completed = True
-                                # Extract the <a> tag
-                                a_tag = row.find_all('td')[2].find('a')
+                        if event_country != 'AUS':
+                            print(event_date)
+                            print(event_name)
+                            completed = True
+                            # Extract the <a> tag
+                            a_tag = row.find_all('td')[2].find('a')
 
-                                # Get the href attribute
-                                href_text = a_tag.get('href')
-                                print(href_text)
+                            # Get the href attribute
+                            href_text = a_tag.get('href')
+                            print(href_text)
 
-                                # Use a regular expression to extract the event ID
-                                match = re.search(r'event=(\d+)', href_text)
-                                if match:
-                                    event = {}
-                                    event['event_id'] = match.group(1)
-                                    print(event['event_id'])
-                                    if option == 'F':
-                                        event['discipline'] = 'Middle/Long'
-                                    elif option == 'FS':
-                                        event['discipline'] = 'Sprint'
-                                    new_events.append(event)
-                                else:
-                                    print("Event ID not found")
+                            # Use a regular expression to extract the event ID
+                            match = re.search(r'event=(\d+)', href_text)
+                            if match:
+                                event = {}
+                                event['event_id'] = match.group(1)
+                                print(event['event_id'])
+                                if option == 'F':
+                                    event['discipline'] = 'Middle/Long'
+                                elif option == 'FS':
+                                    event['discipline'] = 'Sprint'
+                                new_events.append(event)
+                            else:
+                                print("Event ID not found")
 
                         print(f"Has WRE scores: {completed}")
                     else:
