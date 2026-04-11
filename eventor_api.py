@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 def filter_api_event(event):
     include_event = False
     if 'relay' not in event['long_desc'].lower() and \
-        ('school' not in event['long_desc'].lower() or event['event_classification'] == 'nat' ) and \
+        ('schools' not in event['long_desc'].lower() or event['event_classification'] == 'nat' ) and \
         (event['event_classification'] == 'champs' or event['event_classification'] == 'nat' or \
          event['event_classification'] == 'int' or \
 #         event['event_classification'] == 'loc' or \
