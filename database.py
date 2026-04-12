@@ -768,7 +768,7 @@ def load_rankings_from_db(effective_date, age_grade=False):
                 LEFT JOIN age_grades ON athletes.gender = age_grades.gender AND  (year(%s) - athletes.yob) = age_grades.age
             WHERE
                 events.date <= %s
-            ORDER BY athletes.id;
+            ORDER BY events.date desc;
                         """
     else:
         select_query = """
