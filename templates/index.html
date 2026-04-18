@@ -79,6 +79,14 @@
         margin-bottom: 4px;
         color: #333;
       }
+      .badge {
+        font-weight: bold;
+        font-size: 1.5em;
+        font-family: 'Georgia', serif;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        vertical-align: top;
+      }
       .club-state {
         font-size: 0.9rem;
         color: #666;
@@ -181,7 +189,24 @@
               <h4>${athlete['full_name']}</h4>
               ${athlete['club_name'] ? `<div class="club-state"><b>Club</b>: ${athlete['club_name']}</div>` : ''}
               ${athlete['state'] ? `<div class="club-state"><b>State</b>: ${athlete['state']}</div>` : ''}
-              ${athlete['race_count'] ? `<div class="club-state"><b>Races</b>: ${athlete['race_count']}</div>` : ''}
+              ${athlete['race_count'] ? `<div class="club-state"><b>Races</b>: ${athlete['race_count']}    
+                  <span class="badge" title="participation milestone achieved" style="color: ${
+                    athlete['race_count'] >= 500 ? 'goldenrod' :
+                    athlete['race_count'] >= 450 ? 'darkslategrey' :
+                    athlete['race_count'] >= 400 ? '#CD7F32' : // bronze
+                    athlete['race_count'] >= 350 ? 'hotpink' :
+                    athlete['race_count'] >= 300 ? 'teal' :
+                    athlete['race_count'] >= 250 ? 'green' :
+                    athlete['race_count'] >= 200 ? 'orange' :
+                    athlete['race_count'] >= 150 ? 'blue' :
+                    athlete['race_count'] >= 100 ? 'black' :
+                    athlete['race_count'] >= 50 ? 'red' :
+                    athlete['race_count'] >= 25 ? 'purple' :
+                    'brown'
+                    };">
+                    ${athlete['race_count'] < 10 ? '' : Math.max(...[10, 25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500].filter(milestone => athlete['race_count'] >= milestone))}
+                    </span>
+                </div>` : ''}
               </div>
               <div class="col-3 sum-top-5-points"  title="Sum of top 5 ranking points scores in the last 12 months">
               ${parseInt(athlete['sum_top_5_race_points'])}
