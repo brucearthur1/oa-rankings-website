@@ -79,8 +79,19 @@ def load_from_WRE(input, driver):
         try:
             event_date = datetime.strptime(event_date_str, '%d %B %Y').strftime('%d/%m/%Y')
         except ValueError:
-            # Handle dates in other languages (e.g., 'mars' for French)
-            event_date_str_normalized = event_date_str.replace('mars', 'March').replace('januari', 'January').replace('februari', 'February').replace('janvier', 'January').replace('février', 'February').replace('avril', 'April').replace('mai', 'May').replace('juin', 'June').replace('juillet', 'July').replace('août', 'August').replace('september', 'September').replace('septembre', 'September').replace('oktober', 'October').replace('octobre', 'October').replace('november', 'November').replace('novembre', 'November').replace('december', 'December').replace('décembre', 'December')
+            # Handle dates in other languages by normalizing month names to English
+            replacements = {
+                'janvier': 'January', 'février': 'February', 'mars': 'March', 'avril': 'April', 'mai': 'May',
+                'juin': 'June', 'juillet': 'July', 'août': 'August', 'septembre': 'September',
+                'octobre': 'October', 'novembre': 'November', 'décembre': 'December',
+                'januari': 'January', 'februari': 'February', 'april': 'April', 'maj': 'May',
+                'juni': 'June', 'juli': 'July', 'augusti': 'August', 'oktober': 'October',
+                'november': 'November', 'december': 'December',
+                'märz': 'March', 'október': 'October', 'dezember': 'December'
+            }
+            event_date_str_normalized = event_date_str.lower()
+            for key, value in replacements.items():
+                event_date_str_normalized = event_date_str_normalized.replace(key, value)
             event_date = datetime.strptime(event_date_str_normalized, '%d %B %Y').strftime('%d/%m/%Y')
 
         panel_details = soup.find('div', id='paneldetails')
