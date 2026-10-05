@@ -2,9 +2,9 @@ import requests
 from datetime import datetime, timedelta
 from dotenv import load_dotenv 
 import os 
-from database import test_race_exist, store_events, store_race_tmp, confirm_discipline
+from database import test_race_exist, test_race_results_exist, store_events, store_race_tmp, confirm_discipline
 from eventor import deduct_list_name_from_class_name
-from rankings import calculate_race_rankings
+from rankings import calculate_race_rankings, time_to_seconds
 import xml.etree.ElementTree as ET
 
 
@@ -32,6 +32,18 @@ def filter_classes(my_classes):
             all(substring not in my_class['class_name'].lower() for substring in ["21as", "20as", "18as", "open"]) :
             filtered_classes.append(my_class)
     return filtered_classes
+
+
+def _has_valid_race_time(results):
+    for result in results:
+        race_time = result.get('race_time')
+        if not isinstance(race_time, str) or race_time.startswith('-'):
+            continue
+        if race_time.count(':') == 1:
+            race_time = f"00:{race_time}"
+        if time_to_seconds(race_time) is not None:
+            return True
+    return False
 
 
 
@@ -441,7 +453,7 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
                                 else:
                                     long_desc = event_dict['long_desc']
 
-                                race_exists = test_race_exist(race_code)
+                                race_exists = test_race_results_exist(race_code)
                                 if race_exists == False:
                                     # process rankings for this class/race
 
@@ -569,7 +581,7 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
             print(f"reformatted date: {event['event_date']}")
             if event.get('races'):  # Only proceed if event['races'] exists and is not empty
                 for race in event['races']:
-                    if race.get('results'):  # Check if there are any results for the race
+                    if _has_valid_race_time(race.get('results', [])):
                         
                         # store the race in the DB
                         race_to_insert = {
@@ -594,7 +606,7 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
         for event in new_events:
             if event.get('races'):  # Check if there are any races in the event
                 for race in event['races']:
-                    if race.get('results'):  # Check if there are any results for the race
+                    if _has_valid_race_time(race.get('results', [])):
                         for result in race['results']:
                             try:
                                 result['place'] = int(result['place'])
@@ -619,12 +631,19 @@ def api_events_from_eventor_and_calculate_rankings(end_date_str, days_prior):
                         print(f"preparing to calculate")
                         print(race['race_code'])
                         calculate_race_rankings(race['race_code'])
+                        race['ranking_status'] = (
+                            'Rankings calculated'
+                            if test_race_results_exist(race['race_code'])
+                            else 'Calculation did not store results'
+                        )
 
                         my_year = datetime.strptime(race['race_date'], '%Y-%m-%d').year
                         if my_year:
                             print(my_year)
                             # Remember to review Discipline (discipline = 'Middle/Long' by default)
                             confirm_discipline(int(my_year))
+                    else:
+                        race['ranking_status'] = 'No usable result times; skipped'
 
     print("Finished process_and_store_eventor_event_by_class:", datetime.now())
     return new_events

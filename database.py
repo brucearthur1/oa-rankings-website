@@ -1482,6 +1482,16 @@ def test_race_exist(race_code):
             race_exists = True
     return race_exists
 
+
+def test_race_results_exist(race_code):
+    connection.autocommit(True)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT 1 FROM results WHERE race_code = %s LIMIT 1",
+            race_code
+        )
+        return cursor.fetchone() is not None
+
 def update_athletes_with_iof_ids(athletes):
     with connection.cursor() as cursor:
         for athlete in athletes:

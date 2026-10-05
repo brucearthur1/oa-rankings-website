@@ -36,7 +36,7 @@
                                     <a href="https://eventor.orienteering.asn.au{{ event['results_href'] }}" target="_blank">Eventor result link</a>
                                 </td>
                                 <td style="font-size: x-small;"> {{ event['event_classification'] }} </td>
-                                <td style="font-size: x-small;"> Rankings Calculated </td>
+                                <td style="font-size: x-small;"> {{ race['ranking_status'] }} </td>
                                 <td style="font-size: x-small;"> {{ class['class_name'] }} </td>
                             </tr>
                         {% endfor %}
@@ -50,7 +50,7 @@
                                 <a href="https://eventor.orienteering.asn.au{{ event['results_href'] }}" target="_blank">Eventor result link</a>
                             </td>
                             <td style="font-size: x-small;"> {{ event['event_classification'] }} </td>
-                            <td style="font-size: x-small;"> Rankings already exist </td>
+                            <td style="font-size: x-small;"> No new races to process </td>
                             <td style="font-size: x-small;"> {{ class['class_name'] }} </td>
                         </tr>
                     {% endfor %}
